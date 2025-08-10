@@ -1,0 +1,282 @@
+<head>
+    <meta charset="UTF-8">
+    <title>Mtlop - مطلوب</title>
+    <meta name="description" content="Follow us on social media platforms">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Changa:wght@400;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <style>
+        html, body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Changa', sans-serif;
+            background-image: linear-gradient(135deg, #a6c0fe, #f0f8ff);
+            background-size: cover;
+            animation: gradientAnimation 5s infinite;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 80px 0;
+            color: #000;
+            padding-bottom: 35px;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: -5px;
+        }
+
+        a {
+            display: inline-block;
+            margin-bottom: 18px;
+            padding: 10px 20px;
+            color: #000;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+
+        a:hover {
+            background-color: #ececec;
+        }
+
+        a i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+            margin-left: 10px;
+        }
+
+        /* Control the size of your profile picture */
+        .profile-pic {
+            border-radius: 50%;
+            overflow: hidden;
+            width: 180px;
+            height: 180px;
+            box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1);
+            margin-top: -33px;
+        }
+
+        h1 {
+            margin-bottom: -3px;
+        }
+
+        /* Desktop styles */
+        @media (min-width: 600px) {
+            a {
+                width: 490px;
+            }
+
+            /* Style the icon container */
+            .icon-container {
+                position: relative;
+            }
+
+            /* Style the icons within the icon container */
+            .icon-container i {
+                font-size: 1.3rem;
+                /* Increase the icon size as needed */
+                position: absolute;
+                top: 5px;
+                left: 5px;   /* move icons located on buttons to left or right */
+            }
+        }
+
+        /* Mobile styles */
+        @media (max-width: 600px) {
+            .profile-pic {
+                width: 100%;
+                height: auto;
+                max-width: 170px;
+                margin: 15px auto 0px;
+                box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1);
+            }
+
+
+            .container {
+                max-width: 100%;
+                padding: 30px 15px;
+                box-sizing: border-box;
+            }
+
+            a {
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            a i {
+                margin-right: 5px;
+                margin-left: 10px;
+                font-size: 1.5rem;
+                vertical-align: middle;
+            }
+
+            h1 {
+                margin-bottom: -5px;
+            }
+
+            a span {
+                font-size: 1.0rem;
+                letter-spacing: 1px;
+            }
+
+            ul li:last-of-type {
+                margin-bottom: 20px;
+            }
+
+            /* Style the icon container */
+            .icon-container {
+                position: absolute;
+                top: 50%;
+                left: 20px;
+                transform: translateY(-50%);
+            }
+
+            /* Style the icons within the icon container */
+            .icon-container i {
+                font-size: 1.4rem;
+            }
+
+			.overflow-wrap{
+            padding-right:45px;
+            padding-left:45px;
+			word-break: break-word;
+        }
+
+        }
+
+        /* Footer styles */
+        footer {
+            color: #999;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            text-align: center;
+            bottom: 0;
+            background-color: transparent;
+        }
+
+        /* Social media icons */
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+			flex-wrap: wrap;
+        }
+
+        .social-link {
+            color: #000;
+            margin: 1px;
+            background-color: transparent;
+            box-shadow: none;
+            border-radius: 50%;
+            padding: 7px;
+            transition: color 0.3s ease;
+            width: 42px;
+        }
+
+        .social-link:hover {
+            background-color: transparent;
+            color: #454545;
+        }
+
+        .logo-container img {
+            cursor: pointer;
+        }
+    </style>
+<meta name="d41d8cd98f00b204e9800998ecf8427e_lib_detect" id="d41d8cd98f00b204e9800998ecf8427e_lib_detect"><script src="moz-extension://ced3ff11-8a58-4bcb-ab5c-59dd2b9ddc63/library/libraries.js"></script><script src="moz-extension://ced3ff11-8a58-4bcb-ab5c-59dd2b9ddc63/content_scripts/lib_detect.js"></script></head>
+<body>
+    <div class="container">
+       {% if profile.image %}
+            <img src="{{ profile.image.url }}" alt="Profile Picture" class="profile-pic">
+            {% else %}
+            <img src="https://linkin1.com/templates/image/linkin1-profile.jpg" alt="Profile Picture" class="profile-pic">
+            {% endif %}
+         <h1 style="font-size: 2.0rem;">   {{ profile.name }}</h1>
+            <p style="font-size: 0.92rem;">{{ profile.keywords }}</p>
+
+        <!-- Add social media icons -->
+        <div class="social-icons">
+                 {% for item in social %}
+                <button class="social-button" onclick="openLink('#')">
+                    <i class="fab fa-{{ item.provider }}"></i>
+                </button>
+                 {% endfor %}
+
+            </div>
+
+<ul>
+                <!-- TikTok -->
+                {% for item in social %}
+                <li>
+                    <div class="button-wrapper">
+                    <a href="{{ item.url }}" target="_blank" class="btn btncolor">
+                        <div class="icon-container">
+                            <i class="fab fa-{{ item.provider }}"></i>
+                        </div>
+                            <span class="overflow-wrap">{{ item.provider }}</span>
+                    </a>
+                    </div>
+                </li>
+                 {% endfor %}
+                <!-- WhatsApp -->
+
+
+            </ul>
+
+    </div>
+
+    <footer style="font-size: 0.9rem; color: #000;">
+            <div class="logo-container" id="logoContainer">
+                <img class="footer-svg" src="https://digithup.com/static/frontend/arino/assets/img/logodw.svg" alt="Linkin1" width="200" height="150">
+            </div>
+        </footer>
+
+
+        <!-- Photo by BoliviaInteligente on Unsplash -->
+
+
+
+                <script>
+                    // Get the SVG logo element
+                    var svgLogo = document.querySelector(".logo-container img");
+
+                    // Add a click event listener to the SVG logo
+                    svgLogo.addEventListener("click", function() {
+                        // Specify the URL you want to open in a new window
+                        var url = "https://www.digithup.com";
+                        // Open the URL in a new window
+                        window.open(url, "_blank");
+                    });
+                </script>
+
+            <script>
+                // Define the openLink function
+                function openLink(url) {
+                    window.open(url, "_blank");
+                }
+            </script>
+
+</body>

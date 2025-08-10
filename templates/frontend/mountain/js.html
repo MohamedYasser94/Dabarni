@@ -1,0 +1,102 @@
+{% load static %}
+
+
+<!-- vendor plugins -->
+
+
+<!-- Scripts -->
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/countdown/countdown.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/ajaxchimp/jquery.ajaxchimp.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/gsap/tween-max.min.js"></script>
+
+
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/validate/jquery.validate.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/slicknav/jquery.slicknav.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/jarallax/jarallax.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/sharer/sharer.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/aos/aos.min.js"></script>
+
+
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/fuse/fuse.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/mark/mark.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/search/search.min.js"></script>
+
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAV1KS10sb3O462XosfZTKohHJwi6C0joo"></script>
+{% block custom_js %}
+{% if today == 1 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/heuristics/decorative.min.js"></script>
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/heuristics/heuristics.min.js"></script>
+{% elif today == 2 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/star-wars/star-wars.min.js"></script>
+{% elif today == 3 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/constellation/constellation.min.js"></script>
+{% elif today == 4 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/dots/dots.min.js"></script>
+{% elif today == 5 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/swirl/swirl.min.js"></script>
+{% elif today == 6 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/surface/surface.min.js"></script>
+{% elif today == 7 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/surface/surface.min.js"></script>
+{% elif today == 8 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/shift/filter-polyfill.min.js"></script>
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/shift/shift.min.js"></script>
+{% elif today == 9 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/pipeline/pipeline.min.js"></script>
+{% elif today == 10 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/connections/connections.min.js"></script>
+{% elif today == 11 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/coalesce/coalesce.min.js"></script>
+{% elif today == 12 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/aurora/aurora.min.js"></script>
+{% elif today == 13 %}
+   <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/stars-lines/vendors.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/stars-lines/stars-lines.min.js"></script>
+
+{% elif today == 14 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/net/three.r92.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/net/net.min.js"></script>
+{% elif today == 15 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/stardust/stardust.min.js"></script>
+{% elif today == 16 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/stardust/stardust.min.js"></script>
+{% elif today == 17 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/hills/three.r92.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/hills/hills.min.js"></script>
+{% elif today == 18 %}
+   <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/globe/three.r92.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/globe/globe.min.js"></script>
+{% elif today == 19 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/glitch/three.r92.min.js"></script>
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/glitch/glitch.min.js"></script>
+{% elif today == 20 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/boreal-sky/vendors.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/boreal-sky/boreal-sky.min.js"></script>
+{% elif today == 21 %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/birds/three.r92.min.js"></script>
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/birds/birds.min.js"></script>
+{% else %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/geometric/geometric.min.js"></script>
+{% endif %}
+
+{% endblock custom_js %}
+
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/js/app.min.js"></script>
+
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VBEEE2NP62"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-VBEEE2NP62');
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2216688474835783"
+        crossorigin="anonymous"></script>

@@ -1,0 +1,146 @@
+
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+{% block body %}
+
+		<!-- Page Content -->
+			<div class="content content-page">
+				<div class="container">
+					<div class="row">
+						{% include 'kofejob/provider/dashboard/sidebar.html' %}
+
+						<div class="col-xl-9 col-lg-8">
+							<div class="dashboard-sec">
+								<div class="page-title">
+									<h3>{% translate 'Dashboard' %}</h3>
+								</div>
+								<div class="row">
+									<div class="col-md-6 col-lg-4 col-xl-3">
+										<div class="dash-widget">
+											<div class="dash-info">
+												<div class="dashboard-icon">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/freelancer-dashboard-icon-01.svg" alt="Img">
+												</div>
+												<div class="dash-widget-info">{% translate 'Jobs' %}</div>
+											</div>
+											<div class="dash-widget-more d-flex align-items-center justify-content-between">
+												<div class="dash-widget-count">{{ jobs.count }}</div>
+												<a href="{% url 'provider:ProviderJobList' %}" class="d-flex">{% translate 'View Details' %}</a>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-6 col-lg-4 col-xl-3">
+										<div class="dash-widget">
+											<div class="dash-info">
+												<div class="dashboard-icon dashboard-icon-two">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/freelancer-dashboard-icon-02.svg" alt="Img">
+												</div>
+												<div class="dash-widget-info">Task Completed</div>
+											</div>
+											<div class="dash-widget-more d-flex align-items-center justify-content-between">
+												<div class="dash-widget-count">5</div>
+												<a href="" class="d-flex">View Details</a>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-6 col-lg-4 col-xl-3">
+										<div class="dash-widget">
+											<div class="dash-info">
+												<div class="dashboard-icon dashboard-icon-three">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/freelancer-dashboard-icon-03.svg" alt="Img">
+												</div>
+												<div class="dash-widget-info">Reviews</div>
+											</div>
+											<div class="dash-widget-more d-flex align-items-center justify-content-between">
+												<div class="dash-widget-count">25</div>
+												<a href="" class="d-flex">View Details</a>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-6 col-lg-4 col-xl-3">
+										<div class="dash-widget">
+											<div class="dash-info">
+												<div class="dashboard-icon dashboard-icon-four">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/freelancer-dashboard-icon-04.svg" alt="Img">
+												</div>
+												<div class="dash-widget-info">Earning</div>
+											</div>
+											<div class="dash-widget-more d-flex align-items-center justify-content-between">
+												<div class="dash-widget-count">5962</div>
+												<a href="" class="d-flex">View Details</a>
+											</div>
+										</div>
+									</div>
+								</div>
+
+
+
+								<div class="row">
+
+									<!-- Past Earnings -->
+								<div class="col-xl-12">
+									<div class="card mb-4 ongoing-project-card">
+										<div class="pro-head">
+											<h2>{% translate 'Recent Job Add' %}</h2>
+											<a href="{% url 'provider:ProviderJobList' %}" class="btn fund-btn">{% translate 'View All' %}</a>
+										</div>
+										<div class="table-responsive recent-earnings flex-fill">
+											<table class="table mb-0">
+												<thead>
+													<tr>
+														<th>{% translate 'Title' %}</th>
+														<th>{% translate 'Category' %}</th>
+														<th>{% translate 'Cost' %}</th>
+														<th>{% translate 'Create On' %}</th>
+														<th>{% translate 'Duration' %}</th>
+														<th>{% translate 'Features' %}</th>
+														<th>{% translate 'Action' %}</th>
+													</tr>
+												</thead>
+												<tbody>
+                                                {% for item in jobs %}
+													<tr>
+														<td>{{ item.title }} </td>
+														<td>{{ item.category }}</td>
+                                                        <td>{{ item.create_at|date }}</td>
+														<td>{{ item.cost }}</td>
+														<td>{{ item.duration }}</td>
+														<td>{{ item.is_featured }}</td>
+
+														<td><a href="javascript:void(0);"><i class="feather-eye"></i></a></td>
+													</tr>
+                                                {% endfor %}
+
+
+												</tbody>
+											</table>
+										</div>
+									</div>
+								</div>
+								<!-- /Past Earnings -->
+								</div>
+
+
+
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Page Content -->
+
+{% endblock %}
+
+
+{% block custom_js %}
+
+
+
+
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}
+
+

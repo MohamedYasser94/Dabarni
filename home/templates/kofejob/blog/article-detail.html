@@ -1,0 +1,253 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+
+
+	<!-- Breadcrumb -->
+			<div class="bread-crumb-bar">
+				<div class="container">
+					<div class="row align-items-center inner-banner">
+						<div class="col-md-12 col-12 text-center">
+							<div class="breadcrumb-list">
+								<h2>{{ article.title }}</h2>
+								<nav aria-label="breadcrumb" class="page-breadcrumb">
+									<ol class="breadcrumb">
+										<li class="breadcrumb-item"><a href="{% url 'home:HomeIndex' %}"> {% trans 'Home' %}</a></li>
+										<li class="breadcrumb-item" aria-current="page">{{ article.title }}</li>
+									</ol>
+								</nav>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Breadcrumb -->
+
+			<!-- Page Content -->
+			<div class="content">
+				<div class="container">
+					<div class="row">
+						<div class="col-lg-8 col-md-12">
+							<div class="blog-view">
+								<div class="blog-single-post pro-post widget-box">
+									<div class="blog-image">
+										<a href="javascript:void(0);"><img alt="Img" src="{{ article.get_image}}" class="img-fluid"></a>
+									</div>
+									<h3 class="blog-title">{{ article.title }}</h3>
+									<div class="blog-info clearfix">
+										<div class="post-left">
+											<ul>
+
+												<li><a href="javascript:void(0);"><i class="far fa-calendar"></i>{{ article.create_at|date }}</a></li>
+												<li><a href="javascript:void(0);"><i class="far fa-comments"></i>12 Comments</a></li>
+												<li><i class="fas fa-tags"></i>{{ article.category.title }}</li>
+											</ul>
+										</div>
+									</div>
+									<div class="blog-content">
+										<p>{{ article.body|safe }}</p>
+                                    </div>
+								</div>
+
+{#								<div class="pro-post author-widget clearfix">#}
+{#									<div class="widget-title-box clearfix">#}
+{#										<h3 class="pro-title">About Author</h3>#}
+{#									</div>#}
+{#									<div class="about-author">#}
+{#										<div class="about-author-img">#}
+{#											<div class="author-img-wrap">#}
+{#												<a href=""><img class="img-fluid" alt="Img" src="{%  static '' %}{{FRONTEND_ASSETS}}/img/img-02.jpg"></a>#}
+{#											</div>#}
+{#										</div>#}
+{#										<div class="author-details">#}
+{#											<a href="" class="blog-author-name">Web Designer</a>#}
+{#											<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>#}
+{#											<div class="social-links">#}
+{#												<ul>#}
+{#													<li><a href="javascript:void(0);"><i class="fab fa-facebook-f"></i></a></li>#}
+{#													<li><a href="javascript:void(0);"><i class="fab fa-twitter"></i></a></li>#}
+{#													<li><a href="javascript:void(0);"><i class="fab fa-instagram"></i></a></li>#}
+{#													<li><a href="javascript:void(0);"><i class="fab fa-behance"></i></a></li>#}
+{#													<li><a href="javascript:void(0);"><i class="fab fa-dribbble"></i></a></li>#}
+{#												</ul>#}
+{#											</div>#}
+{#										</div>#}
+{#									</div>#}
+{#								</div>#}
+{##}
+{#								<div class="blog-comments pro-post widget-box clearfix pb-0">#}
+{#									<h3 class="pro-title">Comments (12)</h3>#}
+{#									<div class="pro-content pb-0">#}
+{#									<ul class="comments-list">#}
+{#										<li>#}
+{#											<div class="comment">#}
+{#												<div class="comment-author">#}
+{#													<img class="avatar" alt="Img" src="{%  static '' %}{{FRONTEND_ASSETS}}/img/img-02.jpg">#}
+{#												</div>#}
+{#												<div class="comment-block">#}
+{#													<span class="comment-by">#}
+{#														<span class="blog-author-name">Michelle Fairfax <span class="date">Jun 6, 2021</span></span>#}
+{#													</span>#}
+{#													<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam viverra euismod odio, gravida pellentesque urna varius vitae, gravida pellentesque urna varius vitae. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>#}
+{#													<a class="comment-btn" href="javascript:void(0);">#}
+{#														<i class="fas fa-reply"></i> Reply#}
+{#													</a>#}
+{#												</div>#}
+{#											</div>#}
+{#											<ul class="comments-list reply">#}
+{#												<li>#}
+{#													<div class="comment">#}
+{#														<div class="comment-author">#}
+{#															<img class="avatar" alt="Img" src="{%  static '' %}{{FRONTEND_ASSETS}}/img/img-03.jpg">#}
+{#														</div>#}
+{#														<div class="comment-block">#}
+{#															<span class="comment-by">#}
+{#																<span class="blog-author-name">Gina Moore <span class="date">Jun 6, 2021</span></span>#}
+{#															</span>#}
+{#															<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam viverra euismod odio, gravida pellentesque urna varius vitae, gravida pellentesque urna varius vitae.</p>#}
+{#															<a class="comment-btn" href="javascript:void(0);">#}
+{#																<i class="fas fa-reply"></i> Reply#}
+{#															</a>#}
+{#														</div>#}
+{#													</div>#}
+{#												</li>#}
+{#												<li>#}
+{#													<div class="comment">#}
+{#														<div class="comment-author">#}
+{#															<img class="avatar" alt="Img" src="{%  static '' %}{{FRONTEND_ASSETS}}/img/img-04.jpg">#}
+{#														</div>#}
+{#														<div class="comment-block">#}
+{#															<span class="comment-by">#}
+{#																<span class="blog-author-name">Carl Kelly <span class="date">Jun 6, 2021</span></span>#}
+{#															</span>#}
+{#															<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam viverra euismod odio, gravida pellentesque urna varius vitae, gravida pellentesque urna varius vitae.</p>#}
+{#															<a class="comment-btn" href="javascript:void(0);">#}
+{#																<i class="fas fa-reply"></i> Reply#}
+{#															</a>#}
+{#														</div>#}
+{#													</div>#}
+{#												</li>#}
+{#											</ul>#}
+{#										</li>#}
+{#										<li>#}
+{#											<div class="comment">#}
+{#												<div class="comment-author">#}
+{#													<img class="avatar" alt="Img" src="{%  static '' %}{{FRONTEND_ASSETS}}/img/img-05.jpg">#}
+{#												</div>#}
+{#												<div class="comment-block">#}
+{#													<span class="comment-by">#}
+{#														<span class="blog-author-name">Elsie Gilley <span class="date">Jun 6, 2021</span></span>#}
+{#													</span>#}
+{#													<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>#}
+{#												</div>#}
+{#											</div>#}
+{#										</li>#}
+{#									</ul>#}
+{#								</div>#}
+{#								</div>#}
+{##}
+{#								<div class=" pro-post widget-box  new-comment clearfix">#}
+{#									<h4 class="pro-title">Leave Comment</h4>#}
+{#									<div class="pro-content">#}
+{#										<form>#}
+{#											<div class="input-block">#}
+{#												<label class="form-label">Name <span class="text-danger">*</span></label>#}
+{#												<input type="text" class="form-control">#}
+{#											</div>#}
+{#											<div class="input-block">#}
+{#												<label class="form-label">Your Email Address <span class="text-danger">*</span></label>#}
+{#												<input type="email" class="form-control">#}
+{#											</div>#}
+{#											<div class="input-block">#}
+{#												<label class="form-label">Comments</label>#}
+{#												<textarea rows="4" class="form-control"></textarea>#}
+{#											</div>#}
+{#											<div class="submit-section">#}
+{#												<button class="btn btn-primary submit-btn" type="submit">Submit</button>#}
+{#											</div>#}
+{#										</form>#}
+{#									</div>#}
+{#								</div>#}
+
+							</div>
+						</div>
+
+						<!-- Blog Sidebar -->
+						<div class="col-lg-4 col-md-12 sidebar-right theiaStickySidebar">
+
+							<!-- Latest Posts -->
+							<div class=" pro-post widget-box post-widget">
+								<h4 class="pro-title">{% translate 'Latest Posts' %}</h4>
+								<div class="pro-content pt-0">
+									<ul class="latest-posts">
+                                        {% for item in articles %}
+										<li>
+											<div class="post-thumb">
+												<a href="{{ item.get_front_url }}">
+													<img class="img-fluid" src="{{ item.get_image }}" alt="Img">
+												</a>
+											</div>
+											<div class="post-info">
+												<h4>
+													<a href="{{ item.get_front_url }}">{{ item.title }}</a>
+												</h4>
+												<a href="javascript:void(0);" class="posts-date"><i class="feather-calendar"></i>{{ item.create_at|date }}</a>
+											</div>
+										</li>
+                                        {% endfor %}
+
+									</ul>
+								</div>
+							</div>
+							<!-- /Latest Posts -->
+
+							<!-- Categories -->
+							<div class=" pro-post widget-box category-widget">
+								<h4 class="pro-title">{% translate 'Blog Categories' %}</h4>
+								<div class="pro-content">
+									<ul class="category-link">
+                                        {% for item in categories %}
+										<li><a href="{{ item.get_front_url }}">{{ item.title }}</a></li>
+                                        {% endfor %}
+
+									</ul>
+								</div>
+							</div>
+							<!-- /Categories -->
+
+							<!-- Tags -->
+							<div class=" pro-post widget-box tags-widget">
+								<h4 class="pro-title">{% translate 'Tags' %}</h4>
+								<div class="pro-content">
+									<div class="tags">
+                                        {% for item in tags %}
+                                        <a href="{{ item.get_front_url }}" class="tag">{{ item.title }}</a>
+                                        {% endfor %}
+
+
+									</div>
+								</div>
+							</div>
+							<!-- /Tags -->
+
+						</div>
+						<!-- /Blog Sidebar -->
+
+					</div>
+				</div>
+			</div>
+			<!-- /Page Content -->
+
+
+
+{% endblock %}
+
+{% block custom_js %}
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}
+
+

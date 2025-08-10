@@ -1,0 +1,74 @@
+{% load static %}
+
+<!-- jQuery -->
+
+
+			<!-- Scroll Top -->
+		<button class="scroll-top scroll-top-next scroll-to-target" data-target="html">
+			<span class="ti-angle-up"><i class="feather-arrow-up"></i></span>
+		</button>
+		<!-- /Scroll Top -->
+
+		<!-- jQuery -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/js/jquery-3.7.1.min.js"></script>
+
+		<!-- Bootstrap Bundle JS -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/js/bootstrap.bundle.min.js"></script>
+
+		<!-- Owl Carousel -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/js/owl.carousel.min.js"></script>
+
+
+
+		<!-- counterup JS -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/js/jquery.waypoints.js"></script>
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/js/jquery.counterup.min.js"></script>
+
+		<!-- Aos -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/plugins/aos/aos.js"></script>
+
+
+
+
+
+<!-- Select2 JS -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/plugins/select2/js/select2.min.js"></script>
+
+		<!-- Slimscroll JS -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/js/jquery.slimscroll.min.js"></script>
+
+		<!-- FancyBox JS -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/plugins/fancybox/jquery.fancybox.min.js"></script>
+
+		<!-- Swiper JS -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/plugins/swiper/swiper.min.js"></script>
+
+		<!-- Slick JS -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/js/slick.js"></script>
+
+		<!-- Sticky Sidebar JS -->
+        <script src="{%  static '' %}{{FRONTEND_ASSETS}}/plugins/theia-sticky-sidebar/ResizeSensor.js"></script>
+        <script src="{%  static '' %}{{FRONTEND_ASSETS}}/plugins/theia-sticky-sidebar/theia-sticky-sidebar.js"></script>
+
+		<!-- Custom JS -->
+		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/js/script.js"></script>
+	
+		
+{#		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD6adZVdzTvBpE2yBRK8cDfsss8QXChK0I"></script>#}
+{#		<script src="{%  static '' %}{{FRONTEND_ASSETS}}/js/map.js"></script>#}
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EJ7T66D2HR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-EJ7T66D2HR');
+</script>
+{% block custom_js %}
+
+
+
+
+{% endblock custom_js %}

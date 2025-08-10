@@ -1,0 +1,63 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Wrapper -->
+<div class="wrapper">
+    <!-- Wrapper -->
+    {% if today == 1 %}
+        {% include 'frontend/mountain/physics.html' %}
+    {% elif today == 2 %}
+        {% include 'frontend/mountain/star-wars.html' %}
+    {% elif today == 3 %}
+        {% include 'frontend/mountain/constellation.html' %}
+    {% elif today == 4 %}
+        {% include 'frontend/mountain/heuristics.html' %}
+    {% elif today == 5 %}
+        {% include 'frontend/mountain/dots.html' %}
+    {% elif today == 6 %}
+        {% include 'frontend/mountain/swirl.html' %}
+    {% elif today == 7 %}
+        {% include 'frontend/mountain/surface.html' %}
+    {% elif today == 8 %}
+
+        {% include 'frontend/mountain/shift.html' %}
+    {% elif today == 9 %}
+
+        {% include 'frontend/mountain/pipeline.html' %}
+    {% elif today == 10 %}
+        {% include 'frontend/mountain/connections.html' %}
+    {% elif today == 11 %}
+        {% include 'frontend/mountain/coalesce.html' %}
+    {% elif today == 12 %}
+
+        {% include 'frontend/mountain/aurora.html' %}
+    {% elif today == 13 %}
+
+        {% include 'frontend/mountain/stars-lines.html' %}
+    {% elif today == 14 %}
+        {% include 'frontend/mountain/net.html' %}
+    {% elif today == 15 %}
+
+        {% include 'frontend/mountain/stardust.html' %}
+    {% elif today == 16 %}
+        {% include 'frontend/mountain/stardust.html' %}
+    {% elif today == 17 %}
+        {% include 'frontend/mountain/hills.html' %}
+    {% elif today == 18 %}
+
+        {% include 'frontend/mountain/globe.html' %}
+    {% elif today == 19 %}
+        {% include 'frontend/mountain/glitch.html' %}
+    {% elif today == 20 %}
+
+
+        {% include 'frontend/mountain/boreal-sky.html' %}
+    {% elif today == 21 %}
+
+        {% include 'frontend/mountain/birds.html' %}
+    {% else %}
+        {% include 'frontend/mountain/geometric.html' %}
+    {% endif %}
+
+    <!-- Footer -->
+</div>

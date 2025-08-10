@@ -1,0 +1,80 @@
+{% load i18n %}
+{% load static %}
+<!--begin::sidebar-->
+<div id="kt_app_sidebar" class="app-sidebar flex-column d-print-none" data-kt-drawer="true"
+     data-kt-drawer-name="app-sidebar"
+     data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="auto"
+     data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
+    <!--begin::Logo-->
+    <div class="app-sidebar-logo d-none d-lg-flex flex-center py-10 px-5 mb-1" id="kt_app_sidebar_logo">
+        <!--begin::Logo image-->
+        {% if user.access_level == 'SuperAdmin' or user.access_level == 'Admin'  %}
+        <a href="{% url 'core:AdminIndex' %}">
+            {% elif user.access_level == 'Provider'  or user.access_level == 'ProviderEmployee' %}
+             <a href="{% url 'provider:ProviderDashboard' %}">
+                   {% endif %}
+            <img alt="Logo" src="{% static '' %}digithup/mix.png" class="h-50px"/>
+
+
+        </a>
+        <!--end::Logo image-->
+    </div>
+    <!--end::Logo-->
+    <!--begin::Sidebar menu-->
+    <div class="app-sidebar-menu d-flex w-100 hover-scroll-overlay-y my-5" id="kt_app_sidebar_menu_wrapper"
+         data-kt-scroll="true" data-kt-scroll-height="auto" data-kt-scroll-dependencies="#kt_app_sidebar_logo"
+         data-kt-scroll-offset="0">
+        <!--begin::Menu-->
+        <div class="menu menu-column menu-rounded menu-sub-indention menu-active-bg menu-here-bg menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow-gray-500 fw-semibold"
+             id="#kt_app_sidebar_menu" data-kt-menu="true">
+            <!--begin:Menu item-->
+            <div data-kt-menu-placement="right-start" class="menu-item py-1">
+                <!--begin:Menu link-->
+                <span class="menu-link menu-center">
+                     {% if user.access_level == 'SuperAdmin' or user.access_level == 'Admin'  %}
+                <a class="menu-link" href="{% url 'core:AdminIndex' %}">
+                {% elif user.access_level == 'Provider'  or user.access_level == 'ProviderEmployee' %}
+                <a class="menu-link" href="{% url 'provider:ProviderDashboard' %}">
+                {% endif %}
+
+
+                    <span class="menu-icon me-0">
+										<i class="ki-outline ki-home-1      fs-2hx"></i>
+										</span>
+                    </a>
+									</span>
+                <!--end:Menu link-->
+
+            </div>
+            <!--end:Menu item-->
+
+          
+         
+       
+         
+          {% if user.access_level == 'Provider' or  user.access_level == 'ProviderEmployee' %}
+
+         {% block provider %}{% include 'good/job_provider/partials/sidebar-partials.html' %}{% endblock provider %}
+            {% endif %}
+            {% if user_access == 'SuperAdmin' %}
+
+
+                {% block job %}{% include 'good/job/partials/sidebar-partials.html' %}{% endblock job %}
+                {% block classified %}{% include 'good/classified/partials/sidebar-partials.html' %}{% endblock classified %}
+                {% block wallet %}{% include 'good/wallet/partials/sidebar-partials.html' %}{% endblock wallet %}
+                {% block blog %}{% include 'good/blog/partials/sidebar-partials.html' %}{% endblock blog %}
+                {% block front %}{% include 'good/front/partials/sidebar-partials.html' %}{% endblock front %}
+                {% block apps %}{% include 'good/utilities/partials/sidebar-partials.html' %}{% endblock apps %}
+                {% block translate %}{% include 'good/rosetta/partials/sidebar-partials.html' %}{% endblock translate %}
+
+                {% block account %}{% include 'good/account/partials/sidebar-partials.html' %}{% endblock account %}
+                {% block system %}{% include 'good/core/partials/sidebar-partials.html' %}{% endblock system %}
+            {% endif %}
+
+
+        </div>
+        <!--end::Menu-->
+    </div>
+    <!--end::Sidebar menu-->
+</div>
+<!--end::sidebar-->

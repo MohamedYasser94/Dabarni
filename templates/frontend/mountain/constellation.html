@@ -1,0 +1,60 @@
+{% load static %}
+<!-- Section Started Header Coming Soon -->
+<div class="header-section">
+
+    <div class="logo">
+        <img src="{% static '' %}{{ FRONTEND_ASSETS }}/images/logo.png" width="190" height="190" alt="logo"/>
+    </div>
+
+    <h1>COMING SOON</h1>
+
+    <p>Our website is under construction, we are working very hard to give you the best experience with this one.<br>
+        You will love Mountain as much as we do. It will morph perfectly on your needs!</p>
+
+
+    <div class="countdown" data-timer="Jun 27, 2027 20:39:00"></div>
+
+
+    <div class="mouse">
+        <a href="#services">
+            <i class="fa fa-chevron-down"></i>
+        </a>
+    </div>
+
+
+    <!-- SINGLE BACKGROUND IMAGE -->
+
+    <div class="image-box"></div>
+
+    <script>
+
+        jQuery.noConflict()(function ($) {
+
+            $(".image-box").backstretch("{% static '' %}{{ FRONTEND_ASSETS }}/images/goldmount.png");
+
+        });
+
+    </script>
+
+
+    <!-- CONSTELLATION BACKGROUND EFFECT -->
+
+    <div id="effect-box">
+        <canvas id="constellation"></canvas>
+    </div>
+
+    <script>
+
+        var lineColor = "rgba(255,255,255,0.3)";
+        var circleColor = "156,217,249,";
+
+    </script>
+
+
+</div>
+
+{% block custom_js %}
+    <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/backstretch/backstretch.min.js"></script>
+   <script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/constellation/constellation.min.js"></script>
+
+{% endblock custom_js %}

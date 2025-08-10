@@ -1,0 +1,43 @@
+{% load i18n %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<body class="home-page bg-five">
+
+		<!-- Loader -->
+		<div id="global-loader"  >
+			<div class="whirly-loader"> </div>
+			<div class="loader-img">
+				<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/load-icon.svg" class="img-fluid" alt="Img">
+			</div>
+		</div>
+		<!-- Loader -->
+
+		<!-- Main Wrapper -->
+		<div class="main-wrapper home-five-wrapper">
+    {% block head %} {% include FRONTEND_HEAD %}  {% endblock %}
+
+
+
+
+    {% block header %} {% include FRONTEND_HEADER %}  {% endblock %}
+
+    {% block breadcrumb %}{% endblock %}
+
+
+    {% block body %} {% include FRONTEND_BODY %}  {% endblock %}
+
+
+
+    {% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+
+</div>
+<!-- /Main Wrapper -->
+{% block modal %} {% include FRONTEND_MODAL %}  {% endblock %}
+{% block vuejs %} {% include FRONTEND_VUE %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}  {% endblock %}
+<!-- latest jquery end-->
+
+
+</body>
+</html>

@@ -1,0 +1,391 @@
+{% extends BACKEND_BASE %}
+{% load static %}
+{% load i18n %}
+{% load rosetta i18n %}
+{% block body %}
+    <!--end::Sidebar-->
+    <!--begin::Main-->
+    <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+        <!--begin::Content wrapper-->
+        <div class="d-flex flex-column flex-column-fluid">
+            <!--begin::Content-->
+            <div id="kt_app_content" class="app-content flex-column-fluid">
+                <!--begin::Content container-->
+                <div id="kt_app_content_container" class="app-container container-fluid">
+                    <!--begin::Category-->
+                    <div class="card card-flush">
+                        <!--begin::Card header-->
+                        <div class="card-header align-items-center py-5 gap-2 gap-md-5">
+                            <!--begin::Card title-->
+                            <div class="card-title">
+                                <!--begin::Search-->
+                                <div class="d-flex align-items-center position-relative my-1">
+                                    <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    <form id="changelist-search" action="" method="get">
+                                        <input type="text" name="query" value="{% if query %}{{ query }}{% endif %}"
+                                               id="searchbar" tabindex="0"
+                                               class="form-control form-control-solid w-250px ps-12"
+                                               placeholder="Search Category"/>
+                                    </form>
+                                </div>
+                                <!--end::Search-->
+                            </div>
+                            <!--end::Card title-->
+                            <!--begin::Card toolbar-->
+                            <div class="card-toolbar">
+                                <!--begin::Add customer-->
+                                {#												<a href="" class="btn btn-primary">{% translate 'Add Category' %}</a>#}
+                                <a type="button" class="btn btn-primary"
+                                   href="?{{ filter_query_string_base }}&amp;msg_filter=untranslated"
+                                >{% translate 'Get Untranslated' %}
+                                </a>
+                                 <a type="button" class="btn btn-primary m-6"
+                                   href="?{{ filter_query_string_base }}&amp;msg_filter=translated"
+                                >{% translate 'Get Translated' %}
+                                </a>
+                                 <a type="button" class="btn btn-primary"
+                                   href="?{{ filter_query_string_base }}&amp;msg_filter=fuzzy"
+                                >{% translate 'Get Fuzzy' %}
+                                </a>
+                                <!--end::Add customer-->
+                            </div>
+                            <!--end::Card toolbar-->
+                        </div>
+                        <!--end::Card header-->
+                        <!--begin::Card body-->
+                        <div class="card-body pt-0">
+                            <form method="post" action="" class="results">
+                                {% csrf_token %}
+                                <!--begin::Table-->
+                                <table class="table align-middle table-row-dashed fs-6 gy-5"
+                                       id="kt_ecommerce_category_table">
+                                    <thead>
+                                    <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                                        <th class="w-10px pe-2">
+                                            <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
+                                                <input class="form-check-input" type="checkbox" data-kt-check="true"
+                                                       data-kt-check-target="#kt_ecommerce_category_table .form-check-input"
+                                                       value="1"/>
+                                            </div>
+                                        </th>
+                                        <th class="min-w-250px">{% translate 'Original' %}</th>
+                                        <th class="min-w-150px">{% translate 'Translation' %}</th>
+                                        <th class="min-w-150px">{% translate 'Fuzzy' %}</th>
+
+
+                                    </tr>
+                                    </thead>
+                                    <tbody class="fw-semibold text-gray-600">
+                                    {% for message in rosetta_messages %}
+
+                                        <tr>
+                                            <!--begin::Checkbox-->
+                                            <td>
+                                                <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                                    <input class="form-check-input" type="checkbox" value="1"/>
+                                                </div>
+                                            </td>
+                                            <!--end::Checkbox-->
+                                            <!--begin::counter=-->
+                                            <td>
+                                                <span class="part">{{ message.msgid|format_message|linebreaksbr }}</span>
+                                                <span class="part">{{ message.msgid_plural|format_message|linebreaksbr }}</span>
+                                            </td>
+                                            <!--end::counter=-->
+                                            <!--begin::Name=-->
+                                            <td>
+                                            <textarea rows="{{ message.msgid|format_message|lines_count }}" cols="40"
+                                                      name="m_{{ message.md5hash }}"
+                                                      tabindex="{% increment tab_idx %}">{{ message.msgstr }}</textarea>
+
+                                            </td>
+                                            <!--end::Name=-->
+                                            <!--begin::Email=-->
+                                            <td>
+                                                <input type="checkbox" name="f_{{ message.md5hash }}" value="1"
+                                                       {% if message|is_fuzzy %}checked="checked"{% endif %}/>
+
+                                            </td>
+                                            <!--end::Email=-->
+
+
+                                        </tr>
+
+
+                                    {% endfor %}
+
+                                    </tbody>
+                                    <!--end::Table body-->
+                                </table>
+                                <!--end::Table-->
+                                <div class="submit-row">
+                                    <p class="paginator">
+                                        {% if query %}
+                                            <input type="hidden" name="query" value="{{ query }}"/>
+                                        {% endif %}
+                                        <input type="submit" class="btn btn-primary default" name="_next"
+                                               value="{% trans "Save and translate next block" %}"
+                                               tabindex="{% increment tab_idx %}"/>
+
+
+                                        {% if needs_pagination %}
+
+                                            <ul class="pagination">
+
+                                                <li class="page-item previous "><a
+                                                        href="?{{ pagination_query_string_base }}&amp;page={{ page|add:'-1' }}"
+                                                        class="page-link"><i
+                                                        class="previous"></i></a></li>
+
+
+
+
+                                                {% for i in page_range %}
+                                                    {% if i == page %}
+                                                        <li class="page-item active"><a
+                                                                href="?{{ pagination_query_string_base }}&amp;page={{ i }}"
+                                                                class="page-link">{{ i }}</a></li>
+                                                    {% else %}
+                                                        <li class="page-item"><a
+                                                                href="?{{ pagination_query_string_base }}&amp;page={{ i }}"
+                                                                class="page-link">{{ i }}</a></li>
+
+                                                    {% endif %}
+                                                {% endfor %}
+
+                                                <li class="page-item next"><a
+                                                        href="?{{ pagination_query_string_base }}&amp;page={{ page|add:'1' }}"
+                                                        class="page-link"><i class="next"></i></a></li>
+
+
+                                            </ul>
+
+                                        {% endif %}
+
+
+
+
+                                    {% with paginator.object_list|length as hits %}
+                                        <strong>{% blocktrans count rosetta_i18n_pofile|length as message_number %}
+                                            {{ hits }}/{{ message_number }} message{% plural %}{{ hits }}/
+                                            {{ message_number }} messages{% endblocktrans %}</strong>
+                                    {% endwith %}
+
+
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                        <!--end::Card body-->
+                    </div>
+                    <!--end::Category-->
+                </div>
+
+                <!--begin::Modal - Category - Add-->
+                <div class="modal fade" id="kt_modal_add_category" tabindex="-1" aria-hidden="true">
+                    <!--begin::Modal dialog-->
+                    <div class="modal-dialog modal-dialog-centered mw-650px">
+                        <!--begin::Modal content-->
+                        <div class="modal-content">
+                            <!--begin::Form-->
+                            <form class="form" id="kt_modal_add_category" enctype="multipart/form-data"
+                                  action="{% url 'catalog:AdminCatalogCategoriesList' %}"
+                                  method="POST"
+                            >
+                                {% csrf_token %}
+                                <!--begin::Modal header-->
+                                <div class="modal-header" id="kt_modal_add_category_header">
+                                    <!--begin::Modal title-->
+                                    <h2 class="fw-bolder">{% translate 'Category' %}</h2>
+                                    <!--end::Modal title-->
+                                    <!--begin::Close-->
+                                    <div id="kt_modal_add_category_close" data-bs-dismiss="modal" aria-label="Close"
+                                         class="btn btn-icon btn-sm btn-active-icon-primary">
+                                        <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
+                                        <span class="svg-icon svg-icon-1">
+														<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                             viewBox="0 0 24 24" fill="none">
+															<rect opacity="0.5" x="6" y="17.3137" width="16" height="2"
+                                                                  rx="1" transform="rotate(-45 6 17.3137)"
+                                                                  fill="black"/>
+															<rect x="7.41422" y="6" width="16" height="2" rx="1"
+                                                                  transform="rotate(45 7.41422 6)" fill="black"/>
+														</svg>
+													</span>
+                                        <!--end::Svg Icon-->
+                                    </div>
+                                    <!--end::Close-->
+                                </div>
+                                <!--end::Modal header-->
+                                <!--begin::Modal body-->
+                                <div class="modal-body py-10 px-lg-17">
+                                    <!--begin::Scroll-->
+                                    <div class="scroll-y me-n7 pe-7" id="kt_modal_add_category_scroll"
+                                         data-kt-scroll="true"
+                                         data-kt-scroll-activate="{default: false, lg: true}"
+                                         data-kt-scroll-max-height="auto"
+                                         data-kt-scroll-dependencies="#kt_modal_add_category_header"
+                                         data-kt-scroll-wrappers="#kt_modal_add_category_scroll"
+                                         data-kt-scroll-offset="300px">
+                                        <!--begin::Input group-->
+                                        <div class="d-flex flex-wrap gap-5">
+                                            <!--begin::Input group-->
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="required fs-6 fw-bold mb-2">{% translate 'Title' %}</label>
+                                                <!--end::Label-->
+                                                <!--begin::Input-->
+                                                <input type="text" class="form-control form-control-solid"
+                                                       placeholder="{% translate 'Title' %}"
+                                                       name="title" required/>
+                                                <!--end::Input-->
+
+                                            </div>
+                                            <!--end::Input group-->
+
+                                            <!--begin::Input group-->
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <!--begin::Label-->
+                                                <label class="required fs-6 fw-bold mb-2">{% translate 'Translate Name' %}</label>
+                                                <!--end::Label-->
+                                                <!--begin::Input-->
+                                                <input type="text" class="form-control form-control-solid"
+                                                       placeholder="{% translate 'Translate Name' %}"
+                                                       name="title_tr"/>
+                                                <!--end::Input-->
+                                            </div>
+                                            <!--end::Input group-->
+                                        </div>
+                                        <!--end::Input group-->
+                                        <!--begin::Input group-->
+                                        <div class="d-flex flex-wrap gap-5">
+                                            <!--begin::Input group-->
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class=" fs-6 fw-bold mb-2">{% translate 'Keyword' %}</label>
+                                                <!--end::Label-->
+                                                <!--begin::Input-->
+                                                <input type="text" class="form-control form-control-solid"
+                                                       placeholder="{% translate 'Keyword' %}"
+                                                       name="keyword"/>
+                                                <!--end::Input-->
+
+                                            </div>
+                                            <!--end::Input group-->
+
+                                            <!--begin::Input group-->
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <!--begin::Label-->
+                                                <label class=" fs-6 fw-bold mb-2">{% translate 'Translate Keyword' %}</label>
+                                                <!--end::Label-->
+                                                <!--begin::Input-->
+                                                <input type="text" class="form-control form-control-solid"
+                                                       placeholder="{% translate 'Translate Keyword' %}"
+                                                       name="keyword_tr"/>
+                                                <!--end::Input-->
+                                            </div>
+                                            <!--end::Input group-->
+                                        </div>
+
+                                        <!--begin::Input group-->
+                                        <div class="d-flex flex-wrap gap-5">
+                                            {#                                        <!--begin::Input group-->#}
+                                            {#                                        <div class="fv-row w-100 flex-md-root">#}
+                                            {#                                            <label class="required fs-6 fw-bold mb-2">{% translate 'Category' %}</label>#}
+                                            {#                                            <!--end::Label-->#}
+                                            {#                                            <!--begin::Input-->#}
+                                            {#                                            <select name="parent" aria-label="{% translate 'Category' %}"#}
+                                            {#                                                    data-control="select2" data-placeholder="{% translate 'Category' %}"#}
+                                            {#                                                    data-dropdown-parent="#kt_modal_add_category"#}
+                                            {##}
+                                            {#                                                    class="form-select form-select-solid fw-bolder">#}
+                                            {#                                                <option value="" selected="">---------</option>#}
+                                            {#                                                {% for value, text in category_form.parent.field.choices %}#}
+                                            {#                                                    <option value="{{ value }}">{{ text }}</option>#}
+                                            {#                                                {% endfor %}#}
+                                            {#                                            </select>#}
+                                            {#                                            <!--end::Input-->#}
+                                            {##}
+                                            {#                                        </div>#}
+                                            {#                                        <!--end::Input group-->#}
+                                            <!--begin::Input group-->
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="required fs-6 fw-bold mb-2">{% translate 'Color' %}</label>
+                                                <!--end::Label-->
+                                                <!--begin::Input-->
+                                                <select name="color" aria-label="{% translate 'Color' %}"
+                                                        data-control="select2"
+                                                        data-placeholder="{% translate 'Color' %}"
+                                                        data-dropdown-parent="#kt_modal_add_category"
+
+                                                        class="form-select form-select-solid fw-bolder">
+                                                    <option value="" selected="">---------</option>
+                                                    {% for value, text in category_form.color.field.choices %}
+                                                        <option value="{{ value }}"><span
+                                                                style="color:{{ value }} ">{{ text }}</span></option>
+                                                    {% endfor %}
+                                                </select>
+                                                <!--end::Input-->
+
+                                            </div>
+                                            <!--end::Input group-->
+
+                                            <!--begin::Input group-->
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <!--begin::Label-->
+                                                <label class="required fs-6 fw-bold mb-2">{% translate 'Image' %}</label>
+                                                <!--end::Label-->
+                                                <!--begin::Input-->
+                                                <input type="file" class="form-control form-control-solid"
+                                                       accept="image/*"
+                                                       name="image"/>
+                                                <!--end::Input-->
+                                            </div>
+                                            <!--end::Input group-->
+                                        </div>
+                                        <!--end::Input group-->
+
+                                    </div>
+                                    <!--end::Scroll-->
+                                </div>
+                                <!--end::Modal body-->
+                                <!--begin::Modal footer-->
+                                <div class="modal-footer flex-center">
+                                    <!--begin::Button-->
+                                    <button type="reset" id="kt_modal_add_category_cancel"
+                                            class="btn btn-light me-3">{% translate 'Discard' %}</button>
+                                    <!--end::Button-->
+                                    <!--begin::Button-->
+                                    <button type="submit" id="" class="btn btn-primary">
+                                        <span class="indicator-label">{% translate 'Submit' %}</span>
+                                        <span class="indicator-progress">{% translate 'Please wait...' %}
+													<span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                                    </button>
+                                    <!--end::Button-->
+                                </div>
+                                <!--end::Modal footer-->
+                            </form>
+                            <!--end::Form-->
+                        </div>
+                    </div>
+                </div>
+                <!--end::Modal - Category - Add-->
+                <!--end::Content container-->
+            </div>
+            <!--end::Content-->
+        </div>
+        <!--end::Content wrapper-->
+
+    </div>
+    <!--end:::Main-->
+{% endblock %}
+{% block custom_js %}
+
+
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/apps/ecommerce/catalog/categories.js"></script>
+
+
+{% endblock custom_js %}
+{% block foot %} {% include BACKEND_FOOTER %}  {% endblock %}
+{% block js %} {% include BACKEND_JS %}  {% endblock %}

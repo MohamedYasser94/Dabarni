@@ -1,0 +1,252 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<div class="bread-crumb-bar">
+    <div class="container">
+        <div class="row align-items-center inner-banner">
+            <div class="col-md-12 col-12 text-center">
+                <div class="breadcrumb-list">
+                    <h2>{% translate 'Job Details' %}</h2>
+                    <nav aria-label="breadcrumb" class="page-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'home:HomeIndex' %}">{% translate 'Home' %}</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ job.title }}</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container">
+        <div class="row">
+
+            <div class="col-lg-8 col-md-12">
+                
+                <div class="card card-body shadow-sm mb-4">
+                    <div class="d-flex align-items-start">
+                        {% if job.image %}
+                        <img src="{{ job.image.url }}" class="img-fluid rounded me-4" alt="{{ job.title }}" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <h2 class="mb-0 me-2">{{ job.title }}</h2>
+                                {% if job.is_featured == 'Yes' %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> {% translate 'Featured' %}</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted mb-3">
+                                {% translate 'Posted by' %} <a href="#" class="text-primary fw-bold">{{ job.provider.name }}</a>
+                            </p>
+                            <div class="d-flex flex-wrap text-muted">
+                                <span class="me-4 mb-2"><i class="bi bi-tag-fill me-2 text-primary"></i>{{ job.category.title|default:"-" }}</span>
+                                <span class="me-4 mb-2"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>{{ job.location|default:"-" }}</span>
+                                <span class="me-4 mb-2"><i class="bi bi-clock-history me-2 text-primary"></i>{{ job.duration|default:"-" }}</span>
+                                <span class="me-4 mb-2"><i class="bi bi-calendar-check-fill me-2 text-primary"></i>{{ job.create_at|timesince }} {% translate 'ago' %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white p-0 border-bottom-0">
+                        <ul class="nav nav-tabs nav-tabs-bordered" id="jobTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab" aria-controls="description" aria-selected="true">{% translate 'Description' %}</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="requirements-tab" data-bs-toggle="tab" data-bs-target="#requirements" type="button" role="tab" aria-controls="requirements" aria-selected="false">{% translate 'Requirements' %}</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="uploads-tab" data-bs-toggle="tab" data-bs-target="#uploads" type="button" role="tab" aria-controls="uploads" aria-selected="false">{% translate 'Upload Requirements' %}</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body tab-content p-4" id="jobTabContent">
+                        
+                        <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+                            {{ job.description|safe }}
+                        </div>
+                        
+                        <div class="tab-pane fade" id="requirements" role="tabpanel" aria-labelledby="requirements-tab">
+                            {% if job_requirements %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-bordered align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>{% translate "Type" %}</th>
+                                                <th>{% translate "Name" %}</th>
+                                                <th>{% translate "Description" %}</th>
+                                                <th class="text-center">{% translate "Required?" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in job_requirements %}
+                                            <tr>
+                                                <td>{{ item.get_requirement_type_display }}</td>
+                                                <td>{{ item.requirement_name }}</td>
+                                                <td>{{ item.requirement_description|default:'<span class="text-muted">—</span>'|safe }}</td>
+                                                <td class="text-center">
+                                                    {% if item.is_required == "Yes" %}
+                                                        <span class="badge bg-danger">{% translate "Yes" %}</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">{% translate "No" %}</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-center text-muted py-5">{% translate 'No specific requirements listed for this job.' %}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="tab-pane fade" id="uploads" role="tabpanel" aria-labelledby="uploads-tab">
+                            {% if user.is_authenticated and user_request %}
+                                <h4 class="mb-4">{% translate 'Upload Required Documents' %}</h4>
+                                <p class="text-muted">{% translate 'Please upload the files required for your application.' %}</p>
+                                
+                                <form action="{% url 'home:Upload_job_requirements' user_request.slug %}" method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    {% for requirement in job_requirements %}
+                                        <div class="mb-3 p-3 border rounded">
+                                            <label for="requirement_{{ requirement.id }}" class="form-label fw-bold">{{ requirement.requirement_name }}</label>
+                                            <input type="file" class="form-control" name="requirement_{{ requirement.id }}" id="requirement_{{ requirement.id }}">
+                                        </div>
+                                    {% empty %}
+                                        <p class="text-muted">{% translate 'There are no requirements to upload for this job.' %}</p>
+                                    {% endfor %}
+                                    
+                                    {% if job_requirements %}
+                                    <button type="submit" class="btn btn-primary mt-3">
+                                        <i class="bi bi-upload me-2"></i>{% translate 'Upload Files' %}
+                                    </button>
+                                    {% endif %}
+                                </form>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="bi bi-cloud-arrow-up-fill fs-1 text-light"></i>
+                                    <p class="text-muted mt-3 fs-5">{% translate 'You must submit a proposal first before you can upload documents.' %}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-12 sidebar-right theiaStickySidebar">
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body text-center">
+                        <h6>{% translate 'Budget' %}</h6>
+                        <h2 class="display-6 fw-bold text-success">${{ job.cost|floatformat:2 }}</h2>
+                        <p class="mb-2 text-muted">{{ job.get_cost_type_display }}</p>
+                        {% if job.negotiable == 'Yes' %}
+                            <p class="small text-muted"><i class="bi bi-check-circle-fill text-success me-1"></i>{% translate 'Price is negotiable' %}</p>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-white border-0 p-3">
+                        {% if user.is_authenticated %}
+                            {% if user_request %}
+                                <a href="#" class="btn btn-success w-100 btn-lg">
+                                    <i class="bi bi-credit-card-fill me-2"></i>{% translate 'Proceed to Payment' %}
+                                </a>
+                            {% else %}
+                                <a data-bs-toggle="modal" href="#proposalModal" class="btn btn-primary w-100 btn-lg">
+                                    <i class="bi bi-send-fill me-2"></i>{% translate 'Submit Proposal' %}
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'user:FrontCustomerLogin' %}" class="btn btn-primary w-100 btn-lg">
+                                {% translate 'Login to Submit Proposal' %}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h4 class="mb-3">{% translate 'About Provider' %}</h4>
+                        <img src="{{ job.provider.get_image|default:'/static/path/to/default-logo.svg' }}" class="img-fluid rounded-circle" alt="{{ job.provider.name }} logo" style="width: 80px; height: 80px; object-fit: cover;">
+                        <h5 class="fw-bold mt-3 mb-1">{{ job.provider.name }}</h5>
+                        {% if job.provider.date_joined %}
+                        <span class="text-muted small d-block mb-2">
+                            {% translate 'Member Since' %} {{ job.provider.date_joined|date:"F Y" }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <hr class="my-0">
+                    <ul class="list-group list-group-flush">
+                        {% if job.provider.email %}<li class="list-group-item d-flex align-items-center"><i class="bi bi-envelope-fill text-muted me-3"></i><a href="mailto:{{ job.provider.email }}">{{ job.provider.email }}</a></li>{% endif %}
+                        {% if job.provider.phone %}<li class="list-group-item d-flex align-items-center"><i class="bi bi-telephone-fill text-muted me-3"></i><span>{{ job.provider.phone }}</span></li>{% endif %}
+                        {% if job.provider.website %}<li class="list-group-item d-flex align-items-center"><i class="bi bi-globe text-muted me-3"></i><a href="{{ job.provider.website }}" target="_blank">{% translate 'Visit Website' %}</a></li>{% endif %}
+                    </ul>
+                    <div class="card-footer bg-light border-0">
+                        <div class="row text-center">
+                            <div class="col"><p class="mb-0 small text-muted">{% translate 'Jobs' %}</p><h5 class="mb-0 fw-bold">{{ job.provider.jobs.count }}</h5></div>
+                            <div class="col"><p class="mb-0 small text-muted">{% translate 'Hired' %}</p><h5 class="mb-0 fw-bold">{{ job.provider.hire_count|default:0 }}</h5></div>
+                        </div>
+                    </div>
+                    <div class="card-body border-top">
+                        {% if user.is_authenticated and user_request %}
+                            <a href="#" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-chat-dots-fill me-2"></i>{% translate 'Chat with Provider' %}
+                            </a>
+                        {% else %}
+                            <button class="btn btn-outline-primary w-100" disabled title="{% translate 'You must submit a proposal first to start a chat' %}">
+                                <i class="bi bi-chat-dots-fill me-2"></i>{% translate 'Chat with Provider' %}
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="proposalModal" tabindex="-1" aria-labelledby="proposalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="proposalModalLabel">{% translate 'Submit Your Proposal' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'home:FrontSubmitJobRequest' job.slug %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>{% translate 'You are submitting a proposal for the job:' %} <strong>{{ job.title }}</strong></p>
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <label for="id_message" class="form-label fw-bold">{% translate 'Message' %}</label>
+                        {{ proposal_form.message }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_attachment" class="form-label fw-bold">{% translate 'Attach File (Optional)' %}</label>
+                        {{ proposal_form.attachment }}
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate 'Close' %}</button>
+                    <button type="submit" class="btn btn-primary">{% translate 'Send Proposal' %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block custom_js %}{% endblock %}
+{% block foot %} {% include FRONTEND_FOOTER %} {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}

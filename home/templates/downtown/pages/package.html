@@ -1,0 +1,391 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+{% block body %}
+
+
+    		<!-- Breadcrumb -->
+			<div class="breadcrumb-bar-two">
+				<div class="container">
+					<div class="row align-items-center inner-banner">
+						<div class="col-md-12 col-12 text-center">
+							<h2 class="breadcrumb-title">Pricing</h2>
+							<nav aria-label="breadcrumb" class="page-breadcrumb">
+								<ol class="breadcrumb">
+									<li class="breadcrumb-item"><a href="index.html">Home</a></li>
+									<li class="breadcrumb-item" aria-current="page">Pricing</li>
+								</ol>
+							</nav>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Breadcrumb -->
+
+			<!-- Pricing -->
+			<section class="home-twelve-pricing">
+				<div class="floating-bg">
+
+
+				</div>
+				<div class="container">
+					<div class="row">
+						<div class="col-lg-12 aos" data-aos="fade-up">
+							<div class="section-header-fourteen service-inner-fourteen">
+								<h2>{% translate 'Pricing Packages' %}</h2>
+								<p>{% translate '    Explore our pricing packages designed to offer you maximum value. We believe in providing top-tier services and features without the premium price tag. Compare our plans and see how you can get high-quality solutions at rates significantly more competitive than others in the market.' %}</p>
+							</div>
+						</div>
+					</div>
+					<div class="pricing-tab-panel text-center">
+						<ul class="nav nav-pills inner-tab " id="pills-tab" role="tablist">
+							<li class="nav-item" role="presentation">
+								<button class="nav-link active" id="pills-monthly-tab" data-bs-toggle="pill" data-bs-target="#pills-monthly" type="button" role="tab" aria-controls="pills-monthly" aria-selected="true">{% translate 'Monthly' %}</button>
+							</li>
+							<li class="nav-item" role="presentation">
+								<button class="nav-link" id="pills-yearly-tab" data-bs-toggle="pill" data-bs-target="#pills-yearly" type="button" role="tab" aria-controls="pills-yearly" aria-selected="false" tabindex="-1">{% translate 'Annually' %}</button>
+							</li>
+						</ul>
+						<div class="tab-content pt-0">
+							<div class="tab-pane fade active show" id="pills-monthly" role="tabpanel" aria-labelledby="pills-monthly-tab">
+								<div class="row row-gap justify-content-center align-items-end">
+									<div class="col-lg-4 col-md-6 col-sm-12">
+										<div class="price-card-twelve">
+											<div class="price-content">
+												<div class="card-title">
+													<h3>{% translate 'Hala' %}</h3>
+													<span>{% translate 'For Startup Business' %}</span>
+												</div>
+												<div class="price">
+                                                    <p>{% translate 'Starts at' %}</p>
+													<h2>{% translate '10 Kd' %}</h2>
+													<span>{% translate 'Monthly' %}</span>
+
+												</div>
+												<div class="pack-details">
+													<ul>
+														<li>
+															<i class="feather-check-circle"></i>{% translate 'Free Domain' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Website' %}
+														</li>
+														<li>
+															<i class="feather-check-circle"></i>{% translate 'Integration Payment Gateway' %}
+														</li>
+														<li>
+															<i class="feather-check-circle"></i>{% translate '2000 Products' %}
+														</li>
+														<li>
+															<i class="feather-check-circle"></i>{% translate '1 User Accounts' %}
+														</li>
+
+													</ul>
+												</div>
+												<div class="price-btn w-100">
+													<a href="" class="btn w-100">{% translate 'Join the Plan' %}</a>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="col-lg-4 col-md-6 col-sm-12">
+										<div class="price-card-twelve active">
+											<div class="price-content">
+												<div class="popular-head">
+													<span class="d-flex align-items-center"><i class="fa-solid fa-star me-2"></i>{% translate 'Most Popular' %}</span>
+												</div>
+												<div class="card-title">
+													<h3>{% translate 'Tawar' %}</h3>
+													<span>{% translate 'Next Level Of Scale Business' %}</span>
+												</div>
+												<div class="price">
+													 <p>{% translate 'Starts at' %}</p>
+													<h2>{% translate '29 Kd' %}</h2>
+													<span>{% translate 'Monthly' %}</span>
+
+												</div>
+												<div class="pack-details">
+													<ul>
+														<li>
+															<i class="feather-check-circle"></i>{% translate 'All On Hala Package' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Android / Ios App' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate '3500 Products' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Integration Payment Gateway / Delivery Company ' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate '3 User Accounts' %}
+														</li>
+
+													</ul>
+												</div>
+												<div class="price-btn w-100">
+													<a href="" class="btn w-100">{% translate 'Join the Plan' %}</a>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="col-lg-4 col-md-6 col-sm-12">
+										<div class="price-card-twelve">
+											<div class="price-content">
+												<div class="card-title">
+													<h3>{% translate 'Shamil' %}</h3>
+													<span>{% translate 'The most profitable plan' %}</span>
+												</div>
+												<div class="price">
+													 <p>{% translate 'Starts at' %}</p>
+													<h2>{% translate '59 Kd' %}</h2>
+													<span>{% translate 'Monthly' %}</span>
+
+												</div>
+												<div class="pack-details">
+													<ul>
+														<li>
+															<i class="feather-check-circle"></i>{% translate 'All On Tawar Package' %}
+														</li>
+                                                         <li>
+															<i class="feather-check-circle"></i>{% translate 'Socail Media Management' %}
+														</li>
+
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate '5000 Products' %}
+														</li>
+
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Analytical Report' %}
+														</li>
+
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate '7 User Accounts' %}
+														</li>
+													</ul>
+												</div>
+												<div class="price-btn w-100">
+													<a href="" class="btn w-100">{% translate 'Join the Plan' %}</a>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="tab-pane fade" id="pills-yearly" role="tabpanel" aria-labelledby="pills-yearly-tab">
+								<div class="row row-gap justify-content-center align-items-end">
+										<div class="col-lg-4 col-md-6 col-sm-12">
+										<div class="price-card-twelve">
+											<div class="price-content">
+												<div class="card-title">
+													<h3>{% translate 'Hala' %}</h3>
+													<span>{% translate 'For Startup Business' %}</span>
+												</div>
+												<div class="price">
+                                                    <p>{% translate 'Starts at' %}</p>
+													<h2>{% translate '100 Kd' %}</h2>
+													<span>{% translate 'Annually' %}</span>
+
+												</div>
+												<div class="pack-details">
+													<ul>
+														<li>
+															<i class="feather-check-circle"></i>{% translate 'Free Domain' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Website' %}
+														</li>
+														<li>
+															<i class="feather-check-circle"></i>{% translate 'Integration Payment Gateway' %}
+														</li>
+														<li>
+															<i class="feather-check-circle"></i>{% translate '2000 Products' %}
+														</li>
+														<li>
+															<i class="feather-check-circle"></i>{% translate '2 User Accounts' %}
+														</li>
+
+													</ul>
+												</div>
+												<div class="price-btn w-100">
+													<a href="" class="btn w-100">{% translate 'Join the Plan' %}</a>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="col-lg-4 col-md-6 col-sm-12">
+										<div class="price-card-twelve active">
+											<div class="price-content">
+												<div class="popular-head">
+													<span class="d-flex align-items-center"><i class="fa-solid fa-star me-2"></i>{% translate 'Most Popular' %}</span>
+												</div>
+												<div class="card-title">
+													<h3>{% translate 'Tawar' %}</h3>
+													<span>{% translate 'Next Level Of Scale Business' %}</span>
+												</div>
+												<div class="price">
+													 <p>{% translate 'Starts at' %}</p>
+													<h2>{% translate '150 Kd' %}</h2>
+													<span>{% translate 'Annually' %}</span>
+
+												</div>
+												<div class="pack-details">
+													<ul>
+														<li>
+															<i class="feather-check-circle"></i>{% translate 'All On Hala Package' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Android / Ios App' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Unlimited Products' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Integration Payment Gateway / Delivery Company ' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Analytical Report' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate '29 % Discount In Socail Media Management' %}
+														</li>
+													</ul>
+												</div>
+												<div class="price-btn w-100">
+													<a href="" class="btn w-100">{% translate 'Join the Plan' %}</a>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="col-lg-4 col-md-6 col-sm-12">
+										<div class="price-card-twelve">
+											<div class="price-content">
+												<div class="card-title">
+													<h3>{% translate 'Shamil' %}</h3>
+													<span>{% translate 'The most profitable plan' %}</span>
+												</div>
+												<div class="price">
+													 <p>{% translate 'Starts at' %}</p>
+													<h2>{% translate '250 Kd' %}</h2>
+													<span>{% translate 'Annually' %}</span>
+
+												</div>
+												<div class="pack-details">
+													<ul>
+														<li>
+															<i class="feather-check-circle"></i>{% translate 'All On Tawar Package' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'WhatsApp Messages' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Unlimited Products' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate 'Vip Customer Service' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate '1 Photo Session Free' %}
+														</li>
+                                                        <li>
+															<i class="feather-check-circle"></i>{% translate '59 % Discount In Socail Media Management' %}
+														</li>
+													</ul>
+												</div>
+												<div class="price-btn w-100">
+													<a href="" class="btn w-100">{% translate 'Join the Plan' %}</a>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</section>
+			<!-- /Pricing -->
+
+			<!-- Feedback -->
+			<section class="clients-section-fourteen">
+				<div class="floating-bg">
+{#					<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/bg/small-paw-2.png" alt="paw-image" >#}
+{#					<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/bg/small-paw-2.png" alt="paw-image" >#}
+{#					<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/bg/small-paw-3.png" alt="paw-image" >#}
+					<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/bg/care-sec-bg-1.png" alt="paw-image">
+				</div>
+				<div class="container">
+					<div class="badge-title">
+						<span class="badge badge-bg-warning"><i class="fa-solid fa-circle me-2"></i>Testimonials<i class="fa-solid fa-circle ms-2"></i></span>
+					</div>
+					<div class="testi-title-head">
+						<h2>{% translate 'What Our Clients Say' %}</h2>
+						<p>{% translate "Join over 100 satisfied clients who've seen the difference creative thinking makes." %}</p>
+						<div class="rate-star">
+							<h5>{% translate 'Average Ratings' %}</h5>
+							<div>
+								<span>4.9</span>
+								<i class="fa-solid fa-star"></i>
+								<i class="fa-solid fa-star"></i>
+								<i class="fa-solid fa-star"></i>
+								<i class="fa-solid fa-star"></i>
+								<i class="fa-solid fa-star"></i>
+							</div>
+							<div class="review-thumb">
+								<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icons/review-thumb.svg" alt="Img">
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-lg-12">
+							<div class="owl-carousel feedback-review-slider owl-theme aos" data-aos="fade-up">
+                                {% for item in front_data.testimonials %}
+                                    <div class="card feedback-card">
+									<div class="d-flex feedback-card-img-left">
+										<div class="client-inner-main">
+											<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/reviews/review-img-02.png" alt="image" class="img-fluid w-auto">
+										</div>
+										<div class="card-body feedback-card-body">
+											<div class="feedback-inner-main">
+												<div class="rating rating-fourteen">
+													<i class="fas fa-star filled"></i>
+													<i class="fas fa-star filled"></i>
+													<i class="fas fa-star filled"></i>
+													<i class="fas fa-star filled"></i>
+													<i class="fas fa-star filled"></i>
+												</div>
+												<p>
+													{{ item.keyword }}
+												</p>
+												<div class="d-flex justify-content-between align-items-center">
+													<div class="feedback-card-user-info">
+														<h5><a href="#">	{{ item.title }}</a><span>	{{ item.keyword2 }}</span></h5>
+													</div>
+													<div class="quatation-img">
+														<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icons/quatation-img.svg" class="w-auto" alt="Img">
+													</div>
+												</div>
+
+											</div>
+										</div>
+									</div>
+								</div>
+
+                                {% endfor %}
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!-- /Feedback -->
+
+{% endblock %}
+
+{% block custom_js %}
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}
+

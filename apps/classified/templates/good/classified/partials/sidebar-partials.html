@@ -1,0 +1,73 @@
+{% load static %}
+{% load i18n %}
+
+
+{% if user.is_author %}
+
+    <div data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-placement="right-start"
+         class="menu-item py-1">
+        <span class="menu-link menu-center">
+            <span class="menu-icon me-0">
+                <i class="ki-outline ki-tag fs-2hx"></i>
+            </span>
+        </span>
+        <div class="menu-sub menu-sub-dropdown px-lg-2 py-lg-4 w-200px w-lg-225px">
+            <div class="menu-item">
+                <div class="menu-content">
+                    <span class="menu-section fs-5 fw-bolder ps-1 py-1">{% translate 'Catalog' %}</span>
+                </div>
+                </div>
+            <div class="menu-sub menu-sub-accordion menu-active-bg">
+                <div class="menu-item">
+                    <a class="menu-link" href="{% url 'classified:AdminClassifiedCategoriesList' %}">
+                        <span class="menu-bullet">
+                            <span class="bullet bullet-dot"></span>
+                        </span>
+                        <span class="menu-title">{% translate 'Categories' %}</span>
+                    </a>
+                    </div>
+
+                <div class="menu-item">
+                    <a class="menu-link" href="{% url 'classified:AdminClassifiedLocationList' %}">
+                        <span class="menu-bullet">
+                            <span class="bullet bullet-dot"></span>
+                        </span>
+                        <span class="menu-title">{% translate 'Locations' %}</span>
+                    </a>
+                    </div>
+                 <div class="menu-item">
+                    <a class="menu-link" href="{% url 'classified:AdminClassifiedAdList' %}">
+                        <span class="menu-bullet">
+                            <span class="bullet bullet-dot"></span>
+                        </span>
+                        <span class="menu-title">{% translate 'Classified Ads' %}</span>
+                    </a>
+                    </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="{% url 'classified:AdminClassifiedReviewList' %}">
+                        <span class="menu-bullet">
+                            <span class="bullet bullet-dot"></span>
+                        </span>
+                        <span class="menu-title">{% translate 'Reviews' %}</span>
+                    </a>
+                    </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="{% url 'classified:AdminPromotedClassifiedAdList' %}">
+                        <span class="menu-bullet">
+                            <span class="bullet bullet-dot"></span>
+                        </span>
+                        <span class="menu-title">{% translate 'Promoted Ads' %}</span>
+                    </a>
+                    </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="{% url 'classified:AdminCommercialsList' %}">
+                        <span class="menu-bullet">
+                            <span class="bullet bullet-dot"></span>
+                        </span>
+                        <span class="menu-title">{% translate 'Commercials' %}</span>
+                    </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}

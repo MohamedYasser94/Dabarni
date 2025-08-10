@@ -1,0 +1,158 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+{% block body %}
+
+
+<!-- Breadcrumb -->
+			<div class="bread-crumb-bar">
+				<div class="container">
+					<div class="row align-items-center inner-banner">
+						<div class="col-md-12 col-12 text-center">
+							<div class="breadcrumb-list">
+								<h2>{% translate 'Blog' %}</h2>
+								<nav aria-label="breadcrumb" class="page-breadcrumb">
+									<ol class="breadcrumb">
+										<li class="breadcrumb-item"><a href="{% url 'home:HomeIndex' %}">{% translate 'Home' %}</a></li>
+										<li class="breadcrumb-item" aria-current="page">{% translate 'Blog' %}</li>
+									</ol>
+								</nav>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Breadcrumb -->
+
+			<!-- Page Content -->
+			<div class="content">
+				<div class="container">
+
+					<div class="row">
+						<div class="col-lg-8 col-md-12">
+
+							<div class="row blog-grid-row">
+                                {% for item in articles %}
+								<div class="col-md-6 col-sm-12">
+
+									<!-- Blog Post -->
+									<div class="blog grid-blog">
+										<div class="blog-image">
+											<a href="{{ item.get_front_url }}"><img class="img-fluid" src="{{ item.get_image }}" alt="Post Image"></a>
+										</div>
+										<div class="blog-content">
+											<ul class="entry-meta meta-item">
+
+												<li><i class="far fa-clock"></i> {{ item.create_at|date }}</li>
+											</ul>
+											<h3 class="blog-title"><a href="{{ item.get_front_url }}">{{ item.title }}</a></h3>
+											<p class="mb-0">{{ item.keyword }}</p>
+										</div>
+									</div>
+									<!-- /Blog Post -->
+
+								</div>
+                                {% endfor %}
+
+							</div>
+
+							<!-- Blog Pagination -->
+                        {% if articles.has_other_pages %}
+							<div class="row">
+								<div class="col-md-12">
+									<ul class="paginations list-pagination">
+										<li class="page-item"><a href="javascript:void(0);"><i class="feather-chevron-left"></i></a>
+										</li>
+										<li class="page-item"><a href="javascript:void(0);" class="active">1</a></li>
+										<li class="page-item"><a href="javascript:void(0);">2</a></li>
+										<li class="page-item"><a href="javascript:void(0);">3</a></li>
+										<li class="page-item"><a href="javascript:void(0);">...</a></li>
+										<li class="page-item"><a href="javascript:void(0);">10</a></li>
+										<li class="page-item"><a href="javascript:void(0);"><i class="feather-chevron-right"></i></a></li>
+									</ul>
+								</div>
+							</div>
+							<!-- /Blog Pagination -->
+                        {% endif %}
+
+						</div>
+
+						<!-- Blog Sidebar -->
+						<div class="col-lg-4 col-md-12 sidebar-right theiaStickySidebar">
+
+							<!-- Latest Posts -->
+							<div class=" pro-post widget-box post-widget">
+								<h4 class="pro-title">{% translate 'Latest Posts' %}</h4>
+								<div class="pro-content pt-0">
+									<ul class="latest-posts">
+                                        {% for item in latest_articles %}
+										<li>
+											<div class="post-thumb">
+												<a href="{{ item.get_front_url }}">
+													<img class="img-fluid" src="{{ item.get_image }}" alt="Img">
+												</a>
+											</div>
+											<div class="post-info">
+												<h4>
+													<a href="{{ item.get_front_url }}">{{ item.title }}</a>
+												</h4>
+												<a href="{{ item.get_front_url }}" class="posts-date"><i class="feather-calendar"></i>{{ item.create_at|date }}</a>
+											</div>
+										</li>
+                                        {% endfor %}
+
+									</ul>
+								</div>
+							</div>
+							<!-- /Latest Posts -->
+
+							<!-- Categories -->
+							<div class=" pro-post widget-box category-widget">
+								<h4 class="pro-title">{% translate 'Blog Categories' %}</h4>
+								<div class="pro-content">
+									<ul class="category-link">
+                                        {% for item in categories %}
+										<li><a href="{{ item.get_front_url }}">{{ item.title }}</a></li>
+                                        {% endfor %}
+
+									</ul>
+								</div>
+							</div>
+							<!-- /Categories -->
+
+							<!-- Tags -->
+							<div class=" pro-post widget-box tags-widget">
+								<h4 class="pro-title">{% translate 'Tags' %}</h4>
+								<div class="pro-content">
+									<ul class="tags">
+                                        {% for item in tags %}
+										<li><a href="{{ item.get_front_url }}" class="tag">{{ item.title }}</a></li>
+                                        {% endfor %}
+
+									</ul>
+								</div>
+							</div>
+							<!-- /Tags -->
+
+
+						</div>
+						<!-- /Blog Sidebar -->
+
+					</div>
+				</div>
+			</div>
+			<!-- /Page Content -->
+
+
+
+
+
+
+{% endblock %}
+
+
+{% block custom_js %}
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}

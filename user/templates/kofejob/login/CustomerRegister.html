@@ -1,0 +1,154 @@
+
+	{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+{% block body %}
+
+	<!-- Page Content -->
+     <div class="account-page">
+			<div class="login-wrapper">
+				<div class="content w-100">
+					<!-- Login Content -->
+					<div class="account-content">
+						<div class="align-items-center justify-content-center">
+							<div class="login-right">
+								<div class="login-header text-center">
+									<a href="{% url 'home:HomeIndex' %}"><img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/logo.svg" alt="logo" class="img-fluid"></a>
+									<h3>{% translate 'We love to see you joining our community' %}</h3>
+								</div>
+								<nav class="user-tabs mb-4">
+									<ul role="tablist" class="nav nav-pills nav-justified">
+										<li class="nav-item">
+											<a href="#developer" data-bs-toggle="tab" class="nav-link active">{% translate 'Customer' %}</a>
+										</li>
+										<li class="nav-item">
+											<a href="#company" data-bs-toggle="tab" class="nav-link">{% translate 'Provider' %}</a>
+										</li>
+									</ul>
+								</nav>
+								<div class="tab-content pt-0">
+									<div role="tabpanel" id="developer" class="tab-pane fade active show">
+										<form action="{% url 'user:FrontCustomerRegister' %}" enctype="multipart/form-data" method="post">
+                                            {% csrf_token %}
+											<div class="input-block ">
+												<label class="focus-label">{% translate 'First Name' %} <span class="label-star"> *</span></label>
+												<input type="text" class="form-control floating" name="first_name" required>
+											</div>
+                                            <div class="input-block ">
+												<label class="focus-label">{% translate 'Last Name' %} <span class="label-star"> *</span></label>
+												<input type="text" class="form-control floating" name="last_name" required>
+											</div>
+											<div class="input-block ">
+												<label class="focus-label">{% translate 'Email Address' %}<span class="label-star"> *</span></label>
+												<input type="email" class="form-control floating" name="email" required>
+											</div>
+                                            <div class="input-block ">
+												<label class="focus-label">{% translate 'Phone' %}<span class="label-star"> *</span></label>
+												<input type="text" class="form-control floating" name="phone" required>
+											</div>
+											<div class="input-block ">
+												<label class="focus-label">{% translate 'Password' %} <span class="label-star"> *</span></label>
+												<div class="position-relative">
+													<input type="password" class="form-control floating pass-input" name="password1" required>
+													<div class="password-icon ">
+														<span class="fas toggle-password fa-eye-slash"></span>
+													</div>
+												</div>
+											</div>
+											<div class="input-block  mb-0">
+												<label class="focus-label">{% translate 'Confirm Password' %} <span class="label-star"> *</span></label>
+												<div class="position-relative">
+													<input type="password" class="form-control floating pass-inputs" name="password2" required>
+													<div class="password-icons">
+														<span class="fas toggle-passwords fa-eye-slash"></span>
+													</div>
+												</div>
+											</div>
+											<div class="dont-have">
+												<label class="custom_check">
+													<input type="checkbox" name="rem_password">
+													<span class="checkmark"></span> I have read and agree to all <a href="{% url 'home:FrontTermsOfService' %}">{% translate 'Terms & Conditions' %}</a>
+												</label>
+											</div>
+											<button class="btn btn-primary w-100 btn-lg login-btn d-flex align-items-center justify-content-center" type="submit">{% translate 'Sign In Now' %}<i class="feather-arrow-right ms-2"></i></button>
+
+											<div class="row">
+												<div class="col-sm-8 dont-have d-flex  align-items-center">{% translate 'Already have account' %}  <a href="{% url 'user:FrontCustomerLogin' %}" class="ms-2">{% translate 'Sign in?' %}</a></div>
+											</div>
+										</form>
+									</div>
+									<div role="tabpanel" id="company" class="tab-pane fade">
+										<form action="{% url 'user:FrontCustomerRegister' %}" enctype="multipart/form-data" method="post">
+                                            {% csrf_token %}
+											<div class="input-block ">
+												<label class="focus-label">{% translate 'First Name' %} <span class="label-star"> *</span></label>
+												<input type="text" class="form-control floating" name="first_name" required>
+											</div>
+                                            <div class="input-block ">
+												<label class="focus-label">{% translate 'Last Name' %} <span class="label-star"> *</span></label>
+												<input type="text" class="form-control floating" name="last_name" required>
+											</div>
+											<div class="input-block ">
+												<label class="focus-label">{% translate 'Email Address' %}<span class="label-star"> *</span></label>
+												<input type="email" class="form-control floating" name="email" required>
+											</div>
+                                            <div class="input-block ">
+												<label class="focus-label">{% translate 'Phone' %}<span class="label-star"> *</span></label>
+												<input type="text" class="form-control floating" name="phone" required>
+											</div>
+											<div class="input-block ">
+												<label class="focus-label">{% translate 'Password' %} <span class="label-star"> *</span></label>
+												<div class="position-relative">
+													<input type="password" class="form-control floating pass-input" name="password1" required>
+													<div class="password-icon ">
+														<span class="fas toggle-password fa-eye-slash"></span>
+													</div>
+												</div>
+											</div>
+											<div class="input-block  mb-0">
+												<label class="focus-label">{% translate 'Confirm Password' %} <span class="label-star"> *</span></label>
+												<div class="position-relative">
+													<input type="password" class="form-control floating pass-inputs" name="password2" required>
+													<div class="password-icons">
+														<span class="fas toggle-passwords fa-eye-slash"></span>
+													</div>
+												</div>
+											</div>
+											<div class="dont-have">
+												<label class="custom_check">
+													<input type="checkbox" name="rem_password">
+													<span class="checkmark"></span> I have read and agree to all <a href="{% url 'home:FrontTermsOfService' %}">{% translate 'Terms & Conditions' %}</a>
+												</label>
+											</div>
+											<button class="btn btn-primary w-100 btn-lg login-btn d-flex align-items-center justify-content-center" type="submit">{% translate 'Sign In Now' %}<i class="feather-arrow-right ms-2"></i></button>
+
+											<div class="row">
+												<div class="col-sm-8 dont-have d-flex  align-items-center">{% translate 'Already have account' %}  <a href="{% url 'user:FrontCustomerLogin' %}" class="ms-2">{% translate 'Sign in?' %}</a></div>
+											</div>
+										</form>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- /Login Content -->
+				</div>
+			</div>
+     </div>
+
+			<!-- /Page Content -->
+
+{% endblock %}
+
+
+{% block custom_js %}
+
+
+
+
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}
+
+

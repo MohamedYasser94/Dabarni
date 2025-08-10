@@ -1,0 +1,130 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+
+    <div class="bread-crumb-bar">
+		<div class="container">
+			<div class="row align-items-center inner-banner">
+				<div class="col-md-12 col-12 text-center">
+					<div class="breadcrumb-list">
+						<h3>{% translate 'Terms & Conditions' %}</h3>
+						<nav aria-label="breadcrumb" class="page-breadcrumb">
+							<ol class="breadcrumb">
+								<li class="breadcrumb-item"><a href="{% url 'home:HomeIndex' %}">{% translate 'Home' %}</a></li>
+								<li class="breadcrumb-item" aria-current="page">{% translate 'Terms & Conditions' %}</li>
+							</ol>
+						</nav>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="content" style="text-align: left; direction: ltr;">
+		<div class="container">
+			<div class="row">
+				<div class="col-12">
+					<div class="terms-content">
+
+						<div class="terms-text">
+							<h3>Welcome to Manfz</h3>
+							<p><strong>Last Updated:</strong> August 6, 2025</p>
+							<p>Thanks for using our products and services ("Services"). These Terms of Service ("Terms") govern your use of the Manfz mobile application and website (collectively, the "Platform"), provided by Manfz ("we," "our," or "us").</p>
+							<p>By creating an account or using our Services, you are agreeing to these terms. Please read them carefully.</p>
+						</div>
+
+						<div class="terms-text">
+							<h4>1. Using Our Services</h4>
+							<p>You must follow any policies made available to you within the Services. Don't misuse our Services. For example, don't interfere with our Services or try to access them using a method other than the interface and the instructions that we provide. You may use our Services only as permitted by law within the Kingdom of Saudi Arabia.</p>
+							<p>Using our Services does not give you ownership of any intellectual property rights in our Services or the content you access. These terms do not grant you the right to use any branding or logos used in our Services.</p>
+						</div>
+
+						<div class="terms-text">
+							<h4>2. Your Manfz Account</h4>
+							<p>To use our platform, you'll need a Manfz Account. You are responsible for safeguarding your account and for all activities that occur under it. When you register for a Manfz account, we collect your full name, email address, phone number, and account log-in credentials. It is your responsibility to provide accurate and complete information.</p>
+						</div>
+
+						<div class="terms-text">
+							<h4>3. Service Providers and Clients</h4>
+							<p>Manfz is a platform that connects clients seeking to complete official paperwork and transactions ("Clients") with independent service providers who can perform these services ("Providers").</p>
+							<ul>
+								<li>Manfz acts as a neutral venue and is not directly involved in the transactions between Clients and Providers.</li>
+								<li>Providers are responsible for the quality, legality, and execution of the services they offer.</li>
+								<li>Clients are responsible for clearly communicating their needs and providing the necessary information and documents to the Providers.</li>
+								<li>We do not guarantee the completion of any service and are not responsible for the conduct of users on the platform.</li>
+							</ul>
+						</div>
+
+						<div class="terms-text">
+							<h4>4. Content and Communication</h4>
+							<p>Our platform allows you to communicate with other users and upload information. You retain ownership of any intellectual property rights that you hold in that content. You agree not to upload or transmit any material that is illegal, defamatory, or infringes on the rights of others.</p>
+						</div>
+
+						<div class="terms-text">
+							<h4>5. Payments</h4>
+							<p>Clients agree to pay for the services they book through the platform. Manfz facilitates these payments through third-party payment processors. We are not responsible for payment disputes, which must be resolved directly between the Client and the Provider.</p>
+						</div>
+
+						<div class="terms-text">
+							<h4>6. Modifying and Terminating our Services</h4>
+							<p>We are constantly changing and improving our Services. We may add or remove functionalities or features, and we may suspend or stop a Service altogether. We may suspend or stop providing our Services to you if you do not comply with our terms or policies or if we are investigating suspected misconduct.</p>
+						</div>
+
+						<hr style="margin: 40px 0;"/>
+
+						<div class="terms-text" style="text-align: right; direction: rtl;">
+							<h3>مرحبا بك في منفذ</h3>
+							<p><strong>آخر تحديث:</strong> 6 أغسطس 2025</p>
+							<p>شكرًا لاستخدام منتجاتنا وخدماتنا ("الخدمات"). تحكم شروط الخدمة هذه ("الشروط") استخدامك لتطبيق وموقع منفذ (يشار إليها مجتمعة بـ "المنصة")، والمقدمة من منفذ ("نحن"، "لنا" أو "لدينا").</p>
+							<p>بإنشاء حساب أو استخدام خدماتنا، فإنك توافق على هذه الشروط. يرجى قراءتها بعناية.</p>
+						</div>
+
+						<div class="terms-text" style="text-align: right; direction: rtl;">
+							<h4>1. استخدام خدماتنا</h4>
+							<p>يجب عليك اتباع أي سياسات متاحة لك ضمن الخدمات. لا تسيء استخدام خدماتنا. على سبيل المثال، لا تتدخل في خدماتنا أو تحاول الوصول إليها باستخدام طريقة أخرى غير الواجهة والتعليمات التي نقدمها. يجوز لك استخدام خدماتنا فقط على النحو الذي يسمح به القانون داخل المملكة العربية السعودية.</p>
+							<p>إن استخدامك لخدماتنا لا يمنحك ملكية أي من حقوق الملكية الفكرية في خدماتنا أو المحتوى الذي تصل إليه. لا تمنحك هذه الشروط الحق في استخدام أي علامات تجارية أو شعارات مستخدمة في خدماتنا.</p>
+						</div>
+
+						<div class="terms-text" style="text-align: right; direction: rtl;">
+							<h4>2. حسابك في منفذ</h4>
+							<p>لاستخدام منصتنا، ستحتاج إلى حساب في منفذ. أنت مسؤول عن حماية حسابك وعن جميع الأنشطة التي تحدث من خلاله. عند التسجيل للحصول على حساب، نقوم بجمع اسمك الكامل وعنوان بريدك الإلكتروني ورقم هاتفك وبيانات تسجيل الدخول. تقع على عاتقك مسؤولية تقديم معلومات دقيقة وكاملة.</p>
+						</div>
+
+						<div class="terms-text" style="text-align: right; direction: rtl;">
+							<h4>3. مقدمو الخدمات والعملاء</h4>
+							<p>منفذ هي منصة تربط العملاء الذين يسعون لإنجاز المعاملات والأوراق الرسمية ("العملاء") بمقدمي خدمات مستقلين يمكنهم أداء هذه الخدمات ("مقدمو الخدمات").</p>
+							<ul>
+								<li>يعمل منفذ كمنصة محايدة ولا يشارك بشكل مباشر في المعاملات بين العملاء ومقدمي الخدمات.</li>
+								<li>مقدمو الخدمات مسؤولون عن جودة وشرعية وتنفيذ الخدمات التي يقدمونها.</li>
+								<li>العملاء مسؤولون عن توضيح احتياجاتهم وتقديم المعلومات والمستندات اللازمة لمقدمي الخدمات.</li>
+								<li>نحن لا نضمن إنجاز أي خدمة ولسنا مسؤولين عن سلوك المستخدمين على المنصة.</li>
+							</ul>
+						</div>
+
+						<div class="terms-text" style="text-align: right; direction: rtl;">
+							<h4>4. المحتوى والتواصل</h4>
+							<p>تسمح لك منصتنا بالتواصل مع المستخدمين الآخرين وتحميل المعلومات. أنت تحتفظ بملكية أي حقوق ملكية فكرية تمتلكها في ذلك المحتوى. أنت توافق على عدم تحميل أو نقل أي مواد غير قانونية أو تشهيرية أو تنتهك حقوق الآخرين.</p>
+						</div>
+
+						<div class="terms-text" style="text-align: right; direction: rtl;">
+							<h4>5. المدفوعات</h4>
+							<p>يوافق العملاء على الدفع مقابل الخدمات التي يحجزونها عبر المنصة. يقوم منفذ بتسهيل هذه المدفوعات من خلال معالجات دفع تابعة لجهات خارجية. نحن لسنا مسؤولين عن نزاعات الدفع، والتي يجب حلها مباشرة بين العميل ومقدم الخدمة.</p>
+						</div>
+
+						<div class="terms-text" style="text-align: right; direction: rtl;">
+							<h4>6. تعديل وإنهاء خدماتنا</h4>
+							<p>نحن نعمل باستمرار على تغيير وتحسين خدماتنا. قد نضيف أو نزيل وظائف أو ميزات، وقد نعلق خدمة ما أو نوقفها تمامًا. قد نقوم بتعليق أو إيقاف تقديم خدماتنا لك إذا لم تلتزم بشروطنا أو سياساتنا أو إذا كنا نحقق في سوء سلوك مشتبه به.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	{% endblock %}
+
+{% block custom_js %}
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}

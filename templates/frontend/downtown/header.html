@@ -1,0 +1,167 @@
+{% load static %}
+
+
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+
+
+			 <!-- Pre Loader -->
+        <div class="preloader">
+            <div class="d-table">
+                <div class="d-table-cell">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+        <!-- End Pre Loader -->
+
+        <!-- Start Navbar Area -->
+        <div class="navbar-area">
+            <!-- Menu For Mobile Device -->
+            <div class="mobile-nav">
+                <a href="index.html" class="logo">
+                    <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/logo/logo1.png" alt="Logo">
+                </a>
+            </div>
+
+            <!-- Menu For Desktop Device -->
+            <div class="nav-two main-nav">
+                <div class="container-fluid">
+                    <nav class="container-max navbar navbar-expand-md navbar-light ">
+                        <a class="navbar-brand" href="index.html">
+                            <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/logo/logo2.png" class="logo-one" alt="Logo">
+                            <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/logo/logo1.png" class="logo-two" alt="Logo">
+                        </a>
+
+                        <div class="collapse navbar-collapse mean-menu" id="navbarSupportedContent">
+                            <ul class="navbar-nav m-auto">
+
+                                <li class="nav-item">
+                                    <a href="{% url 'home:HomeIndex' %}" class="nav-link"> {% translate 'Home' %} </a>
+                                     </li>
+                                 <li class="nav-item">
+                                    <a href="{% url 'home:FrontClassifiedCategoryList' %}" class="nav-link"> {% translate 'Category' %} </a>
+                                 </li>
+                                      <li class="nav-item">
+                                    <a href="{% url 'home:FrontClassifiedPlacesList' %}" class="nav-link"> {% translate 'Places' %} </a>
+                                 </li>
+                                 <li class="nav-item">
+                                    <a href="{% url 'home:FrontBlog' %}" class="nav-link"> {% translate 'Blog' %} </a>
+                                 </li>
+                                 <li class="nav-item">
+                                    <a href="{% url 'home:FrontAbout' %}" class="nav-link"> {% translate 'About' %} </a>
+                                 </li>
+                                 <li class="nav-item">
+                                    <a href="{% url 'home:FrontContact' %}" class="nav-link"> {% translate 'Contact' %} </a>
+                                </li>
+                            </ul>
+
+                            <div class="side-nav d-in-line align-items-center">
+
+
+                                <div class="side-item">
+                                    <div class="search-box">
+                                        <i class="flaticon-loupe"></i>
+                                    </div>
+                                </div>
+
+                                <div class="side-item">
+                                    <div class="user-btn">
+                                        {% if user.is_authenticated %}
+                                        <a href="{% url 'home:FrontProviderDashboard' %}"></a>
+                                        {% else %}
+                                        <a href="{% url 'user:FrontCustomerLogin' %}"></a>
+                                        {% endif %}
+
+                                            <i class="flaticon-contact"></i>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="side-item">
+                                    <div class="nav-add-btn">
+                                        <a href="" class="default-btn">
+                                           {% translate 'Add Listing' %}
+                                            <i class='bx bx-plus'></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="side-nav-responsive">
+                <div class="container">
+                    <div class="dot-menu">
+                        <div class="circle-inner">
+                            <div class="circle circle-one"></div>
+                            <div class="circle circle-two"></div>
+                            <div class="circle circle-three"></div>
+                        </div>
+                    </div>
+
+                    <div class="container">
+                        <div class="side-nav-inner">
+                            <div class="side-nav justify-content-center  align-items-center">
+
+
+                                <div class="side-item">
+                                    <div class="search-box">
+                                        <i class="flaticon-loupe"></i>
+                                    </div>
+                                </div>
+
+                                <div class="side-item">
+                                    <div class="user-btn">
+                                        {% if user.is_authenticated %}
+                                        <a href="{% url 'home:FrontProviderDashboard' %}"></a>
+                                        {% else %}
+                                        <a href="{% url 'user:FrontCustomerLogin' %}"></a>
+                                        {% endif %}
+
+                                            <i class="flaticon-contact"></i>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="side-item">
+                                    <div class="nav-add-btn">
+                                       <a href="" class="default-btn border-radius">
+                                            Add Listing
+                                            <i class='bx bx-plus'></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Navbar Area -->
+
+        <!-- Search Overlay -->
+        <div class="search-overlay">
+            <div class="d-table">
+                <div class="d-table-cell">
+                    <div class="search-layer"></div>
+                    <div class="search-layer"></div>
+                    <div class="search-layer"></div>
+
+                    <div class="search-close">
+                        <span class="search-close-line"></span>
+                        <span class="search-close-line"></span>
+                    </div>
+
+                    <div class="search-form">
+                        <form>
+                            <input type="text" class="input-search" placeholder="Search here...">
+                            <button type="submit"><i class="flaticon-loupe"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Search Overlay -->

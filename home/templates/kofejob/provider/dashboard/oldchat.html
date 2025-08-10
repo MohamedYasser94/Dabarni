@@ -1,0 +1,488 @@
+
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+<div class="chat-page main-chat-blk dashboard-page" id="chat-app">
+    <div class="chat-page-wrapper">
+        <div class="container">
+            <div class="content">
+                <div class="sidebar-group left-sidebar chat_sidebar">
+                    <div id="chats" class="left-sidebar-wrap sidebar active slimscroll">
+                        <div class="slimscroll">
+                            <div class="left-chat-title all-chats d-flex justify-content-between align-items-center">
+                                <div class="select-group-chat">
+                                    <div class="dropdown">
+                                        <a href="javascript:void(0);">All Chats</a>
+                                    </div>
+                                </div>
+                                <div class="add-section">
+                                    <ul>
+                                        <li><a href="javascript:void(0);" class="user-chat-search-btn"><i class="bx bx-search"></i></a></li>
+                                    </ul>
+                                    <div class="user-chat-search">
+                                        <form>
+                                            <span class="form-control-feedback"><i class="bx bx-search"></i></span>
+                                            <input type="text" name="chat-search" placeholder="Search" class="form-control">
+                                            <div class="user-close-btn-chat"><span class="material-icons">close</span></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="sidebar-body chat-body" id="chatsidebar">
+                                <ul class="user-list" id="dialog-list-container">
+                                    <li class="p-4 text-center" v-if="dialogs.length === 0">No active chats.</li>
+                                    <li v-for="dialog in dialogs" :key="dialog.dialog_id" :class="['user-list-item', 'chat-user-list', {'active': dialog.dialog_id === dialogId}]">
+                                        <a :href="'/chat/' + dialog.dialog_id + '/'">
+                                            <div class="avatar avatar-online">
+                                                <img :src="dialog.other_user.image_url || '/static/digithup/b.png'" class="rounded-circle" alt="image">
+                                            </div>
+                                            <div class="users-list-body">
+                                                <div>
+                                                    <h5>[[ dialog.other_user.first_name]]</h5>
+                                                    <p>[[ dialog.last_message]]</p>
+                                                </div>
+                                                <div class="last-chat-time">
+                                                    <small class="text-muted">[[ dialog.last_message_time]]</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat chat-messages" id="middle">
+                    <div>
+                        <div class="chat-header">
+                            <div class="user-details">
+                                <div class="d-lg-none">
+                                    <ul class="list-inline mt-2 me-2">
+                                        <li class="list-inline-item">
+                                            <a class="text-muted px-0 left_sides" href="javascript:void(0);" data-chat="open">
+                                                <i class="fas fa-arrow-left"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <figure class="avatar ms-1">
+                                    <img :src="otherUserImage || '/static/digithup/b.png'" class="rounded-circle" alt="image">
+                                </figure>
+                                <div class="mt-1">
+                                    <h5>[[ otherUserName]]</h5>
+                                    <small class="last-seen" id="user-online-status">[[ userOnline]]</small>
+                                </div>
+                            </div>
+                            <div class="chat-options">
+                                <ul class="list-inline">
+                                    <li class="list-inline-item">
+                                        <a href="javascript:void(0)" class="btn btn-outline-light chat-search-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Search">
+                                            <i class="bx bx-search"></i>
+                                        </a>
+                                    </li>
+                                    <li class="list-inline-item dream_profile_menu">
+                                        <a href="javascript:void(0)" class="btn btn-outline-light not-chat-user" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Contact Info">
+                                            <i class="bx bx-info-circle"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="chat-body chat-page-group slimscroll">
+                            <div class="messages" id="message-list">
+                                <div v-if="errorMessage" class="alert alert-danger text-center">[[ errorMessage]]</div>
+                                <div v-for="message in messages" :key="message.random_id" :class="['chats', {'chats-right': message.sender == currentUserPk}]">
+                                    <div class="chat-avatar">
+                                        <img :src="message.sender == currentUserPk ? '{% if request.user.image %}{{   request.user.image.url}}{% else %}/static/digithup/b.png{% endif %}' : otherUserImage" class="rounded-circle dreams_chat" alt="image">
+                                    </div>
+                                    <div class="chat-content">
+                                        <div class="chat-profile-name" :class="{'text-end': message.sender == currentUserPk}">
+                                            <h6>
+                                                <i v-if="message.sender == currentUserPk" class="bx bx-check-double me-1"></i>
+                                                [[ message.sender == currentUserPk ? 'You' : otherUserName]]
+                                                <span>[[ message.created_at]]</span>
+                                            </h6>
+                                        </div>
+                                        <div class="message-content">[[ message.text]]</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-footer">
+                        <div class="smile-foot">
+                            <div class="chat-action-btns">
+                                <div class="chat-action-col">
+                                    <a class="action-circle" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a href="javascript:void(0);" class="dropdown-item"><span><i class="bx bx-file"></i></span>Document</a>
+                                        <a href="javascript:void(0);" class="dropdown-item"><span><i class="bx bx-image"></i></span>Gallery</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="text" :value="newMessage" @keyup.enter="sendMessage" id="chat-message-input" class="form-control chat_form" placeholder="Type your message here...">
+                        <div class="form-buttons">
+                            <button class="btn send-btn" type="button" @click="sendMessage">
+                                <i class="bx bx-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            <div class="chat chat-messages" id="middle">
+                    <div>
+                        <div class="chat-header">
+                            <div class="user-details">
+                                <div class="d-lg-none">
+                                    <ul class="list-inline mt-2 me-2">
+                                        <li class="list-inline-item">
+                                            <a class="text-muted px-0 left_sides" href="javascript:void(0);" data-chat="open">
+                                                <i class="fas fa-arrow-left"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <figure class="avatar ms-1">
+                                    <img :src="otherUserImage || '{% static 'path/to/default/avatar.png' %}'" class="rounded-circle" alt="image">
+                                </figure>
+                                <div class="mt-1">
+                                    <h5>[[ otherUserName }}</h5>
+                                    <small class="last-seen" id="user-online-status">[[ userOnline }}</small>
+                                </div>
+                            </div>
+                            <div class="chat-options">
+                                <ul class="list-inline">
+                                    <li class="list-inline-item">
+                                        <a href="javascript:void(0)" class="btn btn-outline-light chat-search-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Search">
+                                            <i class="bx bx-search"></i>
+                                        </a>
+                                    </li>
+                                    <li class="list-inline-item dream_profile_menu">
+                                        <a href="javascript:void(0)" class="btn btn-outline-light not-chat-user" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Contact Info">
+                                            <i class="bx bx-info-circle"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="chat-body chat-page-group slimscroll">
+                            <div class="messages" id="message-list">
+                                <div v-for="message in messages" :key="message.random_id" :class="['chats', {'chats-right': message.sender == currentUserPk}]">
+                                    <div class="chat-avatar">
+                                        <img :src="message.sender == currentUserPk ? '[[ request.user.image.url|default:'' }}' : '[[ other_user.image.url|default:'' }}'" class="rounded-circle dreams_chat" alt="image">
+                                    </div>
+                                    <div class="chat-content">
+                                        <div class="chat-profile-name" :class="{'text-end': message.sender == currentUserPk}">
+                                            <h6>
+                                                <i v-if="message.sender == currentUserPk" class="bx bx-check-double me-1"></i>
+                                                [[ message.sender == currentUserPk ? 'You' : otherUserName }}
+                                                <span>[[ message.created_at }}</span>
+                                            </h6>
+                                        </div>
+                                        <div class="message-content">[[ message.text }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-footer">
+                        <form @submit.prevent="sendMessage">
+                            <div class="smile-foot">
+                                <div class="chat-action-btns">
+                                    <div class="chat-action-col">
+                                        <a class="action-circle" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                            <i class="bx bx-dots-vertical-rounded"></i>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-end">
+                                            <a href="javascript:void(0);" class="dropdown-item"><span><i class="bx bx-file"></i></span>Document</a>
+                                            <a href="javascript:void(0);" class="dropdown-item"><span><i class="bx bx-image"></i></span>Gallery</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="text" v-model="newMessage" id="chat-message-input" class="form-control chat_form" placeholder="Type your message here...">
+                            <div class="form-buttons">
+                                <button class="btn send-btn" type="submit">
+                                    <i class="bx bx-paper-plane"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="right-sidebar right_sidebar_profile right-side-contact show-right-sidebar" id="middle1">
+                    <div class="right-sidebar-wrap active">
+                        <div class="slimscroll">
+                            <div class="left-chat-title d-flex justify-content-between align-items-center border-bottom-0">
+                                <div class="fav-title mb-0">
+                                    <h6>Contact Info</h6>
+                                </div>
+                                <div class="contact-close_call text-end">
+                                    <a href="javascript:void(0);" class="close_profile close_profile4">
+                                        <span class="material-icons">close</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="sidebar-body">
+                                <div class="mt-0 right_sidebar_logo">
+                                    <div class="text-center right-sidebar-profile">
+                                        <figure class="avatar avatar-xl mb-3">
+                                            <img :src="otherUserImage || '/static/digithup/b.png'" class="rounded-circle" alt="image">
+                                        </figure>
+                                        <h5 class="profile-name">[[ otherUserName]]</h5>
+                                        <div class="last-seen-profile">
+                                            <span>[[ otherUserPosition]]</span>
+                                        </div>
+                                    </div>
+                                    <div class="chat-member-details">
+                                        <div class="member-details">
+                                            <ul>
+                                                <li>
+                                                    <h5>Info</h5>
+                                                </li>
+                                                <li>
+                                                    <h6>Phone</h6>
+                                                    <span>[[ otherUserPhone || 'Not provided']]</span>
+                                                </li>
+                                                <li>
+                                                    <h6>Email Address</h6>
+                                                    <span>[[ otherUserEmail]]</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data for Vue.js -->
+<script type="application/json" id="chat-data">{
+    "dialogId": "{{ dialog_id|escapejs }}",
+    "currentUserPk": {{ request.user.pk }},
+    "otherUserPk": {{ other_user.pk }},
+    "otherUserName": "{{ other_user.get_full_name|escapejs }}",
+    "otherUserEmail": "{{ other_user.email|escapejs }}",
+    "otherUserPhone": "{{ other_user.phone|default:'Not provided'|escapejs }}",
+    "otherUserPosition": "{{ other_user.position|default:'Client'|escapejs }}",
+    "otherUserImage": "{{ other_user.image_url|escapejs }}",
+    "userOnline": "{{ other_user.get_online_info|escapejs }}",
+    "initialMessages": {{ messages|safe }}
+}</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+
+    // Get data from JSON script - FIXED: Changed 'json' to 'JSON'
+    const chatData = JSON.parse(document.getElementById('chat-data').textContent);
+
+    // Add validation to ensure dialogId is not undefined
+    if (!chatData.dialogId || chatData.dialogId === 'undefined') {
+        console.error('Dialog ID is undefined or invalid:', chatData.dialogId);
+        alert('Error: Invalid chat session. Please refresh the page.');
+        return;
+    }
+
+    const ChatApp = Vue.createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                dialogId: chatData.dialogId,
+                currentUserPk: chatData.currentUserPk,
+                otherUserPk: chatData.otherUserPk,
+                otherUserName: chatData.otherUserName,
+                otherUserEmail: chatData.otherUserEmail,
+                otherUserPhone: chatData.otherUserPhone,
+                otherUserPosition: chatData.otherUserPosition,
+                otherUserImage: chatData.otherUserImage,
+                userOnline: chatData.userOnline,
+                messages: chatData.initialMessages || [],
+                dialogs: [],
+                newMessage: '',
+                chatSocket: null,
+                errorMessage: '',
+                isConnected: false
+            };
+        },
+        methods: {
+            initWebSocket() {
+                // Additional validation before creating WebSocket
+                if (!this.dialogId || this.dialogId === 'undefined') {
+                    this.errorMessage = 'Invalid dialog ID. Cannot connect to chat.';
+                    console.error('Cannot initialize WebSocket: dialogId is', this.dialogId);
+                    return;
+                }
+
+                const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+                const url = `${protocol}${window.location.host}/ws/chat/${this.dialogId}/`;
+
+                console.log('Connecting to WebSocket:', url);
+                this.chatSocket = new WebSocket(url);
+
+                this.chatSocket.onopen = () => {
+                    console.log('WebSocket connection established');
+                    this.isConnected = true;
+                    this.errorMessage = '';
+                };
+
+                this.chatSocket.onclose = (event) => {
+                    console.log('WebSocket closed:', event);
+                    this.isConnected = false;
+                    this.userOnline = 'Offline';
+                    if (event.code !== 1000) {
+                        this.errorMessage = 'Connection lost. Trying to reconnect...';
+                        setTimeout(() => this.initWebSocket(), 3000);
+                    }
+                };
+
+                this.chatSocket.onmessage = (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        console.log('WebSocket message received:', data);
+
+                        if (data.msg_type === 3) { // TextMessage
+                            this.appendNewMessage(data);
+                        } else if (data.msg_type === 4) { // MessageIdCreated
+                            const message = this.messages.find(m => m.random_id === data.random_id);
+                            if (message) {
+                                message.db_id = data.db_id;
+                            }
+                        } else if (data.msg_type === 5) { // UserStatusUpdate
+                            if (data.user_id == this.otherUserPk) {
+                                this.userOnline = data.status === 'Active' ? 'Online' : 'Offline';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error parsing WebSocket message:', error);
+                        this.errorMessage = 'Error receiving message';
+                        setTimeout(() => { this.errorMessage = ''; }, 3000);
+                    }
+                };
+
+                this.chatSocket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.errorMessage = 'Connection error';
+                    setTimeout(() => { this.errorMessage = ''; }, 3000);
+                };
+            },
+
+            appendNewMessage(data) {
+                const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const newMessage = {
+                    random_id: data.random_id,
+                    text: data.text,
+                    sender: parseInt(data.sender),
+                    sender_username: data.sender_username,
+                    created_at: messageTime,
+                };
+
+                this.messages.push(newMessage);
+                console.log('Message added:', newMessage);
+
+                this.$nextTick(() => {
+                    const messageList = document.getElementById('message-list');
+                    if (messageList) {
+                        messageList.scrollTop = messageList.scrollHeight;
+                    }
+                });
+            },
+
+            sendMessage() {
+                if (!this.newMessage.trim()) {
+                    this.errorMessage = 'Please enter a message';
+                    setTimeout(() => { this.errorMessage = ''; }, 3000);
+                    return;
+                }
+
+                if (!this.isConnected || !this.chatSocket) {
+                    this.errorMessage = 'Not connected to chat';
+                    setTimeout(() => { this.errorMessage = ''; }, 3000);
+                    return;
+                }
+
+                const randomId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+                const messageData = {
+                    msg_type: 3, // TextMessage
+                    text: this.newMessage,
+                    random_id: randomId,
+                };
+
+                console.log('Sending message:', messageData);
+
+                try {
+                    this.chatSocket.send(JSON.stringify(messageData));
+                    this.newMessage = '';
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    this.errorMessage = 'Failed to send message';
+                    setTimeout(() => { this.errorMessage = ''; }, 3000);
+                }
+            },
+
+            loadDialogs() {
+                fetch('/api/dialogs/')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.dialogs = data;
+                        console.log('Dialogs loaded:', data);
+                    })
+                    .catch(error => {
+                        console.error('Error loading dialogs:', error);
+                        this.dialogs = [];
+                    });
+            },
+
+            formatMessages() {
+                this.messages = this.messages.map(msg => ({
+                    ...msg,
+                    sender: parseInt(msg.sender),
+                    created_at: msg.created_at.includes('T') ?
+                        new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
+                        msg.created_at
+                }));
+            }
+        },
+
+        mounted() {
+            console.log('Chat app mounted with dialogId:', this.dialogId);
+            this.formatMessages();
+            this.initWebSocket();
+            this.loadDialogs();
+
+            this.$nextTick(() => {
+                const messageList = document.getElementById('message-list');
+                if (messageList) {
+                    messageList.scrollTop = messageList.scrollHeight;
+                }
+            });
+        },
+
+        beforeUnmount() {
+            if (this.chatSocket) {
+                this.chatSocket.close();
+            }
+        }
+    });
+
+    ChatApp.mount('#chat-app');
+});
+</script>
+{% endblock %}
+
+{% block foot %} {% include FRONTEND_FOOTER %} {% endblock %}
+{% block js %} {% include FRONTEND_JS %} {% endblock %}

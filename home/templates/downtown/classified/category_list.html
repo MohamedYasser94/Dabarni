@@ -1,0 +1,364 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+{% block body %}
+
+	  <!-- Inner Banner -->
+        <div class="inner-banner inner-bg1">
+            <div class="container">
+                <div class="inner-title text-center">
+                    <h3>{% translate 'Category' %}</h3>
+                    <ul>
+                        <li>
+                            <a href="{% url 'home:HomeIndex' %}">{% translate 'Home' %}</a>
+                        </li>
+                        <li>
+                            <i class='bx bx-chevron-right'></i>
+                        </li>
+                        <li>{% translate 'Pages' %}</li>
+                        <li>
+                            <i class='bx bx-chevron-right'></i>
+                        </li>
+                        <li>{% translate 'Category' %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- Inner Banner End -->
+
+        <!-- Category Area -->
+        <section class="category-area pt-100 pb-70">
+            <div class="container">
+                <div class="section-title ">
+                    <span>{% translate 'The Categories' %}</span>
+                    <h2>{% translate 'Search' %} <b>{% translate 'By Category' %}</b></h2>
+                </div>
+
+                <div class="row pt-45">
+                    {% for item in categories %}
+                    <div class="col-lg-2 col-sm-6">
+                        <div class="category-box">
+                            <a href="{{ item.get_front_url }}">
+                                <i class="flaticon-bake"></i>
+                            </a>
+                            <a href="{{ item.get_front_url }}">
+                                <h3>{{ itm.title }}</h3>
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+
+                    <div class="col-lg-2 col-sm-6">
+                        <div class="category-box">
+                            <a href="">
+                                <i class="flaticon-hotel"></i>
+                            </a>
+                            <a href="">
+                                <h3>Hotel</h3>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-sm-6">
+                        <div class="category-box">
+                            <a href="">
+                                <i class="flaticon-barbell"></i>
+                            </a>
+                            <a href="">
+                                <h3>Fitness</h3>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-sm-6">
+                        <div class="category-box">
+                            <a href="">
+                                <i class="flaticon-store"></i>
+                            </a>
+                            <a href="">
+                                <h3>Shops</h3>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-sm-6">
+                        <div class="category-box">
+                            <a href="">
+                                <i class="flaticon-event"></i>
+                            </a>
+                            <a href="">
+                                <h3>Events</h3>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-sm-6">
+                        <div class="category-box">
+                            <a href="">
+                                <i class="flaticon-flower"></i>
+                            </a>
+                            <a href="">
+                                <h3>Beauty</h3>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        <!-- Category Area End -->
+
+       <!-- City Area Two -->
+<section class="city-area-two pt-100 pb-70">
+    <div class="container">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-lg-8">
+                <div class="section-title">
+                    <span>{% translate 'Cities' %}</span>
+                    <h2>{% translate 'Explore the Best Cities In the Area' %}</h2>
+                    <p> {% translate 'Find the best places to visit in the area. Discover new cities and explore their unique offerings.' %}</p>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="city-btn">
+                    <a href="{% url 'home:FrontClassifiedPlacesList' %}" class="default-btn">
+                        {% translate ' View all places' %}
+                        <i class='bx bx-plus'></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row pt-45">
+            {% for item in classified_locations %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="city-card">
+                        <a href="{{ item.get_front_url }}">
+                            <img src="{{ item.get_image }}" alt="Images">
+                        </a>
+                        <div class="content">
+                            <a href="{{ item.get_front_url }}">
+                                <h3>{{ item.governorate }}</h3>
+                            </a>
+                            <span>{{ item.get_ad_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="city-card">
+                        <a href="">
+                            <img src="{% static '' %}{{ FRONTEND_ASSETS }}/img/city-area/city-area6.jpg" alt="Images">
+                        </a>
+                        <div class="content">
+                            <a href="">
+                                <h3>San Antonio</h3>
+                            </a>
+                            <span>13 Locations</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="city-card">
+                        <a href="">
+                            <img src="{% static '' %}{{ FRONTEND_ASSETS }}/img/city-area/city-area7.jpg" alt="Images">
+                        </a>
+                        <div class="content">
+                            <a href="">
+                                <h3>Milwaukee</h3>
+                            </a>
+                            <span>13 Locations</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7 col-md-6">
+                    <div class="city-card">
+                        <a href="">
+                            <img src="{% static '' %}{{ FRONTEND_ASSETS }}/img/city-area/city-area8.jpg" alt="Images">
+                        </a>
+                        <div class="content">
+                            <a href="">
+                                <h3>United Kingdom</h3>
+                            </a>
+                            <span>30 Locations</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 col-md-6  ">
+                    <div class="city-card">
+                        <a href="">
+                            <img src="{% static '' %}{{ FRONTEND_ASSETS }}/img/city-area/city-area9.jpg" alt="Images">
+                        </a>
+                        <div class="content">
+                            <a href="">
+                                <h3>Turkey</h3>
+                            </a>
+                            <span>34 Locations</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+<!-- City Area End -->
+
+<!-- Process Area -->
+<section class="process-area process-bg2">
+    <div class="process-into pt-100 pb-70">
+        <div class="container">
+            <div class="section-title text-center">
+                <span>{% translate 'Process' %}</span>
+                <h2>{% translate 'See' %} <b>{% translate 'How It Works' %}</b></h2>
+                <p> {% translate 'Discover how our platform works to help you find the best places and services in your area.' %} </p>
+            </div>
+            <div class="row pt-45">
+                <div class="col-lg-4 col-sm-6">
+                    <div class="process-item">
+                        <div class="process-item-number number1">1</div>
+                        <i class="flaticon-position"></i>
+                        <div class="content">
+                            <h3>{% translate 'Find an Interesting Place' %}</h3>
+                            <p>{% translate " Search for a place that interests you, whether it's a restaurant, gym, or shop." %} </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-sm-6">
+                    <div class="process-item">
+                        <div class="process-item-number number2 active">2</div>
+                        <i class="flaticon-to-do-list"></i>
+                        <div class="content">
+                            <h3>{% translate 'Choose What To Do' %}</h3>
+                            <p> {% translate 'Select the activities or services you want to explore at the chosen place.' %} </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-sm-6  ">
+                    <div class="process-item">
+                        <div class="process-item-number number3">3</div>
+                        <i class="flaticon-box"></i>
+                        <div class="content">
+                            <h3>{% translate 'Find What You Want' %}</h3>
+                            <p> {% translate 'Discover the offerings and options available at the place you selected.' %} </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="process-line-2">
+            <img src="{% static '' %}{{ FRONTEND_ASSETS }}/img/shape/process-line2.png" alt="Images">
+        </div>
+    </div>
+</section>
+<!-- Process Area End -->
+
+         <!-- Category Area -->
+         <section class="category-area pt-100 pb-70">
+            <div class="container">
+                <div class="section-title text-center">
+                    <span>{% translate 'The Categories' %}</span>
+                    <h2>{% translate 'Use Quick Search By Category' %}</h2>
+                </div>
+
+                <div class="row category-bg">
+                    {% for item in category %}
+                    <div class="col-lg-4 col-sm-6">
+                        <div class="category-card">
+                            <a href="{{ item.get_front_url }}">
+                                <i class="flaticon-bake"></i>
+                            </a>
+
+                            <a href="{{ item.get_front_url }}">
+                                <h3>{{ item.title }}</h3>
+                            </a>
+                            <p>{{ item.keywords }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+
+                    <div class="col-lg-4 col-sm-6">
+                        <div class="category-card">
+                            <a href="">
+                                <i class="flaticon-hotel"></i>
+                            </a>
+                            <a href="">
+                                <h3>Hotel & Resort</h3>
+                            </a>
+                            <p>Lorem ipsum dolor sit amet consecte tempo quaerat voluptatem.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-sm-6">
+                        <div class="category-card">
+                            <a href="">
+                                <i class="flaticon-barbell"></i>
+                            </a>
+                            <a href="">
+                                <h3>Fitness Club</h3>
+                            </a>
+                            <p>Lorem ipsum dolor sit amet consecte tempo quaerat voluptatem.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-sm-6">
+                        <div class="category-card">
+                            <a href="">
+                                <i class="flaticon-store"></i>
+                            </a>
+                            <a href="">
+                                <h3>Shops & Stores</h3>
+                            </a>
+                            <p>Lorem ipsum dolor sit amet consecte tempo quaerat voluptatem.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-sm-6">
+                        <div class="category-card">
+                            <a href="">
+                                <i class="flaticon-event"></i>
+                            </a>
+                            <a href="">
+                                <h3>Events & Programme</h3>
+                            </a>
+                            <p>Lorem ipsum dolor sit amet consecte tempo quaerat voluptatem.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-sm-6">
+                        <div class="category-card">
+                            <a href="">
+                                <i class="flaticon-flower"></i>
+                            </a>
+                            <a href="">
+                                <h3>Beauty & Spa</h3>
+                            </a>
+                            <p>Lorem ipsum dolor sit amet consecte tempo quaerat voluptatem.</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        <!-- Category Area End -->
+
+
+{% endblock %}
+
+
+{% block custom_js %}
+
+
+
+
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}
+

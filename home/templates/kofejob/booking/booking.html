@@ -1,0 +1,291 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+
+    {% include 'doccure/common/breadcrumb.html' %}
+
+			<!-- Page Content -->
+			<div class="content content-space" id="frontuserappo-app">
+				<div class="container">
+					<!-- Booking -->
+					<div class="row">
+						<div class="col-lg-8 col-md-12">
+							<div class="booking-header">
+								<h4 class="booking-title">Select Available Slots</h4>
+							</div>
+							<div class="booking-date choose-date-book">
+								<p>Choose Date</p>
+								<div class="booking-range">
+									<div class="bookingrange btn">
+										<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icons/today-icon.svg" alt="">
+										<span></span>
+										<i class="fas fa-chevron-down"></i>
+									</div>
+								</div>
+							</div>
+							<div class="card booking-card">
+								<div class="card-body time-slot-card-body">
+									<div class="booking-date-slider">
+
+										<ul class="date-slider slick">
+                                            {% for item in day_list %}
+											<li class="" @click="getAppointmentDate('{{ item.day }}','{{ item.name }}')" >
+												<h4>{{ item.day }}</h4>
+												<p>{{ item.name }}</p>
+											</li>
+                                            {% endfor %}
+										</ul>
+									</div>
+									<div class="row">
+										<div class="col-lg-4 col-md-8">
+											<div class="time-slot time-slot-blk">
+												<h4>{% translate 'Morning' %}</h4>
+												<div class="time-slot-list">
+													<ul>
+														<li  v-for="(slot,index) in timeSlot " key="index" :value="slot.slot" >
+															<a class="timing" href="javascript:void(0);" v-if="slot.slot_type == 'Morning'"
+                                                               @click="requestAppointmentDate(slot.slot)"
+                                                            >
+																<span><i class="feather-clock"></i>   [[slot.slot]]</span>
+															</a>
+														</li>
+
+
+													</ul>
+												</div>
+											</div>
+										</div>
+										<div class="col-lg-4 col-md-4">
+											<div class="time-slot time-slot-blk">
+												<h4>{% translate 'Afternoon' %}</h4>
+												<div class="time-slot-list">
+													<ul>
+														<li  v-for="(slot,index) in timeSlot " key="index" :value="slot.slot" >
+															<a class="timing" href="javascript:void(0);" v-if="slot.slot_type == 'Afternoon'"
+                                                                @click="requestAppointmentDate(slot.slot)"
+                                                            >
+																<span><i class="feather-clock"></i>   [[slot.slot]]</span>
+															</a>
+														</li>
+
+
+													</ul>
+												</div>
+											</div>
+										</div>
+										<div class="col-lg-4 col-md-4">
+											<div class="time-slot time-slot-blk">
+												<h4>{% translate 'Evening' %}</h4>
+											<div class="time-slot-list">
+													<ul>
+														<li  v-for="(slot,index) in timeSlot " key="index" :value="slot.slot" >
+															<a class="timing" href="javascript:void(0);" v-if="slot.slot_type == 'Evening'"
+                                                                @click="requestAppointmentDate(slot.slot)"
+                                                            >
+																<span><i class="feather-clock"></i>   [[slot.slot]]</span>
+															</a>
+														</li>
+
+
+													</ul>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="booking-btn">
+								<a href="{% url 'home:FrontBookingAppointmentCheckout' %}" class="btn btn-primary prime-btn justify-content-center align-items-center">
+									Next <i class="feather-arrow-right-circle"></i>
+								</a>
+							</div>
+						</div>
+						<div class="col-lg-4 col-md-12">
+							<div class="booking-header">
+								<h4 class="booking-title">{% translate 'Booking Summary' %}</h4>
+							</div>
+							<div class="card booking-card">
+								<div class="card-body booking-card-body">
+									<div class="booking-doctor-details">
+										<div class="booking-doctor-left">
+											<div class="booking-doctor-img">
+												<a href="doctor-profile.html">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/doctors/doctor-01.jpg" alt="">
+												</a>
+											</div>
+											<div class="booking-doctor-info">
+												<h4><a href="doctor-profile.html">{{ doctor.get_full_name }}</a></h4>
+												<p>{{ clinic.title }} ,{{ clinic.category }}</p>
+											</div>
+										</div>
+										<div class="booking-doctor-right">
+											<p>
+												<i class="fas fa-check-circle"></i>
+												<a href="">Edit</a>
+											</p>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="card booking-card">
+								<div class="card-body booking-card-body">
+									<div class="booking-doctor-details">
+										<div class="booking-device">
+											<div class="booking-device-img">
+												<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icons/device-message.svg" alt="">
+											</div>
+											<div class="booking-doctor-info">
+												<h3>We can help you</h3>
+												<p class="device-text">Call us +1 888-888-8888 (or) chat with our customer support team.</p>
+												<a href="" class="btn">Chat With Us</a>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="card booking-card mb-0">
+								<div class="card-body booking-card-body">
+									<div class="booking-doctor-details">
+										<div class="booking-device">
+											<div class="booking-device-img">
+												<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icons/smart-phone.svg" alt="">
+											</div>
+											<div class="booking-doctor-info">
+												<h3>Get the App</h3>
+												<p class="device-text">Download our app for better experience and for more feature</p>
+												<div class="app-images">
+													<a href="javascript:void(0);">
+														<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/google-img.svg" alt="">
+													</a>
+													<a href="javascript:void(0);">
+														<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/app-img.svg" alt="">
+													</a>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- /Booking -->
+				</div>
+
+			</div>
+			<!-- /Page Content -->
+
+
+ <script>
+        const FrontUserAppointment = Vue.createApp({
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    CurrentDoctor: '{{ doctor_slug }}',
+                    SelectDay:'',
+                    SelectDayName:'',
+                    timeSlot: [],
+                    events: [],
+                    selectedTime: null,
+
+
+                }
+            },
+            methods: {
+              getAppointmentDate(day,day_name) {
+                    console.log('addNewAppointment', day,day_name);
+                    this.SelectDay = day
+                    this.SelectDayName = day_name
+                    const url = "{% url 'api:FrontPatientApiCheckDate'  %}";
+                    payload = {
+
+                        "csrfmiddlewaretoken": "{{ csrf_token }}",
+
+                        "day": day,
+                        "day_name":day_name,
+                        "doctor": this.CurrentDoctor,
+
+                    }
+                    jQuery.ajax({
+                        type: 'POST',
+                        dataType: "json",
+                        url: url,
+                        timeout: 5000,
+                        data: payload,
+
+                        success: (data) => {
+
+                            console.log('data', data)
+                            this.timeSlot = data
+
+                        },
+                        error: function (data) {
+                            console.error("ERROR...", data)
+
+
+                        },
+                    });
+
+
+                },
+                requestAppointmentDate(slot) {
+                    console.log('addNewAppointment', slot);
+                    const url = "{% url 'api:FrontPatientApiRequestAddAppointment'  %}";
+                    payload = {
+
+                        "csrfmiddlewaretoken": "{{ csrf_token }}",
+
+                        "day": this.SelectDay,
+                        "day_name":this.SelectDayName,
+                        "doctor": this.CurrentDoctor,
+                        "slot":slot,
+
+                    }
+                    jQuery.ajax({
+                        type: 'POST',
+                        dataType: "json",
+                        url: url,
+                        timeout: 5000,
+                        data: payload,
+
+                        success: (data) => {
+
+                            console.log('data', data)
+
+
+                        },
+                        error: function (data) {
+                            console.error("ERROR...", data)
+
+
+                        },
+                    });
+
+
+                },
+
+
+            },
+
+
+
+
+        })
+        FrontUserAppointment.mount('#frontuserappo-app')
+
+
+        FrontUserAppointment.config.devtools = true
+
+
+    </script>
+{% endblock %}
+
+
+
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block custom_js %}
+{% endblock custom_js %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}
+
+

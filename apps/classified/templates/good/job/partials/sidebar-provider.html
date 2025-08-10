@@ -1,0 +1,86 @@
+{% load static %}
+{% load i18n %}
+
+{% if user.is_author %}
+<!--====== START: JOB ICON WITH HOVER MENU ======-->
+<div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
+     data-kt-menu-placement="right-start"
+     class="menu-item py-1">
+
+    <span class="menu-link menu-center">
+        <span class="menu-icon me-0">
+            <i class="ki-outline ki-package fs-2hx"></i>
+        </span>
+    </span>
+
+    <div class="menu-sub menu-sub-dropdown px-lg-2 py-lg-4 w-200px w-lg-225px">
+        <div class="menu-item">
+            <div class="menu-content">
+                <span class="menu-section fs-5 fw-bolder ps-1 py-1">{% translate 'Job' %}</span>
+            </div>
+        </div>
+
+        <div class="menu-item">
+            <a class="menu-link" href="{% url 'job:AdminJobList' %}">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">{% translate 'Jobs' %}</span>
+            </a>
+        </div>
+    </div>
+</div>
+<!--====== END: JOB ICON ======-->
+
+
+<!--====== START: REQUESTS ICON WITH HOVER MENU ======-->
+<div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
+     data-kt-menu-placement="right-start"
+     class="menu-item py-1">
+
+    <span class="menu-link menu-center">
+        <span class="menu-icon me-0">
+            <i class="ki-outline ki-send fs-2hx"></i>
+        </span>
+    </span>
+
+    <div class="menu-sub menu-sub-dropdown px-lg-2 py-lg-4 w-200px w-lg-225px">
+        <div class="menu-item">
+            <div class="menu-content">
+                <span class="menu-section fs-5 fw-bolder ps-1 py-1">{% translate 'Requests' %}</span>
+            </div>
+        </div>
+
+        <div class="menu-sub menu-sub-accordion menu-active-bg">
+
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'job:AdminJobRequestsList' 'New' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'New Requests' %}</span>
+                </a>
+            </div>
+
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'job:AdminJobRequestsList' 'In Progress' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'In Progress' %}</span>
+                </a>
+            </div>
+
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'job:AdminJobRequestsList' 'Completed' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'Completed' %}</span>
+                </a>
+            </div>
+
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'job:AdminJobRequestsList' 'Canceled' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'Canceled' %}</span>
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!--====== END: REQUESTS ICON ======-->
+{% endif %}

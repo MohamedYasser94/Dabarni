@@ -1,0 +1,54 @@
+{% load static %}
+
+
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+
+
+			<!-- Header -->
+			<header class="header">
+				<div class="container">
+					<nav class="navbar navbar-expand-lg header-nav p-0">
+						<div class="navbar-header">
+							<a id="mobile_btn" href="javascript:void(0);">
+								<span class="bar-icon">
+									<span></span>
+									<span></span>
+									<span></span>
+								</span>
+							</a>
+							<a href="{% url 'home:HomeIndex' %}" class="navbar-brand logo">
+								<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/logoar.png" style="width: 200px;height: 50px" class="img-fluid" alt="Logo">
+							</a>
+						</div>
+						<div class="main-menu-wrapper">
+							<div class="menu-header">
+								<a href="{% url 'home:HomeIndex' %}" class="menu-logo">
+									<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/logoar.png" style="width: 200px;height: 50px" class="img-fluid" alt="Logo">
+								</a>
+								<a id="menu_close" class="menu-close" href="javascript:void(0);">
+									<i class="fas fa-times"></i>
+								</a>
+							</div>
+							<ul class="main-nav">
+								<li><a href="{% url 'home:HomeIndex' %}" >{% translate 'Home' %}</a></li>
+                                <li><a href="{% url 'home:HomeIndex' %}" >{% translate 'Services' %}</a></li>
+                                <li><a href="{% url 'home:FrontBlog' %}" >{% translate 'Blog' %}</a></li>
+                                <li><a href="{% url 'home:FrontAbout' %}" >{% translate 'About' %}</a></li>
+							</ul>
+						</div>
+						<ul class="nav header-navbar-rht reg-head">
+                            {% if user.is_authenticated %}
+							<li><a href="{% url 'home:FrontProviderDashboard' %}" class="reg-btn"><img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/users.svg" class="me-1" alt="img">{% translate 'Dashboard' %}</a></li>
+
+                            {% else %}
+                                <li><a href="{% url 'user:FrontCustomerLogin' %}" class="log-btn"><img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/lock.svg" class="me-1" alt="img"> {% translate 'Login' %}</a></li>
+                                 <li><a href="{% url 'user:FrontCustomerRegister' %}" class="log-btn"><img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/lock.svg" class="me-1" alt="img"> {% translate 'Register' %}</a></li>
+                            {% endif %}
+							<li><a href="{% url 'provider:ProviderJobCreate' %}" class="login-btn"><i class="feather-plus me-1"></i>{% translate 'Add job' %} </a></li>
+						</ul>
+					</nav>
+				</div>
+
+			</header>
+			<!-- /Header -->

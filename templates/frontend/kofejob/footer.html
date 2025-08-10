@@ -1,0 +1,121 @@
+{% load static %}
+
+
+{% load i18n %}
+
+	<!-- Footer -->
+			<footer class="footer footer-five">
+
+
+				<!-- /Footer Top Nav -->
+				<div class="footer-top ">
+					<div class="container">
+
+						<div class="row">
+							<div class="col-lg-2 col-md-4">
+								<div class="footer-widget footer-menu">
+									<h2 class="footer-title">Useful Links</h2>
+									<ul>
+										<li><a href="{% url 'home:FrontBlog' %}">{% translate 'Blog' %}</a></li>
+                                        <li><a href="{% url 'home:FrontClassifiedCategoryList' %}">{% translate 'Classified Category' %}</a></li>
+                                        <li><a href="{% url 'home:FrontJobList' %}">{% translate 'Provider' %}</a></li>
+                                        <li><a href="{% url 'home:FrontTermsConditions' %}">{% translate 'Terms & Conditions' %}</a></li>
+
+									</ul>
+								</div>
+							</div>
+							<div class="col-lg-2 col-md-4">
+								<div class="footer-widget footer-menu">
+									<h2 class="footer-title">{% translate 'Help & Support' %}</h2>
+									<ul>
+										<li><a href="{% url 'home:FrontAbout' %}">{% translate 'About Us' %}</a></li>
+                                        <li><a href="{% url 'home:FrontContact' %}">{% translate 'Contact Us' %}</a></li>
+                                        <li><a href="{% url 'home:FrontPrivacyPolicy' %}">{% translate 'Privacy Policy' %}</a></li>
+                                        <li><a href="{% url 'home:FrontTermsConditions' %}">{% translate 'Terms & Conditions' %}</a></li>
+									</ul>
+								</div>
+							</div>
+							<div class="col-lg-2 col-md-4">
+								<div class="footer-widget footer-menu">
+									<h2 class="footer-title">{% translate 'Other Links' %}</h2>
+									<ul>
+										<li><a href="{% url 'home:FrontAbout' %}">{% translate 'About Us' %}</a></li>
+                                        <li><a href="{% url 'home:FrontContact' %}">{% translate 'Contact Us' %}</a></li>
+                                        <li><a href="{% url 'home:FrontPrivacyPolicy' %}">{% translate 'Privacy Policy' %}</a></li>
+
+                                        <li><a href="{% url 'provider:ProviderJobCreate' %}">{% translate 'Add job' %}</a></li>
+									</ul>
+								</div>
+							</div>
+							<div class="col-lg-2 col-md-4">
+								<div class="footer-widget footer-menu">
+									<h2 class="footer-title">{% translate 'Featured Categories' %}</h2>
+									<ul>
+										<li><a href="{% url 'home:FrontAbout' %}">{% translate 'About Us' %}</a></li>
+                                        <li><a href="{% url 'home:FrontContact' %}">{% translate 'Contact Us' %}</a></li>
+                                        <li><a href="{% url 'home:FrontPrivacyPolicy' %}">{% translate 'Privacy Policy' %}</a></li>
+                                        <li><a href="{% url 'home:FrontTermsConditions' %}">{% translate 'Terms & Conditions' %}</a></li>
+									</ul>
+								</div>
+							</div>
+							<div class="col-lg-4 col-md-6">
+								<div class="footer-widget footer-menu">
+									<h2 class="footer-title">{% translate 'Subscribe' %}</h2>
+									<div class="banner-content aos aos-init aos-animate" data-aos="fade-up">
+										<form class="form" name="store" method="post" action="{% url 'home:FrontNewsletterSubscriber' %}" enctype="multipart/form-data">
+                                            {% csrf_token %}
+											<div class="form-inner">
+												<div class="input-group">
+													<input type="email" class="form-control" placeholder="Your Email address.....">
+													<button class="btn btn-primary sub-btn" type="submit"><i class="fas fa-long-arrow-alt-right long-arrow"></i></button>
+												</div>
+											</div>
+										</form>
+									</div>
+									<div class="applicate-mobile-blk">
+										<h6 class="mb-3">{% translate 'Mobile Application' %}</h6>
+									</div>
+									<div class="row g-2">
+										<div class="col-lg-4">
+											<a href="javascript:void(0);"><img class="img-fluid" src="{%  static '' %}{{FRONTEND_ASSETS}}/img/app-store.svg" alt="app-store"></a>
+										</div>
+										<div class="col-lg-4">
+											<a href="javascript:void(0);"><img class="img-fluid" src="{%  static '' %}{{FRONTEND_ASSETS}}/img/google-play.svg" alt="google-play"></a>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- /Footer Top -->
+
+				<!-- Footer Bottom -->
+                <div class="footer-bottom">
+					<div class="container">
+
+						<!-- Copyright -->
+						<div class="copyright">
+							<div class="row">
+								<div class="col-md-12 col-lg-12 ">
+									<div class="footer-bottom-content">
+										<div class="copyright-text">
+											<p class="mb-0">Copyright {% now 'Y' %} © Manfz App. All right reserved.
+                                                developed by <a href="https://www.digithup.com" target="_blank">Digithup</a>
+                                            </p>
+										</div>
+										<ul>
+											<li><a href="javascript:void(0);" class="icon" target="_blank"><i class="fab fa-facebook-f"></i> </a></li>
+											<li><a href="javascript:void(0);" class="icon" target="_blank"><i class="fab fa-linkedin-in"></i> </a></li>
+											<li><a href="javascript:void(0);" class="icon" target="_blank"><i class="fab fa-twitter"></i> </a></li>
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- /Copyright -->
+					</div>
+				</div>
+				<!-- /Footer Bottom -->
+			</footer>
+			<!-- /Footer -->

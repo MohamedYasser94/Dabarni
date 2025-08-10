@@ -1,0 +1,52 @@
+{% load static %}
+<div class="wrapper">
+
+
+    <!-- Section Started Header Coming Soon -->
+    <div class="header-section">
+
+        <div class="logo">
+            <img src="{% static '' %}digithup/upmix.png" width="290" height="290" alt="logo"/>
+        </div>
+
+        <h1>COMING SOON</h1>
+
+        <p>Our website is under construction, we are working very hard to give you the best experience with this
+            one.<br> You will love Mountain as much as we do. It will morph perfectly on your needs!</p>
+
+
+        <div class="countdown" data-timer="Jun 27, 2025 20:39:00"></div>
+
+
+        <div class="mouse">
+            <a href="#services">
+                <i class="fa fa-chevron-down"></i>
+            </a>
+        </div>
+
+
+        <div id="effect-box">
+            <div id="surface"></div>
+        </div>
+
+        <script>
+
+            var speed =  0.0002 ;
+            var ambient_color = "#880066";
+            var diffuse_color = "#16b6ea";
+
+         </script>
+    </div>
+
+
+
+
+
+</div>
+
+
+{% block custom_js %}
+<script src="{% static '' %}{{ FRONTEND_ASSETS }}/plugins/effects/surface/surface.min.js"></script>
+
+{% endblock custom_js %}
+

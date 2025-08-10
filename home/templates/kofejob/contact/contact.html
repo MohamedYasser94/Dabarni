@@ -1,0 +1,146 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+{% block body %}
+
+
+
+		<!-- Breadcrumb -->
+			<div class="breadcrumb-bar-two">
+				<div class="container">
+					<div class="row align-items-center inner-banner">
+						<div class="col-md-12 col-12 text-center">
+							<h2 class="breadcrumb-title">{% translate 'Contact Us' %}</h2>
+							<nav aria-label="breadcrumb" class="page-breadcrumb">
+								<ol class="breadcrumb">
+									<li class="breadcrumb-item"><a href="{% url 'home:HomeIndex' %}">{% translate 'Home' %}</a></li>
+									<li class="breadcrumb-item" aria-current="page">{% translate 'Contact Us' %}</li>
+								</ol>
+							</nav>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Breadcrumb -->
+
+			<!-- Contact Us -->
+			<section class="contact-section">
+				<div class="container">
+					<div class="row">
+						<div class="col-lg-5 col-md-12">
+							<div class="section-inner-header contact-inner-header">
+								<h6>{% translate 'Get in touch' %}</h6>
+								<h2>{% translate 'Have Any Question?' %}</h2>
+							</div>
+							<div class="card contact-card">
+								<div class="card-body">
+									<div class="contact-icon">
+										<i class="feather-map-pin"></i>
+									</div>
+									<div class="contact-details">
+										<h4>{% translate 'Address' %}</h4>
+										<p>8432 Mante Highway, Aminaport, USA</p>
+									</div>
+								</div>
+							</div>
+							<div class="card contact-card">
+								<div class="card-body">
+									<div class="contact-icon">
+										<i class="feather-phone"></i>
+									</div>
+									<div class="contact-details">
+										<h4>{% translate 'Phone Number' %}</h4>
+										<p>+965 506 90566</p>
+									</div>
+								</div>
+							</div>
+							<div class="card contact-card">
+								<div class="card-body">
+									<div class="contact-icon">
+										<i class="feather-mail"></i>
+									</div>
+									<div class="contact-details">
+										<h4>{% translate 'Email Address' %}</h4>
+										<p>info@mtlop.com</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-lg-7 col-md-12 d-flex">
+							<div class="card contact-form-card w-100">
+								<div class="card-body">
+									<form action="{% url 'home:FrontContactForm' %}" method="POST" enctype="multipart/form-data">
+                                        {% csrf_token %}
+										<div class="row">
+											<div class="col-md-6">
+												<div class="form-group">
+													<label>{% translate 'Name' %}</label>
+													<input type="text" class="form-control" placeholder="{% translate 'Enter Your Name' %}" name="name">
+												</div>
+											</div>
+											<div class="col-md-6">
+												<div class="form-group">
+													<label>{% translate 'Email Address' %}</label>
+													<input type="text" class="form-control" placeholder="{% translate 'Enter Email Address' %}" name="email">
+												</div>
+											</div>
+											<div class="col-md-6">
+												<div class="form-group">
+													<label>{% translate 'Phone Number' %}</label>
+													<input type="text" class="form-control" placeholder="{% translate 'Enter Phone Number' %}" name="phone">
+												</div>
+											</div>
+											<div class="col-md-6">
+												<div class="form-group">
+													<label>{% translate 'Subject' %}</label>
+													<input type="text" class="form-control" placeholder="{% translate 'Enter Subject' %}" name="subject">
+												</div>
+											</div>
+											<div class="col-md-12">
+												<div class="form-group">
+													<label>{% translate 'Message' %}</label>
+													<textarea class="form-control" placeholder="{% translate 'Enter your Message' %}" name="message"></textarea>
+												</div>
+											</div>
+											<div class="col-md-12">
+												<div class="form-group form-group-btn mb-0">
+													<button type="submit" class="btn btn-primary prime-btn">{% translate 'Send Message' %}</button>
+												</div>
+											</div>
+										</div>
+                                    <br>
+                                         {% for message in messages %}
+                        {% if message.extra_tags == 'ContactForm' %}
+                            {% if message.tags == 'ContactForm success' %}
+                                <div class="alert alert-info">
+                            {% elif message.tags == 'ContactForm danger' %}
+                                <div class="alert alert-danger">
+                            {% endif %}
+                         {{ message|striptags }}
+
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+									</form>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!-- /Contact Us -->
+
+			<!-- Contact Map -->
+			<section class="contact-map d-flex">
+				<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d5209.168631310336!2d47.994275416549584!3d29.378984357983523!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3fcf849856ab55cf%3A0xa814d6b5243fa3a8!2z2KjYsdisINin2YTYrdmF2LHYp9ihINmE2YTYo9i52YXYp9mEINmI2YXYsdmD2LIg2KfZhNiq2LPZiNmC!5e0!3m2!1sar!2seg!4v1746385220644!5m2!1sar!2seg" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+			</section>
+			<!-- /Contact Map -->
+
+{% endblock %}
+
+
+{% block custom_js %}
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}

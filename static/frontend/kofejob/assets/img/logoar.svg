@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 713.28 243.34">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #40d0c8;
+      }
+
+      .cls-2 {
+        isolation: isolate;
+      }
+
+      .cls-3 {
+        fill: #4a3a7c;
+        font-family: GECap-Medium, 'GE Cap';
+        font-size: 184.98px;
+        font-weight: 500;
+      }
+
+      .cls-4 {
+        fill: url(#linear-gradient);
+        mix-blend-mode: multiply;
+      }
+
+      .cls-5 {
+        fill: #3cb39b;
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="98.24" y1="122.32" x2="180.68" y2="68.16" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".67"/>
+      <stop offset=".14" stop-color="#f8f8f8" stop-opacity=".68"/>
+      <stop offset=".29" stop-color="#e4e4e4" stop-opacity=".7"/>
+      <stop offset=".45" stop-color="#c3c3c3" stop-opacity=".75"/>
+      <stop offset=".62" stop-color="#969696" stop-opacity=".81"/>
+      <stop offset=".79" stop-color="#5b5b5b" stop-opacity=".88"/>
+      <stop offset=".96" stop-color="#131313" stop-opacity=".97"/>
+      <stop offset="1" stop-color="#000"/>
+    </linearGradient>
+  </defs>
+  <g class="cls-2">
+    <g id="Layer_2" data-name="Layer 2">
+      <g id="Layer_1-2" data-name="Layer 1">
+        <g>
+          <text class="cls-3" transform="translate(0 154.18)"><tspan x="0" y="0">تطبيق منفـــذ</tspan></text>
+          <g>
+            <g>
+              <path class="cls-5" d="M175.71,63.14c0,13.99-9.86,29.26-19.97,41.23-10.67,12.63-21.63,21.61-21.63,21.61,0,0,0,0,0,0-11.73-10.41-12.43-22.12-1.59-38.59l25.3-38.46c.07-.11.14-.22.21-.32l-46.39,1.62c-9.35.33-14.22-9.06-6.32-17.08h0c3.27-3.14,7.05-5.75,11.2-7.69,5.35-2.5,11.32-3.9,17.61-3.9,22.97,0,41.6,18.62,41.6,41.6Z"/>
+              <path class="cls-4" d="M139.52,121.23c-7.33-6.16-11.8-12.93-6.99-25.25,5.17-13.25,14.65-30.08,17.14-34.68l-17.16,26.09c-10.84,16.48-10.13,28.19,1.6,38.6,0,0,2.12-1.74,5.4-4.76Z"/>
+            </g>
+            <path class="cls-1" d="M132.51,87.39l-1.32-19.56,7.7-8.47-11.24,2.17-16.02-11.3h0c-9.35.33-14.22-9.06-6.32-17.08-7.88,7.57-12.79,18.21-12.79,30,0,28.51,40.88,62.26,41.59,62.83-11.73-10.41-12.43-22.12-1.59-38.59l25.3-38.46c.07-.11.14-.22.21-.32h0l-25.51,38.78ZM117.91,57.59l3,2.12-18.39,8.04,15.39-10.15ZM124.3,65.48l1.77,3.15-27.07,13.13,25.3-16.28ZM112.8,86.06l16.43-11.53.25,3.66-16.68,7.87Z"/>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

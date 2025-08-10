@@ -1,0 +1,95 @@
+{% load i18n %}
+{% load static %}
+
+
+<div class="col-xl-3 col-lg-4 theiaStickySidebar">
+							<div class="settings-widget">
+								<div class="settings-header d-sm-flex flex-row flex-wrap text-center text-sm-start align-items-center">
+									<a href="{% url 'home:FrontProviderDashboard' %}"><img alt="profile image" src="{%  static '' %}{{FRONTEND_ASSETS}}/img/user/table-avatar-03.jpg" class="avatar-lg rounded-circle"></a>
+									<div class="ms-sm-3 ms-md-0 ms-lg-3 mt-2 mt-sm-0 mt-md-2 mt-lg-0">
+										<h3 class="mb-0"><a href="{% url 'home:FrontProviderDashboard' %}">{{ user.get_full_name }}</a><img src="{{ user.get_image }}" class="ms-1" alt="Img"></h3>
+										<p class="mb-0">{{ user.email }}</p>
+									</div>
+								</div>
+								<div class="settings-menu">
+									<div id="sidebar-menu" class="sidebar-menu">
+										<ul>
+											<li class="nav-item">
+												<a href="{% url 'home:FrontProviderDashboard' %}" class="nav-link active">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/sidebar-icon-01.svg" alt="Img"> {% translate 'Dashboard' %}
+
+												</a>
+											</li>
+											<li class="nav-item submenu">
+												<a href="{% url 'home:FrontProviderJobRequestList' %}" class="nav-link">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/sidebar-icon-02.svg" alt="Img"> {% translate 'Jobs' %}
+													<span class="menu-arrow"></span>
+												</a>
+												<ul class="sub-menu-ul">
+
+													<li>
+														<a href="{% url 'home:FrontProviderJobRequestList' %}">{% translate 'New' %}</a>
+													</li>
+
+													<li>
+														<a href="{% url 'home:FrontProviderJobRequestList' %}">{% translate 'Processing' %} </a>
+													</li>
+                                                    <li>
+														<a href="{% url 'home:FrontProviderJobRequestList' %}">{% translate 'Completed' %}</a>
+													</li>
+													<li>
+														<a href="{% url 'home:FrontProviderJobRequestList' %}">{% translate 'Cancelled' %}</a>
+													</li>
+
+												</ul>
+											</li>
+
+											<li class="nav-item">
+												<a href="{% url 'home:FrontProviderJobReviews' %}" class="nav-link">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/sidebar-icon-04.svg" alt="Img"> {% translate 'Reviews' %}
+												</a>
+											</li>
+											<li class="nav-item">
+												<a href="{% url 'home:FrontProviderJobChat' %}" class="nav-link">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/sidebar-icon-06.svg" alt="Img"> {% translate 'Chat' %}
+												</a>
+											</li>
+											<li class="nav-item">
+												<a href="{% url 'home:FrontProviderJobRequestList' %}" class="nav-link">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/sidebar-icon-07.svg" alt="Img"> {% translate 'Payments' %}
+												</a>
+											</li>
+											<li class="nav-item">
+												<a href="javascript:void(0);" class="nav-link">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/sidebar-icon-10.svg" alt="Img">  {% translate 'Settings' %}
+													<span class="menu-arrow"></span>
+												</a>
+												<ul class="sub-menu-ul">
+													<li>
+														<a href="{% url 'user:FrontUpdateProfile' user.slug %}">{% translate 'Profile' %}</a>
+													</li>
+													<li>
+														<a href="{% url 'home:FrontProviderJobRequestList' %}">{% translate 'Plan & Billing' %}</a>
+													</li>
+													<li>
+														<a href="{% url 'home:FrontProviderJobRequestList' %}">{% translate 'Verify Identity' %}</a>
+													</li>
+													<li>
+														<a href="{% url 'user:FrontResetPassword' %}">{% translate 'Change Password' %}</a>
+													</li>
+													<li>
+														<a href="{% url 'home:FrontProviderJobRequestList' %}">{% translate 'Delete Account' %}</a>
+													</li>
+												</ul>
+											</li>
+											<li class="nav-item">
+												<a href="{% url 'user:FrontCustomerLogout' %}" class="nav-link">
+													<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/icon/sidebar-icon-11.svg" alt="Img"> {% translate 'Logout' %}
+												</a>
+											</li>
+										</ul>
+									</div>
+
+								</div>
+							</div>
+						</div>

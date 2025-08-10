@@ -1,0 +1,105 @@
+{% extends BACKEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+    <link href="{% static '' %}{{ BACKEND_ASSETS }}/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet"
+          type="text/css"/>
+    <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+        <div id="kt_content_container" class="container-fluid">
+            <form id="kt_ecommerce_edit_gateway_form" class="form d-flex flex-column flex-lg-row"
+                  enctype="multipart/form-data" action="{% url 'wallet:AdminPaymentGatewayUpdate' gateway.slug %}"
+                  method="POST">
+                {% csrf_token %}
+
+                <div class="d-flex flex-column flex-lg-row-fluid gap-7 gap-lg-10">
+
+                    <div class="card card-flush py-4">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <h2>{% translate 'Gateway Data' %}</h2>
+                            </div>
+                        </div>
+                        <div class="card-body pt-0">
+                            <div class="d-flex flex-column gap-5 gap-md-7">
+
+                                <div class="fv-row">
+                                    <label class="required form-label">{% translate 'Gateway Name' %}</label>
+                                    <input class="form-control" name="name"
+                                           placeholder="{% translate 'Gateway Name' %}" value="{{ gateway.name }}"/>
+                                    </div>
+                                <div class="fv-row">
+                                    <label class="form-label">{% translate 'Gateway Image' %}</label>
+                                    {% if gateway.image %}
+                                        <div class="mb-3">
+                                            <img src="{{ gateway.image.url }}" alt="{{ gateway.name }}" style="max-height: 50px;" class="img-thumbnail"/>
+                                            <p class="text-muted fs-7">{% translate 'Current Image' %}</p>
+                                        </div>
+                                    {% endif %}
+                                    <input type="file" name="image" class="form-control" />
+                                    <div class="text-muted fs-7">{% translate 'Set the gateway logo image. Only *.png, *.jpg and *.jpeg image files are accepted.' %}</div>
+                                </div>
+                                <div class="fs-3 fw-bolder mb-n2">{% translate 'Settings' %}</div>
+                                {% with setting=gateway.settings.first %}
+                                <div class="d-flex flex-column flex-md-row gap-5">
+                                    <div class="fv-row flex-row-fluid">
+                                        <label class="required form-label">{% translate 'Setting Key' %}</label>
+                                        <input class="form-control" name="setting_key"
+                                               placeholder="e.g. public_key or client_id" value="{{ setting.setting_key }}"/>
+                                        </div>
+                                    <div class="flex-row-fluid">
+                                        <label class="required form-label">{% translate 'Setting Value (Secret)' %}</label>
+                                        <input class="form-control" name="setting_secret"
+                                               placeholder="e.g. sk_...." value="{{ setting.setting_value }}"/>
+                                        </div>
+                                </div>
+                                {% endwith %}
+
+                            </div>
+                        </div>
+                        <div class="card-body pt-0">
+                            {% if gateway_form.errors %}
+                                {% for error_field, error_message in gateway_form.errors.items %}
+                                    <div class="alert alert-danger">
+                                        {{ error_field|striptags }}: {{ error_message|striptags }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'wallet:AdminPaymentGatewayList' %}" id="kt_ecommerce_edit_order_cancel"
+                           class="btn btn-light me-5">{% translate 'Cancel' %}</a>
+                        <button type="submit" id="kt_ecommerce_edit_order_submit" class="btn btn-primary">
+                            <span class="indicator-label">{% translate 'Save Changes' %}</span>
+                            <span class="indicator-progress">{% translate 'Please wait...' %}
+											<span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                        </button>
+                        </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    {% endblock %}
+
+{% block custom_js %}
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/plugins/custom/datatables/datatables.bundle.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/plugins/custom/formrepeater/formrepeater.bundle.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/apps/ecommerce/sales/save-order.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/widgets.bundle.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/widgets.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/apps/chat/chat.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/type.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/budget.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/settings.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/team.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/targets.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/files.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/complete.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/main.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/upgrade-plan.js"></script>
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/users-search.js"></script>
+    {% endblock custom_js %}
+
+{% block foot %} {% include BACKEND_FOOTER %}  {% endblock %}
+{% block js %} {% include BACKEND_JS %}  {% endblock %}

@@ -1,0 +1,590 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+{% block body %}
+
+	  <!-- Inner Banner -->
+        <div class="inner-banner inner-bg3">
+            <div class="container">
+                <div class="inner-banner-title text-center">
+                    <h3>{% translate 'Ridge Fitness Club' %}</h3>
+                    <p>{% translate 'News pariatur. Excepteur sint occaecat iat nulla pariatur.Excepteur' %} </p>
+                </div>
+
+                <div class="banner-list">
+                    <div class="row align-items-center justify-content-center">
+                        <div class="col-lg-6 col-md-7">
+                            <ul class="list">
+                                <li>
+                                    <a href="{% url 'home:HomeIndex' %}">{% translate 'Home' %}</a>
+                                </li>
+                                <li>
+                                    <i class='bx bx-chevron-right'></i>
+                                </li>
+                                <li>{% translate 'Pages' %}</li>
+                                <li>
+                                    <i class='bx bx-chevron-right'></i>
+                                </li>
+                                <li class="active">{% translate 'Ridgi Fitness Clu' %}</li>
+                            </ul>
+                        </div>
+
+                        <div class="col-lg-6 col-md-5">
+                            <p>{% translate 'Results for' %}: <a href="#">{% translate 'Listings' %}</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Inner Banner End -->
+
+        <!-- Listing Widget Section -->
+        <div class="listing-widget-section pt-100 pb-70">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-4">
+                        <div class="listing-section-right">
+                            <h3 class="title"> <i class="flaticon-filter"></i> {% translate 'Filters' %}</h3>
+                            <div class="listing-right-form">
+                                <form>
+                                    <div class="row justify-content-center">
+                                        <div class="col-lg-12">
+                                            <div class="form-group">
+                                                <i class='flaticon-filter'></i>
+                                                <select class="form-control">
+                                                    <option>{% translate 'All Listing Type' %}</option>
+                                                    <option>{% translate 'Restaurants' %}</option>
+                                                    <option>{% translate 'Events' %}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-12">
+                                            <div class="form-group">
+                                                <i class='flaticon-loupe'></i>
+                                                <input type="text" class="form-control" placeholder="{% translate 'What Are Searching' %}*">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-12">
+                                            <div class="form-group">
+                                                <i class='flaticon-menu'></i>
+                                                <input type="text" class="form-control" placeholder="{% translate 'All Cities' %}">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-12">
+                                            <div class="form-group">
+                                                <i class='flaticon-list'></i>
+                                                <select class="form-control">
+                                                    <option>{% translate 'All Category' %}</option>
+                                                    <option>{% translate 'Restaurants' %}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-12">
+                                            <div class="form-group">
+                                                <i class="flaticon-calendar"></i>
+                                                <input id="datetimepicker" type="text" class="form-control" placeholder="{% translate 'Date & Time' %}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="facilities-list">
+                                <h3 class="facilities-title"> {% translate 'Facilities' %}</h3>
+                                <ul>
+                                    <li>
+                                        <div class="agree-label">
+                                            <input type="checkbox" id="chb1">
+                                            <label for="chb1">
+                                                Air Conditioned
+                                            </label>
+                                        </div>
+                                    </li>
+
+                                    <li>
+                                        <div class="agree-label">
+                                            <input type="checkbox" id="chb2">
+                                            <label for="chb2">
+                                                Non-smoking
+                                            </label>
+                                        </div>
+                                    </li>
+
+                                    <li>
+                                        <div class="agree-label">
+                                            <input type="checkbox" id="chb3">
+                                            <label for="chb3">
+                                                Elevator building
+                                            </label>
+                                        </div>
+                                    </li>
+
+                                    <li>
+                                        <div class="agree-label">
+                                            <input type="checkbox" id="chb4">
+                                            <label for="chb4">
+                                                Free Parking
+                                            </label>
+                                        </div>
+                                    </li>
+
+                                    <li>
+                                        <div class="agree-label">
+                                            <input type="checkbox" id="chb5">
+                                            <label for="chb5">
+                                                Pet Friendly
+                                            </label>
+                                        </div>
+                                    </li>
+
+                                    <li>
+                                        <div class="agree-label">
+                                            <input type="checkbox" id="chb6">
+                                            <label for="chb6">
+                                                Free WiFi
+                                            </label>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-12 col-md-12 text-center">
+                                <button type="submit" class="default-btn border-radius">
+                                    Search Result
+                                    <i class='bx bx-plus'></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8">
+                        <div class="listing-widget-into">
+                            <div class="row align-items-center justify-content-center">
+                                <div class="col-lg-9 col-sm-9">
+                                    <div class="listing-right-form">
+                                        <div class="row justify-content-center">
+                                            <div class="form-group">
+                                                <label>{% translate 'Sort by' %}:</label>
+                                            </div>
+                                            <div class="col-lg-7 col-sm-8">
+                                                <div class="form-group">
+                                                    <i class='flaticon-filter'></i>
+                                                    <select class="form-control">
+                                                        <option>{% translate 'All Listing Type' %}</option>
+                                                        <option>{% translate 'Restaurants' %}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-sm-3">
+                                    <ul class="listing-widget-menu">
+                                        <li><a href="#" class="active"><i class="flaticon-filter"></i></a></li>
+                                        <li><a href="#"><i class="flaticon-menu"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="row justify-content-center">
+                                {% for item in locations %}
+                                <div class="col-lg-6 col-md-6">
+                                    <div class="place-list-item">
+                                        <div class="images">
+                                            <a href="{{ item.get_front_url }}" class="images-list">
+                                                <img src="{{ item.get_image }}" alt="Images">
+                                            </a>
+
+
+                                            <div class="place-status bg-dark-orange">
+                                                <a href="{{ item.get_front_url }}"><h3>{% translate 'Open Now' %}</h3></a>
+                                            </div>
+                                            <div class="place-tag">
+                                                <ul>
+                                                    <li>
+                                                        <a href="{{ item.get_map }}" target="_blank">
+                                                            <i class="flaticon-place"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-like"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-workflow"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <span><a href="{{ item.get_front_url }}">{{ item.price }}</a></span>
+                                                <h3 class="title"><a href="{{ item.get_front_url }}">{{ item.category.title }}</a></h3>
+                                            </div>
+                                        </div>
+
+                                        <div class="content">
+                                            <a href="{{ item.get_front_url }}">
+                                                <h3>{{ item.title }}</h3>
+                                            </a>
+                                            <p>
+                                                <i class="flaticon-cursor"></i>
+                                                {{ item.address }}
+                                            </p>
+
+                                            <ul class="place-rating">
+                                                <li>
+                                                    <a href="#">4.9</a>
+                                                </li>
+                                                <li>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star icon-color'></i>
+                                                    <i class='bx bxs-star icon-color'></i>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+
+                                <div class="col-lg-6 col-md-6">
+                                    <div class="place-list-item">
+                                        <div class="images">
+                                            <a href="" class="images-list">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-list2.jpg" alt="Images">
+                                            </a>
+
+                                            <div class="place-profile">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-profile2.png" alt="Images">
+                                                <h3>By, Jaein</h3>
+                                            </div>
+                                            <div class="place-status bg-dark-orange">
+                                                <a href=""><h3>Closed Now</h3></a>
+                                            </div>
+                                            <div class="place-tag">
+                                                <ul>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-place"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-like"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-workflow"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <span><a href="">$$$</a></span>
+                                                <h3 class="title"> <a href="#">Beauty Shop</a></h3>
+                                            </div>
+                                        </div>
+
+                                        <div class="content">
+                                            <a href="">
+                                                <h3>The Beauty Shop</h3>
+                                            </a>
+                                            <p>
+                                                <i class="flaticon-cursor"></i>
+                                                Davisto Laterani, 104, 00184 Roma, Italy
+                                            </p>
+
+                                            <ul class="place-rating">
+                                                <li>
+                                                    <a href="#">5.0</a>
+                                                </li>
+                                                <li>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6 col-md-6">
+                                    <div class="place-list-item">
+                                        <div class="images">
+                                            <a href="" class="images-list">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-list3.jpg" alt="Images">
+                                            </a>
+
+                                            <div class="place-profile">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-profile3.png" alt="Images">
+                                                <h3>By, Normand</h3>
+                                            </div>
+                                            <div class="place-status bg-color-blue">
+                                                <a href=""><h3>Open Now</h3></a>
+                                            </div>
+                                            <div class="place-tag">
+                                                <ul>
+                                                    <li>
+                                                        <a href="">
+                                                            <i class="flaticon-place"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="">
+                                                            <i class="flaticon-like"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-workflow"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <span><a href="">$$$</a></span>
+                                                <h3 class="title"><a href="#">Fitness Club</a></h3>
+                                            </div>
+                                        </div>
+
+                                        <div class="content">
+                                            <a href="">
+                                                <h3>Ridge Fitness Club</h3>
+                                            </a>
+                                            <p>
+                                                <i class="flaticon-cursor"></i>
+                                                Ke visto Onterio, 104, 6789 Rcona, usa
+                                            </p>
+
+                                            <ul class="place-rating">
+                                                <li>
+                                                    <a href="#">4.5</a>
+                                                </li>
+                                                <li>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star icon-color'></i>
+                                                    <i class='bx bxs-star icon-color'></i>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6 col-md-6">
+                                    <div class="place-list-item">
+                                        <div class="images">
+                                            <a href="" class="images-list">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-list4.jpg" alt="Images">
+                                            </a>
+
+                                            <div class="place-profile">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-profile4.png" alt="Images">
+                                                <h3>By, Olfred</h3>
+                                            </div>
+                                            <div class="place-status bg-color-blue">
+                                                <a href=""><h3>Open Now</h3></a>
+                                            </div>
+                                            <div class="place-tag">
+                                                <ul>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-place"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-like"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-workflow"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <span><a href="">$$$</a></span>
+                                                <h3 class="title"><a href="#">Restaurant</a></h3>
+                                            </div>
+                                        </div>
+
+                                        <div class="content">
+                                            <a href="">
+                                                <h3>The Hotel</h3>
+                                            </a>
+                                            <p>
+                                                <i class="flaticon-cursor"></i>
+                                                Ostapin, 134, 00184 Coventry, London
+                                            </p>
+
+                                            <ul class="place-rating">
+                                                <li>
+                                                    <a href="#">4.7</a>
+                                                </li>
+                                                <li>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star icon-color'></i>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6 col-md-6">
+                                    <div class="place-list-item">
+                                        <div class="images">
+                                            <a href="" class="images-list">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-list5.jpg" alt="Images">
+                                            </a>
+
+                                            <div class="place-profile">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-profile2.png" alt="Images">
+                                                <h3>By, Olfred</h3>
+                                            </div>
+                                            <div class="place-status bg-color-blue">
+                                                <a href=""><h3>Open Now</h3></a>
+                                            </div>
+                                            <div class="place-tag">
+                                                <ul>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-place"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-like"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-workflow"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <span><a href="">$$$</a></span>
+                                                <h3 class="title"><a href="#">Bar</a></h3>
+                                            </div>
+                                        </div>
+
+                                        <div class="content">
+                                            <a href="">
+                                                <h3>Bar Shop</h3>
+                                            </a>
+                                            <p>
+                                                <i class="flaticon-cursor"></i>
+                                                Ostapin, 134, 00184 Coventry, London
+                                            </p>
+
+                                            <ul class="place-rating">
+                                                <li>
+                                                    <a href="#">4.7</a>
+                                                </li>
+                                                <li>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star icon-color'></i>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6 col-md-6">
+                                    <div class="place-list-item">
+                                        <div class="images">
+                                            <a href="" class="images-list">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-list6.jpg" alt="Images">
+                                            </a>
+
+                                            <div class="place-profile">
+                                                <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/place-list/place-profile.png" alt="Images">
+                                                <h3>By, By, Jaein</h3>
+                                            </div>
+                                            <div class="place-status bg-color-blue">
+                                                <a href=""><h3>Open Now</h3></a>
+                                            </div>
+                                            <div class="place-tag">
+                                                <ul>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-place"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-like"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#">
+                                                            <i class="flaticon-workflow"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <span><a href="">$$$</a></span>
+                                                <h3 class="title"><a href="#">Shop</a></h3>
+                                            </div>
+                                        </div>
+
+                                        <div class="content">
+                                            <a href="">
+                                                <h3>The Shop</h3>
+                                            </a>
+                                            <p>
+                                                <i class="flaticon-cursor"></i>
+                                                Tilt Tilbury, 334, 00184 Coventry, London
+                                            </p>
+
+                                            <ul class="place-rating">
+                                                <li>
+                                                    <a href="#">4.7</a>
+                                                </li>
+                                                <li>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star'></i>
+                                                    <i class='bx bxs-star icon-color'></i>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+
+                                <div class="col-lg-12 text-center">
+                                    <a href="#" class="default-btn border-radius">
+                                        {% translate 'Load More' %}
+                                        <i class='bx bx-plus'></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Listing Widget Section End -->
+
+{% endblock %}
+
+
+{% block custom_js %}
+
+
+
+
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}
+

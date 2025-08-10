@@ -1,0 +1,248 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+{% block body %}
+
+<style>
+    /* Your existing styles remain unchanged */
+    .chat-messages > div { display: flex; flex-direction: column; height: calc(100vh - 150px); }
+    .chat-body.chat-page-group { flex: 1 1 auto; overflow-y: scroll !important; overflow-x: hidden; max-height: calc(100vh - 250px); height: calc(100vh - 250px); position: relative; }
+    .chat-body.chat-page-group .slimScrollBar, .chat-body.chat-page-group .slimScrollRail { display: none !important; }
+    .chat-body.chat-page-group::-webkit-scrollbar { width: 8px; }
+    .chat-body.chat-page-group::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .chat-body.chat-page-group::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+    .chat-body.chat-page-group::-webkit-scrollbar-thumb:hover { background: #555; }
+    .messages { min-height: 100%; display: flex; flex-direction: column; padding: 10px; }
+</style>
+
+<div class="chat-page main-chat-blk dashboard-page" id="chat-app">
+    <div class="chat-page-wrapper">
+        <div class="container">
+            <div class="content">
+                <!-- Left Sidebar (Dialogs List) -->
+                <div class="sidebar-group left-sidebar chat_sidebar">
+                    <div id="chats" class="left-sidebar-wrap sidebar active slimscroll">
+                        <div class="slimscroll">
+                           <div class="left-chat-title all-chats d-flex justify-content-between align-items-center">
+                               <div class="select-group-chat">
+                                   <div class="dropdown"><a href="javascript:void(0);">All Chats</a></div>
+                               </div>
+                           </div>
+                            <div class="sidebar-body chat-body" id="chatsidebar">
+                               <ul class="user-list" id="dialog-list-container">
+                                   <li v-for="dialog in dialogs" :key="dialog.dialog_id" :class="['user-list-item', 'chat-user-list', {'active': dialog.dialog_id === dialogId}]">
+                                       <a :href="'/chat/' + dialog.dialog_id + '/'">
+                                           <div class="avatar avatar-online">
+                                               <img :src="dialog.other_user.image_url || '/static/digithup/b.png'" class="rounded-circle" alt="image">
+                                           </div>
+                                           <div class="users-list-body">
+                                               <div>
+                                                   <h5>[[ dialog.other_user.name]]</h5>
+                                                   <p>[[ dialog.last_message]]</p>
+                                               </div>
+                                               <div class="last-chat-time">
+                                                   <small class="text-muted">[[ timeAgo(dialog.last_message_time) ]]</small>
+                                               </div>
+                                           </div>
+                                       </a>
+                                   </li>
+                               </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Chat Window -->
+                <div class="chat chat-messages" id="middle">
+                    <div>
+                        <div class="chat-header">
+                            <div class="user-details">
+                                <figure class="avatar ms-1">
+                                    <img :src="otherUserImage || '/static/digithup/b.png'" class="rounded-circle" alt="image">
+                                </figure>
+                                <div class="mt-1">
+                                    <h5>[[ otherUserName]]</h5>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-body chat-page-group" ref="messageContainer">
+                            <div class="messages" id="message-list">
+                                <div v-if="errorMessage" class="alert alert-danger text-center">[[ errorMessage]]</div>
+                                <!-- Messages are now rendered from Firestore -->
+                                <div v-for="message in messages" :key="message.id" :class="['chats', {'chats-right': message.sender == currentUserPk}]">
+                                    <div class="chat-avatar">
+                                        <img :src="message.sender == currentUserPk ? '{% if request.user.image %}{{ request.user.image.url }}{% else %}/static/digithup/b.png{% endif %}' : otherUserImage" class="rounded-circle dreams_chat" alt="image">
+                                    </div>
+                                    <div class="chat-content">
+                                        <div class="chat-profile-name" :class="{'text-end': message.sender == currentUserPk}">
+                                            <h6>
+                                                <i v-if="message.sender == currentUserPk" class="bx bx-check-double me-1"></i>
+                                                [[ message.sender == currentUserPk ? 'You' : otherUserName]]
+                                                <span>[[ formatTimestamp(message.createdAt) ]]</span>
+                                            </h6>
+                                        </div>
+                                        <div class="message-content">[[ message.text]]</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-footer">
+                        <form @submit.prevent="sendMessage">
+                            <input type="text" v-model="newMessage" class="form-control chat_form" placeholder="Type your message here...">
+                            <div class="form-buttons">
+                                <button class="btn send-btn" type="submit">
+                                    <i class="bx bx-paper-plane"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data for Vue.js -->
+<script type="application/json" id="chat-data">{
+    "dialogId": "{{ dialog_id|escapejs }}",
+    "currentUserPk": {{ request.user.pk }},
+    "otherUserPk": {{ other_user.pk }},
+    "otherUserName": "{{ other_user.get_full_name|escapejs }}",
+    "otherUserImage": "{{ other_user.image_url|escapejs }}"
+}</script>
+
+<!-- FIREBASE SDKs - ADD THESE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatData = JSON.parse(document.getElementById('chat-data').textContent);
+
+    // --- FIREBASE CONFIGURATION ---
+    // PASTE YOUR FIREBASE CONFIG OBJECT HERE
+    const firebaseConfig = {
+         apiKey: "AIzaSyDlv8r2NeYlbAjJHnLp1FeQmf8u_-0EVpw",
+  authDomain: "manfz-35648.firebaseapp.com",
+  projectId: "manfz-35648",
+  storageBucket: "manfz-35648.firebasestorage.app",
+  messagingSenderId: "184321323791",
+  appId: "1:184321323791:web:fab1a41b5827fb2753847a",
+  measurementId: "G-MYC8K2FZWG"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const ChatApp = Vue.createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                dialogId: chatData.dialogId,
+                currentUserPk: chatData.currentUserPk,
+                otherUserPk: chatData.otherUserPk,
+                otherUserName: chatData.otherUserName,
+                otherUserImage: chatData.otherUserImage,
+                messages: [], // Messages will be loaded from Firestore
+                dialogs: [],  // You can keep loading dialogs from your Django API
+                newMessage: '',
+                errorMessage: '',
+                db: db, // Store firestore instance
+                unsubscribe: null // To stop listening for new messages later
+            };
+        },
+        methods: {
+            // --- NEW: SEND MESSAGE TO FIRESTORE ---
+            sendMessage() {
+                if (!this.newMessage.trim()) return;
+
+                const messagesRef = this.db.collection('chats').doc(this.dialogId).collection('messages');
+
+                messagesRef.add({
+                    text: this.newMessage,
+                    sender: this.currentUserPk,
+                    receiver: this.otherUserPk,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp() // Use server time
+                }).then(() => {
+                    this.newMessage = '';
+                    this.scrollToBottom();
+                }).catch(error => {
+                    console.error("Error sending message: ", error);
+                    this.errorMessage = "Failed to send message.";
+                });
+            },
+
+            // --- NEW: LISTEN FOR REAL-TIME MESSAGES FROM FIRESTORE ---
+            listenForMessages() {
+                if (this.unsubscribe) this.unsubscribe(); // Stop any previous listener
+
+                const messagesRef = this.db.collection('chats').doc(this.dialogId).collection('messages').orderBy('createdAt', 'asc');
+
+                this.unsubscribe = messagesRef.onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === "added") {
+                            this.messages.push({ id: change.doc.id, ...change.doc.data() });
+                        }
+                    });
+                    this.$nextTick(() => {
+                        this.scrollToBottom();
+                    });
+                }, error => {
+                    console.error("Error listening for messages: ", error);
+                    this.errorMessage = "Error loading chat history.";
+                });
+            },
+
+            // --- HELPER METHODS ---
+            scrollToBottom() {
+                const container = this.$refs.messageContainer;
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            },
+            formatTimestamp(timestamp) {
+                if (!timestamp) return '';
+                return timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            },
+            loadDialogs() {
+                fetch('{% url 'home:FrontApiDialogList' %}')
+                    .then(response => response.json())
+                    .then(data => { this.dialogs = data; })
+                    .catch(error => console.error('Error loading dialogs:', error));
+            },
+            timeAgo(isoString) {
+                if (!isoString) return '';
+                const date = new Date(isoString);
+                const now = new Date();
+                const seconds = Math.round((now - date) / 1000);
+                const minutes = Math.round(seconds / 60);
+                if (minutes < 60) return `${minutes} min ago`;
+                const hours = Math.round(minutes / 60);
+                if (hours < 24) return `${hours} hr ago`;
+                const days = Math.round(hours / 24);
+                return `${days} day(s) ago`;
+            }
+        },
+        mounted() {
+            if (!this.dialogId) {
+                this.errorMessage = "No chat session selected.";
+                return;
+            }
+            this.listenForMessages();
+            this.loadDialogs();
+        },
+        beforeUnmount() {
+            if (this.unsubscribe) {
+                this.unsubscribe(); // Clean up the listener when the component is destroyed
+            }
+        }
+    });
+
+    ChatApp.mount('#chat-app');
+});
+</script>
+{% endblock %}

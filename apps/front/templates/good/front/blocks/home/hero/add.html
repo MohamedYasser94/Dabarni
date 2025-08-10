@@ -1,0 +1,438 @@
+{% extends BACKEND_BASE %}
+
+{% load static %}
+{% load i18n %}
+
+
+{% block body %}
+
+
+    <div class="app-main flex-column flex-row-fluid" id="purchaseApp">
+    <!--begin::Content wrapper-->
+    <div class="d-flex flex-column flex-column-fluid" id="ManufacturingApp">
+        <!--begin::Content-->
+        <div id="kt_app_content" class="app-content flex-column-fluid">
+            <!--begin::Content container-->
+            <div id="kt_app_content_container" class="app-container container-fluid">
+                <!--begin::Form-->
+                <form id="kt_invoice_form" class="form d-flex flex-column flex-lg-row"
+
+                      enctype="multipart/form-data" method="POST"
+                      action="{% url 'front:AdminFrontHomeHeroMainCreate' %}">
+                    {% csrf_token %}
+                    <!--begin::Aside column-->
+                    <div class="d-flex flex-column gap-7 gap-lg-10 w-100 w-lg-300px mb-7 me-lg-10">
+                        <!--begin::Thumbnail settings-->
+                        <div class="card card-flush py-4">
+                            <!--begin::Card header-->
+                            <div class="card-header">
+                                <!--begin::Card title-->
+                                <div class="card-title">
+                                    <h2>{% translate 'Main Image' %}</h2>
+                                </div>
+                                <!--end::Card title-->
+                            </div>
+                            <!--end::Card header-->
+                            <!--begin::Card body-->
+                            <div class="card-body text-center pt-0">
+                                <!--begin::Image input-->
+                                <div class="image-input image-input-empty image-input-outline mb-3"
+                                     data-kt-image-input="true"
+                                     style="background-image: url(
+                                             {% static 'add.html' %}{{ BACKEND_ASSETS }}/media/svg/files/blank-image.svg)">
+                                    <!--begin::Preview existing avatar-->
+                                    <div class="image-input-wrapper w-150px h-150px"></div>
+                                    <!--end::Preview existing avatar-->
+                                    <!--begin::Label-->
+                                    <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"
+                                           data-kt-image-input-action="change" data-bs-toggle="tooltip"
+                                           title="Change avatar">
+                                        <i class="bi bi-pencil-fill fs-7"></i>
+                                        <!--begin::Inputs-->
+                                        <input type="file" name="main_image" />
+                                        <input type="hidden" name="avatar_remove"/>
+                                        <!--end::Inputs-->
+                                    </label>
+                                    <!--end::Label-->
+                                    <!--begin::Cancel-->
+                                    <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"
+                                          data-kt-image-input-action="cancel" data-bs-toggle="tooltip"
+                                          title="Cancel avatar">
+															<i class="bi bi-x fs-2"></i>
+														</span>
+                                    <!--end::Cancel-->
+                                    <!--begin::Remove-->
+                                    <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"
+                                          data-kt-image-input-action="remove" data-bs-toggle="tooltip"
+                                          title="Remove avatar">
+															<i class="bi bi-x fs-2"></i>
+														</span>
+                                    <!--end::Remove-->
+                                </div>
+                                <!--end::Image input-->
+                                <!--begin::Description-->
+                                <div class="text-muted fs-7">{% translate 'Set the product thumbnail image. Only *.png, *.jpg and *.jpeg image files are accepted' %}</div>
+                                <!--end::Description-->
+                            </div>
+                            <!--end::Card body-->
+                        </div>
+                        <!--end::Thumbnail settings-->
+                         <!--begin::Thumbnail settings-->
+                        <div class="card card-flush py-4">
+                            <!--begin::Card header-->
+                            <div class="card-header">
+                                <!--begin::Card title-->
+                                <div class="card-title">
+                                    <h2>{% translate 'Main Video' %}</h2>
+                                </div>
+                                <!--end::Card title-->
+                            </div>
+                            <!--end::Card header-->
+                            <!--begin::Card body-->
+                            <div class="card-body text-center pt-0">
+                                <!--begin::Image input-->
+                                <div class="image-input image-input-empty image-input-outline mb-3"
+                                     data-kt-image-input="true"
+                                     style="background-image: url(
+                                             {% static '' %}{{ BACKEND_ASSETS }}/media/svg/files/blank-image.svg)">
+                                    <!--begin::Preview existing avatar-->
+                                    <div class="image-input-wrapper w-150px h-150px"></div>
+                                    <!--end::Preview existing avatar-->
+                                    <!--begin::Label-->
+                                    <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"
+                                           data-kt-image-input-action="change" data-bs-toggle="tooltip"
+                                           title="Change avatar">
+                                        <i class="bi bi-pencil-fill fs-7"></i>
+                                        <!--begin::Inputs-->
+                                        <input type="file" name="video" accept="video/*"/>
+                                        <input type="hidden" name="avatar_remove"/>
+                                        <!--end::Inputs-->
+                                    </label>
+                                    <!--end::Label-->
+                                    <!--begin::Cancel-->
+                                    <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"
+                                          data-kt-image-input-action="cancel" data-bs-toggle="tooltip"
+                                          title="Cancel avatar">
+															<i class="bi bi-x fs-2"></i>
+														</span>
+                                    <!--end::Cancel-->
+                                    <!--begin::Remove-->
+                                    <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"
+                                          data-kt-image-input-action="remove" data-bs-toggle="tooltip"
+                                          title="Remove avatar">
+															<i class="bi bi-x fs-2"></i>
+														</span>
+                                    <!--end::Remove-->
+                                </div>
+                                <!--end::Image input-->
+                                <!--begin::Description-->
+                                <div class="text-muted fs-7">{% translate 'Set the product thumbnail image. Only *.png, *.jpg and *.jpeg image files are accepted' %}</div>
+                                <!--end::Description-->
+                            </div>
+                            <!--end::Card body-->
+                        </div>
+                        <!--end::Thumbnail settings-->
+
+
+
+                    </div>
+                    <!--end::Aside column-->
+{#                     <!--begin::Aside column-->#}
+{#                    <div class="d-flex flex-column gap-7 gap-lg-10 w-100 w-lg-300px mb-7 me-lg-10">#}
+{#                        <!--begin::Thumbnail settings-->#}
+{#                        <div class="card card-flush py-4">#}
+{#                            <!--begin::Card header-->#}
+{#                            <div class="card-header">#}
+{#                                <!--begin::Card title-->#}
+{#                                <div class="card-title">#}
+{#                                    <h2>{% translate 'Gif' %}</h2>#}
+{#                                </div>#}
+{#                                <!--end::Card title-->#}
+{#                            </div>#}
+{#                            <!--end::Card header-->#}
+{#                            <!--begin::Card body-->#}
+{#                            <div class="card-body text-center pt-0">#}
+{#                                <!--begin::Image input-->#}
+{#                                <div class="image-input image-input-empty image-input-outline mb-3"#}
+{#                                     data-kt-image-input="true"#}
+{#                                     style="background-image: url(#}
+{#                                             {% static 'add.html' %}{{ BACKEND_ASSETS }}/media/svg/files/blank-image.svg)">#}
+{#                                    <!--begin::Preview existing avatar-->#}
+{#                                    <div class="image-input-wrapper w-150px h-150px"></div>#}
+{#                                    <!--end::Preview existing avatar-->#}
+{#                                    <!--begin::Label-->#}
+{#                                    <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"#}
+{#                                           data-kt-image-input-action="change" data-bs-toggle="tooltip"#}
+{#                                           title="Change avatar">#}
+{#                                        <i class="bi bi-pencil-fill fs-7"></i>#}
+{#                                        <!--begin::Inputs-->#}
+{#                                        <input type="file" name="main_gif" />#}
+{#                                        <input type="hidden" name="avatar_remove"/>#}
+{#                                        <!--end::Inputs-->#}
+{#                                    </label>#}
+{#                                    <!--end::Label-->#}
+{#                                    <!--begin::Cancel-->#}
+{#                                    <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"#}
+{#                                          data-kt-image-input-action="cancel" data-bs-toggle="tooltip"#}
+{#                                          title="Cancel avatar">#}
+{#															<i class="bi bi-x fs-2"></i>#}
+{#														</span>#}
+{#                                    <!--end::Cancel-->#}
+{#                                    <!--begin::Remove-->#}
+{#                                    <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"#}
+{#                                          data-kt-image-input-action="remove" data-bs-toggle="tooltip"#}
+{#                                          title="Remove avatar">#}
+{#															<i class="bi bi-x fs-2"></i>#}
+{#														</span>#}
+{#                                    <!--end::Remove-->#}
+{#                                </div>#}
+{#                                <!--end::Image input-->#}
+{#                                <!--begin::Description-->#}
+{#                                <div class="text-muted fs-7">{% translate 'Set the product thumbnail image. Only *.png, *.jpg and *.jpeg image files are accepted' %}</div>#}
+{#                                <!--end::Description-->#}
+{#                            </div>#}
+{#                            <!--end::Card body-->#}
+{#                        </div>#}
+{#                        <!--end::Thumbnail settings-->#}
+{#                         <!--begin::Thumbnail settings-->#}
+{#                        <div class="card card-flush py-4">#}
+{#                            <!--begin::Card header-->#}
+{#                            <div class="card-header">#}
+{#                                <!--begin::Card title-->#}
+{#                                <div class="card-title">#}
+{#                                    <h2>{% translate 'Main Video' %}</h2>#}
+{#                                </div>#}
+{#                                <!--end::Card title-->#}
+{#                            </div>#}
+{#                            <!--end::Card header-->#}
+{#                            <!--begin::Card body-->#}
+{#                            <div class="card-body text-center pt-0">#}
+{#                                <!--begin::Image input-->#}
+{#                                <div class="image-input image-input-empty image-input-outline mb-3"#}
+{#                                     data-kt-image-input="true"#}
+{#                                     style="background-image: url(#}
+{#                                             {% static '' %}{{ BACKEND_ASSETS }}/media/svg/files/blank-image.svg)">#}
+{#                                    <!--begin::Preview existing avatar-->#}
+{#                                    <div class="image-input-wrapper w-150px h-150px"></div>#}
+{#                                    <!--end::Preview existing avatar-->#}
+{#                                    <!--begin::Label-->#}
+{#                                    <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"#}
+{#                                           data-kt-image-input-action="change" data-bs-toggle="tooltip"#}
+{#                                           title="Change avatar">#}
+{#                                        <i class="bi bi-pencil-fill fs-7"></i>#}
+{#                                        <!--begin::Inputs-->#}
+{#                                        <input type="file" name="video" accept="video/*"/>#}
+{#                                        <input type="hidden" name="avatar_remove"/>#}
+{#                                        <!--end::Inputs-->#}
+{#                                    </label>#}
+{#                                    <!--end::Label-->#}
+{#                                    <!--begin::Cancel-->#}
+{#                                    <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"#}
+{#                                          data-kt-image-input-action="cancel" data-bs-toggle="tooltip"#}
+{#                                          title="Cancel avatar">#}
+{#															<i class="bi bi-x fs-2"></i>#}
+{#														</span>#}
+{#                                    <!--end::Cancel-->#}
+{#                                    <!--begin::Remove-->#}
+{#                                    <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"#}
+{#                                          data-kt-image-input-action="remove" data-bs-toggle="tooltip"#}
+{#                                          title="Remove avatar">#}
+{#															<i class="bi bi-x fs-2"></i>#}
+{#														</span>#}
+{#                                    <!--end::Remove-->#}
+{#                                </div>#}
+{#                                <!--end::Image input-->#}
+{#                                <!--begin::Description-->#}
+{#                                <div class="text-muted fs-7">{% translate 'Set the product thumbnail image. Only *.png, *.jpg and *.jpeg image files are accepted' %}</div>#}
+{#                                <!--end::Description-->#}
+{#                            </div>#}
+{#                            <!--end::Card body-->#}
+{#                        </div>#}
+{#                        <!--end::Thumbnail settings-->#}
+{##}
+{##}
+{##}
+{#                    </div>#}
+{#                    <!--end::Aside column-->#}
+                    <!--begin::Main column-->
+                    <div class="d-flex flex-column flex-row-fluid gap-7 gap-lg-10">
+                        <!--begin:::Tabs-->
+                        <ul class="nav nav-custom nav-tabs nav-line-tabs nav-line-tabs-2x border-0 fs-4 fw-bold mb-n2">
+                            <!--begin:::Tab item-->
+                            <li class="nav-item">
+                                <a class="nav-link text-active-primary pb-4 active" data-bs-toggle="tab"
+                                   href="#kt_ecommerce_add_product_general">{% translate 'General' %}</a>
+                            </li>
+                            <!--end:::Tab item-->
+                        </ul>
+                        <!--end:::Tabs-->
+                        <!--begin::Tab content-->
+                        <div class="tab-content">
+                            <!--begin::Tab pane-->
+                            <div class="tab-pane fade show active" id="kt_ecommerce_add_product_general"
+                                 role="tab-panel">
+                                <div class="d-flex flex-column gap-7 gap-lg-10">
+                                    <!--begin::General options-->
+                                    <div class="card card-flush py-4">
+                                        <!--begin::Card header-->
+                                        <div class="card-header">
+                                            <div class="card-title">
+                                                <h2>{% translate 'General' %}</h2>
+                                            </div>
+                                        </div>
+                                        <!--end::Card header-->
+                                        <!--begin::Card body-->
+                                        <div class="card-body pt-0">
+                                            <!--begin::Title-->
+                                            <div class="d-flex flex-wrap gap-5">
+                                                <!--begin::Input group-->
+                                                <div class="fv-row w-100 flex-md-root">
+                                                    <!--begin::Label-->
+                                                    <label class="form-label">{% translate 'Title' %}</label>
+                                                    <!--end::Label-->
+                                                    <!--begin::Input-->
+                                                    <input type="text" name="item_title"
+                                                           class="form-control mb-2"/>
+                                                    <!--end::Input-->
+
+                                                </div>
+                                                <!--end::Input group-->
+
+                                                <!--begin::Input group-->
+                                                <div class="fv-row w-100 flex-md-root">
+                                                    <!--begin::Label-->
+                                                    <label class="form-label">{% translate 'Keywords' %}</label>
+                                                    <!--end::Label-->
+                                                    <!--begin::Input-->
+                                                    <input type="text" name="item_keywords" class="form-control mb-2"
+                                                    />
+                                                    <!--end::Input-->
+
+                                                </div>
+                                                <!--end::Input group-->
+                                            </div>
+                                            <!--end:Title-->
+                                            <!--begin::Title-->
+                                            <div class="d-flex flex-wrap gap-5">
+                                                <!--begin::Input group-->
+                                                <div class="fv-row w-100 flex-md-root">
+                                                    <!--begin::Label-->
+                                                    <label class="form-label">{% translate 'Video Id' %}</label>
+                                                    <!--end::Label-->
+                                                    <!--begin::Input-->
+                                                    <input type="text" name="item_video_id"
+                                                           class="form-control mb-2"/>
+                                                    <!--end::Input-->
+
+                                                </div>
+                                                <!--end::Input group-->
+
+                                                <!--begin::Input group-->
+                                                <div class="fv-row w-100 flex-md-root">
+                                                    <!--begin::Label-->
+                                                    <label class="form-label">{% translate 'Url' %}</label>
+                                                    <!--end::Label-->
+                                                    <!--begin::Input-->
+                                                    <input type="text" name="item_url" class="form-control mb-2"
+                                                    />
+                                                    <!--end::Input-->
+
+                                                </div>
+                                                <!--end::Input group-->
+
+                                            </div>
+                                            <!--end:Title-->
+                                            <!--begin::Title-->
+                                            <div class="d-flex flex-wrap gap-5">
+
+                                                 <div class="card-body pt-10">
+                                                     <label class="required form-label">{% translate 'Description' %}</label>
+                                                 <textarea id="kt_docs_tinymce_basic" name="item_description"
+                                                              class="tox-target">
+
+
+                                                        </textarea>
+                                                 </div>
+                                            </div>
+                                            <!--end:Title-->
+
+
+
+                                        </div>
+                                        <!--end::Card header-->
+                                    </div>
+                                    <!--end::General options-->
+                                </div>
+                            </div>
+                            <!--end::Tab pane-->
+
+
+                        </div>
+                        <!--end::Tab content-->
+                        <div class="d-flex justify-content-end">
+                            <!--begin::Button-->
+                            <a href=""
+                               id="kt_ecommerce_add_product_cancel"
+                               class="btn btn-light me-5">{% translate 'Cancel' %}</a>
+                            <!--end::Button-->
+                            <!--begin::Button-->
+                            <button type="submit" id="kt_ecommerce_add_product_submit" class="btn btn-primary">
+                                <span class="indicator-label">{% translate 'Save Changes' %}</span>
+                                <span class="indicator-progress">{% translate 'Please wait...' %}
+													<span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                            </button>
+                            <!--end::Button-->
+                        </div>
+                    </div>
+                    <!--end::Main column-->
+
+                </form>
+                <!--end::Form-->
+                <br>
+                <div>
+                    {% if block_form.errors %}
+
+                        {% for error_field, error_message in block_form.errors.items %}
+
+                            <div class="alert alert-danger">
+                                {{ error_field|striptags }}: {{ error_message|striptags }}
+                                <strong>{{ error|escape }}</strong>
+                            </div>
+                        {% endfor %}
+
+                    {% endif %}
+                    {% for message in messages %}
+                        {% if message.extra_tags == 'Portfolio' %}
+                            {% if message.tags == 'Portfolio success' %}
+                                <div class="alert alert-info">
+                            {% elif message.tags == 'Portfolio danger' %}
+                                <div class="alert alert-danger">
+                            {% endif %}
+                        {{ message.extra_tags|striptags }}: {{ message|striptags }}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+                </div>
+
+                <!--end::Content container-->
+            </div>
+            <!--end::Content-->
+        </div>
+
+        <!--end::Content wrapper-->
+
+    </div>
+    <!--end:::Main-->
+
+
+
+
+{% endblock %}
+{% block custom_js %}
+    <script src="{% static '' %}{{ BACKEND_ASSETS }}/plugins/custom/tinymce/tinymce.bundle.js"></script>
+
+
+{% endblock custom_js %}
+{% block foot %} {% include BACKEND_FOOTER %}  {% endblock %}
+{% block js %} {% include BACKEND_JS %}  {% endblock %}

@@ -1,0 +1,32 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+             <!-- Start 404 Error -->
+		<div class="error-area">
+			<div class="d-table">
+				<div class="d-table-cell">
+					<div class="error-content">
+                        <img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/logo/logo3.png" alt="Images">
+						<h1>4 <span>0</span> 4</h1>
+						<h3>Oops! Page Not Found</h3>
+						<p>The page you are looking for might have been removed had its name changed or is temporarily unavailable.</p>
+						<a href="index.html" class="default-btn">
+							Return To Home Page
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+        <!-- End 404 Error -->
+
+{% endblock %}
+
+{% block custom_js %}
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}
+
+

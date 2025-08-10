@@ -1,0 +1,473 @@
+{% extends BACKEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+    <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+        <div id="kt_content_container" class="container-fluid">
+            <form id="kt_ecommerce_update_classified_ad_form" class="form d-flex flex-column flex-lg-row"
+                  enctype="multipart/form-data" method="POST"
+                  action="{% url 'classified:AdminClassifiedAdUpdate' ad.slug %}">
+                {% csrf_token %}
+                <div class="d-flex flex-column gap-7 gap-lg-10 w-100 w-lg-300px mb-7 me-lg-10">
+                    <div class="card card-flush py-4">
+                        <div class="card-header"><div class="card-title"><h2>{% translate 'Thumbnail' %}</h2></div></div>
+                        <div class="card-body text-center pt-0">
+                            <div class="image-input image-input-outline mb-3" data-kt-image-input="true"
+                                 style="background-image: url('{% if ad.image %}{{ ad.image.url }}{% else %}{% static '' %}{{ BACKEND_ASSETS }}/media/svg/files/blank-image.svg{% endif %}')">
+                                <div class="image-input-wrapper w-150px h-150px"
+                                     style="background-image: url('{% if ad.image %}{{ ad.image.url }}{% endif %}')"></div>
+                                <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow"
+                                       data-kt-image-input-action="change" data-bs-toggle="tooltip" title="Change image">
+                                    <i class="bi bi-pencil-fill fs-7"></i>
+                                    <input type="file" name="image" accept=".png, .jpg, .jpeg"/>
+                                </label>
+                            </div>
+                            <div class="text-muted fs-7">{% translate 'Set the ad thumbnail image.' %}</div>
+                        </div>
+                    </div>
+                    <div class="card card-flush py-4">
+                        <div class="card-header"><div class="card-title"><h2>{% translate 'Ad Details' %}</h2></div></div>
+                        <div class="card-body pt-0">
+                            <div class="mb-10 fv-row">
+                                <label class="required form-label">{% translate 'Category' %}</label>
+                                <select class="form-select mb-2" data-control="select2" data-placeholder="Select an option" name="category">
+                                    <option></option>
+                                    {% for value, text in ad_form.category.field.choices %}
+                                        <option value="{{ value }}" {% if ad.category.id == value %}selected{% endif %}>{{ text }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="fv-row">
+                                <label class="required form-label">{% translate 'Location' %}</label>
+                                <select class="form-select mb-2" data-control="select2" data-placeholder="Select an option" name="location">
+                                    <option></option>
+                                    {% for value, text in ad_form.location.field.choices %}
+                                        <option value="{{ value }}" {% if ad.location.id == value %}selected{% endif %}>{{ text }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column flex-row-fluid gap-7 gap-lg-10">
+                    <ul class="nav nav-custom nav-tabs nav-line-tabs nav-line-tabs-2x border-0 fs-4 fw-bold mb-n2">
+                        <li class="nav-item"><a class="nav-link text-active-primary pb-4 active" data-bs-toggle="tab" href="#general_tab">{% translate 'General' %}</a></li>
+                        <li class="nav-item"><a class="nav-link text-active-primary pb-4" data-bs-toggle="tab" href="#location_tab">{% translate 'Location Map' %}</a></li>
+                        <li class="nav-item"><a class="nav-link text-active-primary pb-4" data-bs-toggle="tab" href="#items_tab">{% translate 'Ad Items' %}</a></li>
+                        <li class="nav-item"><a class="nav-link text-active-primary pb-4" data-bs-toggle="tab" href="#attributes_tab">{% translate 'Attributes' %}</a></li>
+                        <li class="nav-item"><a class="nav-link text-active-primary pb-4" data-bs-toggle="tab" href="#media_tab">{% translate 'Media Gallery' %}</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="general_tab" role="tab-panel">
+                            <div class="d-flex flex-column gap-7 gap-lg-10">
+                                <div class="card card-flush py-4">
+                                    <div class="card-header"><div class="card-title"><h2>{% translate 'General' %}</h2></div></div>
+                                    <div class="card-body pt-0">
+                                        <div class="fv-row mb-10">
+                                            <label class="required form-label">{% translate 'Ad Title' %}</label>
+                                            <input type="text" name="title" class="form-control mb-2" value="{{ ad.title }}" placeholder="Ad title"/>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">{% translate 'Description' %}</label>
+                                            <textarea name="description" class="form-control" rows="6">{{ ad.description }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card card-flush py-4">
+                                    <div class="card-header"><div class="card-title"><h2>{% translate 'Pricing & Contact' %}</h2></div></div>
+                                    <div class="card-body pt-0">
+                                        <div class="d-flex flex-wrap gap-5">
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Price' %}</label>
+                                                <input type="number" step="any" name="price" class="form-control mb-2" value="{{ ad.price|default_if_none:'' }}"/>
+                                            </div>
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Hide Price?' %}</label>
+                                                <select name="hide_price" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                    {% for v, t in ad_form.hide_price.field.choices %}
+                                                        <option value="{{ v }}" {% if ad.hide_price == v %}selected{% endif %}>{{ t }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Is Negotiable?' %}</label>
+                                                <select name="negotiable" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                    {% for v, t in ad_form.negotiable.field.choices %}
+                                                        <option value="{{ v }}" {% if ad.negotiable == v %}selected{% endif %}>{{ t }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-5 mt-5">
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Phone Number' %}</label>
+                                                <input type="text" name="number" class="form-control mb-2" value="{{ ad.number|default_if_none:'' }}"/>
+                                            </div>
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Hide Phone?' %}</label>
+                                                <select name="hide_number" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                    {% for v, t in ad_form.hide_number.field.choices %}
+                                                        <option value="{{ v }}" {% if ad.hide_number == v %}selected{% endif %}>{{ t }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-5 mt-5">
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'WhatsApp Number' %}</label>
+                                                <input type="text" name="whats_app_number" class="form-control mb-2" value="{{ ad.whats_app_number|default_if_none:'' }}"/>
+                                            </div>
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Hide WhatsApp?' %}</label>
+                                                <select name="whats_app_hide_number" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                    {% for v, t in ad_form.whats_app_hide_number.field.choices %}
+                                                        <option value="{{ v }}" {% if ad.whats_app_hide_number == v %}selected{% endif %}>{{ t }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card card-flush py-4">
+                                    <div class="card-header"><div class="card-title"><h2>{% translate 'Promotion & Status' %}</h2></div></div>
+                                    <div class="card-body pt-0">
+                                        <div class="d-flex flex-wrap gap-5">
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Status' %}</label>
+                                                <select name="status" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                    {% for value, text in ad_form.status.field.choices %}
+                                                        <option value="{{ value }}" {% if ad.status == value %}selected{% endif %}>{{ text }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Is Featured?' %}</label>
+                                                <select name="is_featured" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                <option value="{{ item.is_featured }}">{{ item.is_featured }}</option>
+                                                    {% for value, text in ad_form.is_featured.field.choices %}
+                                                        <option value="{{ value }}" {% if ad.is_featured|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Is Premium?' %}</label>
+                                                <select name="is_premium" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                <option value="{{ item.is_premium }}">{{ item.is_premium }}</option>
+                                                    {% for value, text in ad_form.is_premium.field.choices %}
+                                                        <option value="{{ value }}" {% if ad.is_premium|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                                                    {% endfor %}
+
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-5 mt-5">
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Is Urgent?' %}</label>
+                                                <select name="is_urgent" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                    {% for value, text in ad_form.is_urgent.field.choices %}
+                                                        <option value="{{ value }}" {% if ad.is_urgent|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Is Promoted?' %}</label>
+                                                <select name="is_promoted" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                    {% for value, text in ad_form.is_promoted.field.choices %}
+                                                        <option value="{{ value }}" {% if ad.is_promoted|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="fv-row w-100 flex-md-root">
+                                                <label class="form-label">{% translate 'Featured Top?' %}</label>
+                                                <select name="is_featured_top" class="form-select mb-2" data-control="select2" data-hide-search="true">
+                                                    {% for value, text in ad_form.is_featured_top.field.choices %}
+                                                        <option value="{{ value }}" {% if ad.is_featured_top|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="location_tab" role="tab-panel">
+                            <div class="card card-flush py-4">
+                                <div class="card-header"><div class="card-title"><h2>{% translate 'Geographic Location' %}</h2></div></div>
+                                <div class="card-body pt-0">
+                                    <div id="map" style="height: 400px; width: 100%;" class="mb-5 rounded"></div>
+                                    <div class="d-flex flex-wrap gap-5">
+                                        <div class="fv-row w-100 flex-md-root">
+                                            <label class="form-label">{% translate 'Latitude' %}</label>
+                                            <input type="text" name="latitude" id="lat-input" class="form-control mb-2" value="{{ ad.latitude|default_if_none:'' }}" readonly/>
+                                        </div>
+                                        <div class="fv-row w-100 flex-md-root">
+                                            <label class="form-label">{% translate 'Longitude' %}</label>
+                                            <input type="text" name="longitude" id="lon-input" class="form-control mb-2" value="{{ ad.longitude|default_if_none:'' }}" readonly/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="items_tab" role="tab-panel">
+                            <div class="card card-flush py-4">
+                                <div class="card-header"><div class="card-title"><h2>{% translate 'Ad Items' %}</h2></div></div>
+                                <div class="card-body pt-0">
+                                    <h4 class="mb-3 fs-5">{% translate "Existing Items" %}</h4>
+                                    {% for item in items %}
+                                        <div class="form-group row mb-5 p-3 border rounded">
+                                            <input type="hidden" name="itemu_slug" value="{{ item.slug }}">
+                                            <div class="col-md-2">
+                                                {% if item.item_image %}
+                                                    <a href="{{ item.item_image.url }}" target="_blank">
+                                                        <img src="{{ item.item_image.url }}" class="img-thumbnail w-100px">
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">{% translate 'No Image' %}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">{% translate 'Name' %}</label>
+                                                        <input type="text" name="itemu_name" class="form-control" value="{{ item.item_name }}"/>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">{% translate 'Description' %}</label>
+                                                        <input type="text" name="itemu_description" class="form-control" value="{{ item.item_description|default_if_none:'' }}"/>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">{% translate 'Price' %}</label>
+                                                        <input type="number" name="itemu_price" class="form-control" value="{{ item.item_price|default_if_none:'' }}"/>
+                                                    </div>
+                                                    <div class="col-md-12 mt-3">
+                                                        <label class="form-label">{% translate 'Replace Image' %}</label>
+                                                        <input type="file" name="itemu_image_{{ item.slug }}" class="form-control form-control-sm" accept=".png, .jpg, .jpeg"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-center">
+                                                <input class="form-check-input" type="checkbox" name="itemu_delete" value="{{ item.slug }}"/>
+                                                <label class="ms-2 text-danger">{% translate 'Delete' %}</label>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <p class="text-muted">{% translate 'No existing items.' %}</p>
+                                    {% endfor %}
+                                    <div class="separator my-10"></div>
+                                    <h4 class="mb-3 fs-5">{% translate "Add New Items" %}</h4>
+                                    <div id="ad_items_repeater">
+                                        <div class="form-group">
+                                            <div data-repeater-list="new_items">
+                                                <div data-repeater-item class="mb-5">
+                                                    <div class="form-group row">
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">{% translate 'Name' %}</label>
+                                                            <input type="text" name="item_name" class="form-control"/>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">{% translate 'Description' %}</label>
+                                                            <input type="text" name="item_description" class="form-control"/>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <label class="form-label">{% translate 'Price' %}</label>
+                                                            <input type="number" name="item_price" class="form-control"/>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">{% translate 'Image' %}</label>
+                                                            <input type="file" name="item_image" class="form-control" accept=".png, .jpg, .jpeg"/>
+                                                        </div>
+                                                        <div class="col-md-1 d-flex align-items-end">
+                                                            <a href="javascript:;" data-repeater-delete class="btn btn-sm btn-light-danger">
+                                                                <i class="ki-duotone ki-trash fs-5"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group mt-5">
+                                            <a href="javascript:;" data-repeater-create class="btn btn-light-primary">
+                                                <i class="ki-duotone ki-plus fs-3"></i> {% translate 'Add Item' %}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="attributes_tab" role="tab-panel">
+                            <div class="card card-flush py-4">
+                                <div class="card-header"><div class="card-title"><h2>{% translate 'Custom Attributes' %}</h2></div></div>
+                                <div class="card-body pt-0">
+                                    <h4 class="mb-3 fs-5">{% translate "Existing Attributes" %}</h4>
+                                    {% for attr in attributes %}
+                                        <div class="form-group row mb-5 p-3 border rounded">
+                                            <input type="hidden" name="attributeu_slug" value="{{ attr.slug }}">
+                                            <div class="col-md-5">
+                                                <label class="form-label">{% translate 'Name' %}</label>
+                                                <input type="text" name="attributeu_name" class="form-control" value="{{ attr.name }}"/>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <label class="form-label">{% translate 'Value' %}</label>
+                                                <input type="text" name="attributeu_value" class="form-control" value="{{ attr.value }}"/>
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <input class="form-check-input" type="checkbox" name="attributeu_delete" value="{{ attr.slug }}"/>
+                                                <label class="ms-2 text-danger">{% translate 'Delete' %}</label>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <p class="text-muted">{% translate 'No existing attributes.' %}</p>
+                                    {% endfor %}
+                                    <div class="separator my-10"></div>
+                                    <h4 class="mb-3 fs-5">{% translate "Add New Attributes" %}</h4>
+                                    <div id="attributes_repeater">
+                                        <div class="form-group">
+                                            <div data-repeater-list="attributes">
+                                                <div data-repeater-item class="mb-5">
+                                                    <div class="form-group row">
+                                                        <div class="col-md-5">
+                                                            <label class="form-label">{% translate 'Name' %}</label>
+                                                            <input type="text" name="attribute_name" class="form-control"/>
+                                                        </div>
+                                                        <div class="col-md-5">
+                                                            <label class="form-label">{% translate 'Value' %}</label>
+                                                            <input type="text" name="attribute_value" class="form-control"/>
+                                                        </div>
+                                                        <div class="col-md-2 d-flex align-items-end">
+                                                            <a href="javascript:;" data-repeater-delete class="btn btn-sm btn-light-danger">
+                                                                <i class="ki-duotone ki-trash fs-5"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group mt-5">
+                                            <a href="javascript:;" data-repeater-create class="btn btn-light-primary">
+                                                <i class="ki-duotone ki-plus fs-3"></i> {% translate 'Add Attribute' %}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="media_tab" role="tab-panel">
+                            <div class="card card-flush py-4">
+                                <div class="card-header"><div class="card-title"><h2>{% translate 'Media Gallery' %}</h2></div></div>
+                                <div class="card-body pt-0">
+                                    <h4 class="mb-3 fs-5">{% translate "Existing Images" %}</h4>
+                                    <div class="row g-5">
+                                        {% for media in media_gallery %}
+                                            <div class="col-md-3 text-center">
+                                                <a href="{{ media.image.url }}" target="_blank">
+                                                    <img src="{{ media.image.url }}" class="img-thumbnail" style="height:100px; object-fit:cover;">
+                                                </a>
+                                                <div class="mt-2">
+                                                    <input class="form-check-input" type="checkbox" name="media_delete" value="{{ media.slug }}"/>
+                                                    <label class="ms-2 text-danger">{% translate 'Delete' %}</label>
+                                                </div>
+                                            </div>
+                                        {% empty %}
+                                            <p class="text-muted">{% translate 'No gallery images.' %}</p>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="separator my-10"></div>
+                                    <h4 class="mb-3 fs-5">{% translate "Upload New Images" %}</h4>
+                                    <div class="fv-row mb-2">
+                                        <input class="form-control" type="file" name="new_gallery_images" multiple accept=".png, .jpg, .jpeg"/>
+                                    </div>
+                                    <div class="text-muted fs-7">{% translate 'Set the ad media gallery.' %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'classified:AdminClassifiedAdList' %}" class="btn btn-light me-5">{% translate 'Cancel' %}</a>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="indicator-label">{% translate 'Save Changes' %}</span>
+                            <span class="indicator-progress">{% translate 'Please wait...' %}
+                                <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="mt-5">
+                {% if ad_form.errors %}
+                    {% for field, error_list in ad_form.errors.items %}
+                        {% for error in error_list %}
+                            <div class="alert alert-danger">
+                                <strong>{{ field|title }}</strong>: {{ error }}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
+                {% for message in messages %}
+                    {% if message.extra_tags == 'ClassifiedAd' %}
+                        <div class="alert {% if 'success' in message.tags %}alert-success{% else %}alert-danger{% endif %}">{{ message }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block custom_js %}
+    {# Your custom_js block remains unchanged #}
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_Maps_API_KEY&libraries=places&callback=initMap" async defer></script>
+
+    <script>
+        function initMap() {
+            const initialPosition = { lat: {{ ad.latitude|default:'26.1627' }}, lng: {{ ad.longitude|default:'32.7265' }} }; // Center on existing ad location or default
+            let map = new google.maps.Map(document.getElementById("map"), { center: initialPosition, zoom: 12 });
+            let marker = new google.maps.Marker({ position: initialPosition, map: map, draggable: true });
+            function updateFields(latLng) {
+                document.getElementById('lat-input').value = latLng.lat().toFixed(6);
+                document.getElementById('lon-input').value = latLng.lng().toFixed(6);
+            }
+            google.maps.event.addListener(marker, 'dragend', (event) => updateFields(event.latLng));
+            google.maps.event.addListener(map, 'click', (event) => { marker.setPosition(event.latLng); updateFields(event.latLng); });
+            updateFields(marker.getPosition());
+        }
+
+        KTUtil.onDOMContentLoaded(function () {
+            let mapInitialized = false;
+
+            $('#ad_items_repeater').repeater({
+                initEmpty: false,
+                show: function () { $(this).slideDown(); },
+                hide: function (d) { $(this).slideUp(d); }
+            });
+
+            $('#attributes_repeater').repeater({
+                initEmpty: false,
+                show: function () { $(this).slideDown(); },
+                hide: function (d) { $(this).slideUp(d); }
+            });
+
+            const tabTriggers = document.querySelectorAll('a[data-bs-toggle="tab"]');
+            tabTriggers.forEach(trigger => {
+                trigger.addEventListener('shown.bs.tab', function(event) {
+                    const tabId = event.target.getAttribute('href');
+                    if (tabId === '#location_tab' && !mapInitialized) {
+                        if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                            initMap();
+                            mapInitialized = true;
+                        }
+                    }
+                });
+            });
+
+            const activeTab = document.querySelector('.nav-tabs .nav-link.active');
+            if (activeTab && activeTab.getAttribute('href') === '#location_tab' && typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                initMap();
+                mapInitialized = true;
+            }
+        });
+    </script>
+    {# The long jquery.repeater.min.js script can be included here or loaded from a static file #}
+
+{% endblock custom_js %}

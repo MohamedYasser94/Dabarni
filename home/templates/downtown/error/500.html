@@ -1,0 +1,47 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+  	<!-- Main Wrapper -->
+		<div class="main-wrapper">
+
+			<!-- Error 500 -->
+			<div class="container-fluid p-0">
+				<div class="w-100 overflow-hidden position-relative flex-wrap d-block vh-100">
+					<div class="row justify-content-center align-items-center vh-100 overflow-auto flex-wrap ">
+						<div class="col-lg-8 col-md-12 text-center">
+							<div class="error-info">
+								<div class="error-404-img">
+									<img src="assets/img/error-500.png" class="img-fluid" alt="error-500-image">
+									<div class="error-content">
+										<h5 class="mb-2">Oops! That Page Can’t Be Found.</h5>
+										<p>The page you are looking for was never existed.</p>
+										<a href="index.html" class="btn btn-primary-gradient btn-sm">Back to Home</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Error 500 -->
+
+			<!-- Cursor -->
+			<div class="mouse-cursor cursor-outer"></div>
+			<div class="mouse-cursor cursor-inner"></div>
+			<!-- /Cursor -->
+
+		</div>
+		<!-- /Main Wrapper -->
+
+
+{% endblock %}
+
+{% block custom_js %}
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}
+
+

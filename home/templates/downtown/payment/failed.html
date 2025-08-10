@@ -1,0 +1,35 @@
+{% extends FRONTEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+            <!-- Page Content -->
+			<div class="content">
+				<div class="container-fluid">
+					<div class="row">
+						<div class="col-md-8 offset-md-2">
+							<!-- Page Not Found -->
+							<div class="empty-content text-center">
+								<img src="{%  static '' %}{{FRONTEND_ASSETS}}/img/PaymentSuccessful.jpg" style="height:200px;width: 200px" alt="logo" class="img-fluid">
+								<h2>{% translate 'Payment Successful' %}</h2>
+								<p> {% translate 'Your payment has been successfully processed. Thank you for your purchase!' %}</p>
+								<div class="btn-item">
+									<a class="btn get-btn" href="{% url 'home:HomeIndex' %}">{% translate 'Go To Home' %} <i class="feather-arrow-right ms-2"></i></a>
+									<a class="btn courses-btn" href="javascript:void(0);">Back <i class="feather-arrow-right ms-2"></i></a>
+								</div>
+							</div>
+							<!-- / Page Not Found -->
+
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Page Content -->
+
+{% endblock %}
+
+{% block custom_js %}
+
+{% endblock custom_js %}
+{% block foot %} {% include FRONTEND_FOOTER %}  {% endblock %}
+{% block js %} {% include FRONTEND_JS %}{% endblock %}

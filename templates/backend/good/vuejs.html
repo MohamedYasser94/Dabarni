@@ -1,0 +1,56 @@
+{% load static %}
+{% load i18n %}
+
+<script>
+
+    const BackEndGeneralApp = Vue.createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                messagesss: 'Hello World',
+                showResult: false,
+                searchInput: '',
+                searchResults: [],
+                treatments: [],
+                persons: [],
+                notifications: [],
+
+
+            }
+        },
+        methods: {
+            getSearchItem: function () {
+                const url = "{% url 'api:AdminApiSearch'  %}";
+                payload = {
+                    "csrfmiddlewaretoken": "{{ csrf_token }}",
+                    "search": this.searchInput
+                }
+                jQuery.ajax({
+                    type: 'POST',
+                    dataType: "json",
+                    url: url,
+                    data: payload,
+                    timeout: 5000,
+                    success: (data) => {
+                        if (data.success === true) {
+                            this.treatments = data.treatments
+                            this.persons = data.persons
+                            this.showResult = true
+                        } else {
+                            this.showResult = false
+                        }
+                    },
+                    error: function (data) {
+                        this.showResult = false
+                    },
+                });
+            },
+
+        },
+
+    })
+    BackEndGeneralApp.mount('#ket_app_body')
+    BackEndGeneralApp.config.devtools = true
+
+
+</script>
