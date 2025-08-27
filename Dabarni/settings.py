@@ -67,6 +67,8 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.sitemaps',
     'django.contrib.humanize',
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
 ]
 
 OWN_APPS = [
@@ -309,6 +311,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 ######### Channel Layer ############
 CHANNEL_LAYERS = {
