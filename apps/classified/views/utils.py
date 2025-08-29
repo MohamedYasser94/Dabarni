@@ -1,8 +1,4 @@
-from django.contrib.auth import get_user_model
-
-from apps.classified.models.classified import ClassifiedCategories, ClassifiedLocation, ClassifiedAd, ClassifiedReview
 from apps.classified.models.job import *
-from core.models.core import CommonTranslate
 from helper.decorators import authenticated_staff, staff_only
 
 User = get_user_model()

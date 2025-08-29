@@ -77,7 +77,6 @@ OWN_APPS = [
     'api.apps.ApiConfig',
     'apps.classified.apps.ClassifiedConfig',
     'apps.front.apps.FrontConfig',
-    'apps.provider.apps.ProviderConfig',
     'apps.wallet.apps.WalletConfig',
 
 ]

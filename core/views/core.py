@@ -18,8 +18,8 @@ from core.forms.core import SystemSettingForm, AdminCommonSocialLinkForm, AdminC
     AdminSiteSettingUpdateForm, AdminSiteSettingForm, AdminCommonTranslateForm, AdminHelpCategoriesForm, \
     AdminHelpQuestionsForm, ConfigSettingForm
 from core.models.core import SystemSetting, SiteSetting, CommonSeo, CommonSocialLink, HelpCategories, CommonTranslate, \
-    HelpQuestions, CommonMediaFiles, CommonTags, CommonComment, CommonProfile, QrCode, ConfigSetting
-from core.models.localization import Country
+    HelpQuestions, CommonMediaFiles, CommonTags, CommonComment, QrCode, ConfigSetting
+
 from helper.commonHelper import BACKEND_TEMPLATES
 from helper.decorators import superuser_only, staff_only, authenticated_staff, admin_only
 
@@ -107,7 +107,7 @@ def AdminSiteSettingCreate(request):
             meta_keywords = request.POST.get('meta_keywords')
             meta_author = request.POST.get('meta_author')
             seo_image = request.FILES.get('seo_image')
-            country = Country.objects.get(id=country_id)
+
             user_id = request.user.id
             user = User.objects.get(id=user_id)
 
@@ -116,7 +116,7 @@ def AdminSiteSettingCreate(request):
                 print(country_id)
 
                 setting_form = SiteSetting(title=title, keywords=keywords, copyright=copyright, email=email,
-                                           image=image, domain=domain, country=country, phone=phone, address=address,
+                                           image=image, domain=domain,  phone=phone, address=address,
                                            about=about, status=status, )
                 setting_form.save()
 
@@ -209,10 +209,7 @@ def AdminSiteSettingUpdate(request, slug):
             meta_keywords = title
             meta_author = request.user.id
 
-            try:
-                country = Country.objects.get(id=country_id)
-            except:
-                country = None
+
             user_id = request.user.id
             setting_object = SiteSetting.objects.get(slug=slug)
             setting_object.title = title
@@ -236,7 +233,7 @@ def AdminSiteSettingUpdate(request, slug):
                 setting_object.favicon = favicon
             else:
                 setting_object.favicon = setting_object.favicon
-            setting_object.country = country
+
             setting_object.phone = phone
             setting_object.address = address
             setting_object.about = about
@@ -1260,27 +1257,7 @@ def AdminCommonSocialLink(request, provider, url, owner_model, owner_id):
         social.save()
 
 
-def AdminCommonProfile(request, phone, address_type, address, country, governorates, city, area, note, owner_model,
-                       owner_id):
-    try:
-        print("try")
-        profile = CommonProfile.objects.get(owner_model=ContentType.objects.get(model=owner_model), owner_id=owner_id)
-        profile.phone = phone
-        profile.address_type = address_type
-        profile.address = address
-        profile.country = country
-        profile.governorates = governorates
-        profile.city = city
-        profile.area = area
-        profile.note = note
-        profile.save()
-    except:
-        print("except")
-        profile = CommonProfile(phone=phone, address_type=address_type, address=address, country=country,
-                                governorates=governorates, city=city, area=area, note=note,
-                                owner_model=ContentType.objects.get(model=owner_model),
-                                owner_id=owner_id)
-        profile.save()
+
 
 
 def AdminCommonTranslate(request, title, keyword, body, owner_model, owner_id):

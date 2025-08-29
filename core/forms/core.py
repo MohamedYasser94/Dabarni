@@ -1,7 +1,7 @@
 from django import forms
 
 from core.models.core import SystemSetting, SiteSetting, QrCode, CommonSeo, CommonMediaFiles, CommonTags, \
-    CommonSocialLink, CommonProfile, CommonTranslate, HelpCategories, HelpQuestions, ConfigSetting
+    CommonSocialLink,CommonTranslate, HelpCategories, HelpQuestions, ConfigSetting
 
 
 class AdminSiteSettingForm(forms.ModelForm):
@@ -85,14 +85,7 @@ class AdminCommonSocialLinkForm(forms.ModelForm):
         exclude = ['owner_model', 'owner_id', 'owner', 'code', 'slug']
 
 
-class AdminCommonProfileForm(forms.ModelForm):
-    # url = forms.CharField(required=False)
-    # provider = forms.CharField(required=False)
 
-    class Meta:
-        model = CommonProfile
-        fields = '__all__'
-        exclude = ['owner_model', 'owner_id', 'owner', 'code', 'slug']
 
 
 class AdminCommonTranslateForm(forms.ModelForm):

@@ -24,7 +24,7 @@
                                         <span class="path1"></span>
                                         <span class="path2"></span>
                                     </i>
-                                    <input type="text" data-kt-ecommerce-product-filter="search" class="form-control form-control-solid w-250px ps-12" placeholder="{% translate 'Search Provider' %}" />
+                                    <input type="text" data-kt-ecommerce-product-filter="search" class="form-control form-control-solid w-250px ps-12" placeholder="{% translate 'Search provider' %}" />
                                 </div>
                                 <!--end::Search-->
                             </div>
@@ -42,7 +42,7 @@
                                     <!--end::Select2-->
                                 </div>
                                 <!--begin::Add provider-->
-                                <a href="{% url 'job:AdminJobProviderCreate' %}" class="btn btn-primary">{% translate 'Add Job Provider' %}</a>
+                                <a href="{% url 'job:AdminJobProviderCreate' %}" class="btn btn-primary">{% translate 'Add Job provider' %}</a>
 
                                 <!--end::Add provider-->
                             </div>
@@ -60,7 +60,7 @@
                                                 <input class="form-check-input" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_ecommerce_products_table .form-check-input" value="1" />
                                             </div>
                                         </th>
-                                        <th class="min-w-200px">{% translate 'Provider' %}</th>
+                                        <th class="min-w-200px">{% translate 'provider' %}</th>
                                         <th class="min-w-200px">{% translate 'Code' %}</th>
                                         <th class=" min-w-100px">{% translate 'Phone' %}</th>
                                         <th class=" min-w-100px">{% translate 'Type' %}</th>
@@ -143,7 +143,7 @@
                     </div>
                     <!--end::Providers-->
                     {% for message in messages %}
-                        {% if message.extra_tags == 'Provider' %}
+                        {% if message.extra_tags == 'provider' %}
                             <div class="alert alert-{% if 'success' in message.tags %}success{% else %}danger{% endif %} mt-5">
                                 {{ message|striptags }}
                             </div>

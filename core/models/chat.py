@@ -26,7 +26,7 @@ class UploadedFile(models.Model):
 
 class Dialog(models.Model):
     """
-    Represents a one-to-one conversation between a Job Provider and a Customer.
+    Represents a one-to-one conversation between a Job provider and a Customer.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     job = models.ForeignKey('classified.Job', on_delete=models.CASCADE, related_name="dialogs", null=True, blank=True)

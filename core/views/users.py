@@ -19,10 +19,9 @@ from core.utils.notification import notify_user
 from Dabarni import settings
 from core.forms.users import AdminUserSignUpForm, UserUpdateForm, AdminGroupForm, UserProfileForm, \
     AdminUserLoginForm, AdminUserUpdateForm, UserProfileUpdateForm
-from core.models.localization import Country, Language
-from core.models.services import Newsletter, Contact
-from core.models.social import FriendList, FriendRequest
-from core.utils.friend_request_status import FriendRequestStatus, get_friend_request_or_false
+from core.models.localization import Language
+from core.models.contact import Newsletter, Contact
+
 from helper.commonHelper import BACKEND_TEMPLATES
 from helper.decorators import superuser_only, unauthenticated_user, authenticated_user, staff_only, authenticated_staff, \
     admin_only
@@ -281,8 +280,7 @@ def AdminUserUpdate(request, slug):
                         country = None
                         country_id = request.POST.get('country')
 
-                        if country_id not in ['', None]:
-                            country = Country.objects.get(id=country_id)
+
                         lang_id = request.POST.get('lang')
                         lang = Language.objects.get(id=lang_id) if lang_id not in ['', None] else None
                         user_object = User.objects.get(slug=slug)

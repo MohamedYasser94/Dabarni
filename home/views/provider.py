@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.shortcuts import render , redirect
 from django.utils import timezone
 
-from apps.classified.forms.job import AdminJobForm ,JobRequestForm
+
 from apps.classified.models.job import *
 from apps.wallet.models.billing import Purchase
 from helper.commonHelper import ACTIVE_FRONTEND_TEMPLATES
@@ -271,7 +271,7 @@ def CheckProvider(request):
 
     return provider
 
-#################### Job Provider Dashboard ####################
+#################### Job provider Dashboard ####################
 def FrontProviderDashboard(request):
     if not request.user.is_authenticated:
         return redirect('home:FrontJobList')
@@ -330,7 +330,7 @@ def FrontProviderJobEdit(request, slug):
 
 def FrontProviderJobChat(request, dialog_id=None):
     """
-    Provider chat view - redirects to the main chat room view
+    provider chat view - redirects to the main chat room view
     """
     if not request.user.is_authenticated:
         return redirect('home:FrontJobList')

@@ -1,21 +1,12 @@
 import asyncio
-
 import aiohttp
 from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
-
-
-from core.models.core import *
-from core.models.notifications import*
-
-
-from core.models.social import *
-from core.utils.whatsapp import *
 from Dabarni.settings import *
+from core.models.core import *
+from core.models.notifications import *
 from helper.commonHelper import *
 
 User = get_user_model()
@@ -123,17 +114,6 @@ def notify_user_ticket(request, slug, message):
     msg.send()
 
 
-def CommonWhatappNotification(request, name, phone, message):
-    messenger = WhatsApp(WhatsApp_TOKEN, phone_number_id=WhatsApp_phone_number)
-    # messenger.send_message(title, phone)
-    messenger.send_message(message, phone)
-    messenger.send_location(lat=1.29, long=103.85, name="Singapore", address="Singapore",
-        recipient_id="+201015666808", )
-
-    response = messenger.send_message(
-
-        message=message, recipient_id=phone, )
-    print('whatapp response', response)
 
 
 async def send_whatsapp_message(phone_number, message):
@@ -186,12 +166,4 @@ def notify_vendor(detail, subject, text_content):
 
 
 
-def create_notification_chat(request, target, from_user, object_id):
-    print('content_type', object_id)
-    content = ContentType.objects.get_for_model(FriendList)
-    redirect_url = f"{settings.BASE_URL}/profile/{from_user.slug}/",
-    verb = f"Sent To Yoy Follow {from_user.email}.",
 
-    notification = ChatNotification.objects.create(target=target, from_user=from_user, content_type=content,
-                                                   object_id=object_id, redirect_url=redirect_url, verb=verb,
-                                                   read=False)

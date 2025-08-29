@@ -1,8 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
-
-from apps.classified.models.classified import ClassifiedCategories, ClassifiedAd, ClassifiedLocation
 from helper.commonHelper import ACTIVE_FRONTEND_TEMPLATES
 
 

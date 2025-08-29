@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 
 
-from core.models.localization import City
+
 
 from helper.commonHelper import ACTIVE_FRONTEND_TEMPLATES
 
@@ -106,9 +106,6 @@ def save_address_form(request, form, template_name):
     return JsonResponse(data)
 
 
-def load_cities(request):
-    governorates_id = request.GET.get('governorates')
-    cities = City.objects.filter(governorates_id=governorates_id).order_by('name')
-    return render(request, 'users/dashboard/city_dropdown_list_options.html', {'cities': cities})
+
 
 

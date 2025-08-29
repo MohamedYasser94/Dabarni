@@ -14,12 +14,12 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from core.models.localization import Country, City, Area, Governorates, Language, Currency
+from core.models.localization import  Language
 from helper.modelHelper import Active_Status, User_Position, Email_Validator, Access_Level, User_Status, Country_List, \
     Governorates_List, SAUDI_CITIES_BY_GOVERNORATE
 
 from helper.viewHelper import get_file_path
-from user.apps import DjangoRestJwtRegistrationConfig
+
 from user.managers import TokenManager
 
 
@@ -70,31 +70,26 @@ class User(AbstractBaseUser, PermissionsMixin):
                               error_messages={
                                   'unique': "This email has already been registered."})
 
-    first_name = models.CharField(max_length=25, validators=[UnicodeUsernameValidator], blank=True, null=True)
-    middle_name = models.CharField(max_length=25, validators=[UnicodeUsernameValidator], blank=True, null=True)
-    last_name = models.CharField(max_length=25, validators=[UnicodeUsernameValidator], blank=True, null=True)
-    position = models.CharField(max_length=30, validators=[UnicodeUsernameValidator], blank=True, null=True,
+    first_name = models.CharField(max_length=25, blank=True, null=True)
+    middle_name = models.CharField(max_length=25,  blank=True, null=True)
+    last_name = models.CharField(max_length=25,  blank=True, null=True)
+    position = models.CharField(max_length=30,  blank=True, null=True,
                                 default='Client')
     phone = models.CharField(max_length=20, validators=[validate_integer], blank=True, null=True)
     image = models.ImageField(upload_to=get_file_path, blank=True, null=True)
     auth_provider = models.CharField(
         max_length=50, blank=False,
-        null=False, validators=[UnicodeUsernameValidator], default='email')
+        null=False,  default='email')
     is_superuser = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     admin =models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     is_staff = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     is_author = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     is_active = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
-    is_customer = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
-    subscribe = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
-    seller = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
-    deliver = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     is_verified = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     access_level = models.CharField(max_length=20, choices=Access_Level, default='Customer')
     access_notification = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     groups = models.ForeignKey(Group, on_delete=models.CASCADE, blank=True, null=True)
-    slug = models.SlugField(unique=True)
-    nuc = models.CharField(unique=True, max_length=200)
+
     have_wallet = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     fcm_token = models.TextField(blank=True)
     otp = models.CharField(max_length=6, blank=True, null=True)
@@ -112,6 +107,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     hide_email = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     country = models.CharField(max_length=100, choices=Country_List, default='Egypt', null=True, blank=True)
     governorates = models.CharField(max_length=100, choices=Governorates_List, default='Cairo', null=True, blank=True)
+    code = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    slug = models.SlugField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -125,9 +122,9 @@ class User(AbstractBaseUser, PermissionsMixin):
             return self.email
 
     def save(self, *args, **kwargs):
-        if not self.nuc and not self.slug :
-            self.nuc = str(get_random_string(5).upper()
-                           + str(uuid.uuid4()).split('-')[1] + 'NUC'
+        if not self.code and not self.slug :
+            self.code = str(get_random_string(5).upper()
+                           + str(uuid.uuid4()).split('-')[1] + 'USER'
                            + uuid.uuid4().hex[:6].upper())
             self.slug = slugify(self.email)
             self.auth_provider = 'email'
@@ -190,12 +187,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class UserProfile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    country = models.ForeignKey(Country, on_delete=models.CASCADE, max_length=20, null=True, blank=True)
-    note = models.CharField(max_length=50, validators=[UnicodeUsernameValidator], blank=True, null=True)
-    position = models.CharField(max_length=15, validators=[UnicodeUsernameValidator], choices=User_Position,
-                                default='Guest', null=True, blank=True)
+    p_year = models.CharField(max_length=4, validators=[validate_integer], null=True, blank=True)
+    p_month = models.CharField(max_length=2, validators=[validate_integer], null=True, blank=True)
+    p_day = models.CharField(max_length=2, validators=[validate_integer], null=True, blank=True)
+    dob = models.DateField(null=True, blank=True)
+    nationality = models.CharField(max_length=50, null=True, blank=True)
+    residence = models.CharField(max_length=50, null=True, blank=True)
+    id_number = models.CharField(max_length=50, null=True, blank=True)
+    country = models.TextField(max_length=100, choices=Country_List, default='Egypt', null=True, blank=True)
     lang = models.ForeignKey(Language, on_delete=models.CASCADE, null=True, blank=True)
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True, blank=True)
     dark_mode = models.CharField(max_length=10, choices=Active_Status, default='Inactive', null=True, blank=True)
     notification = models.CharField(max_length=10, choices=Active_Status, default='Active', null=True, blank=True)
     deactivate = models.CharField(max_length=10, choices=Active_Status, default='Inactive', null=True, blank=True)

@@ -14492,7 +14492,7 @@ msgstr "حساب التواصل الاجتماعي"
 #: .\core\templates\good\people\team\add.html:483
 #: .\core\templates\good\people\team\update.html:524
 #: .\core\templates\good\people\team\update.html:554
-msgid "Provider"
+msgid "provider"
 msgstr "مقدم الخدمة"
 
 #: .\core\templates\good\operations\team\add.html:515
@@ -19707,14 +19707,14 @@ msgstr "المهارات المستخدمة"
 #: .\home\templates\arino\providers\provider_details.html:16
 #: .\home\templates\doccure\providers\provider_details.html:16
 #, fuzzy
-#| msgid "Provider"
+#| msgid "provider"
 msgid "Providers"
 msgstr "مقدم الخدمة"
 
 #: .\home\templates\arino\providers\providers.html:11
 #, fuzzy
 #| msgid "Service Title"
-msgid "Service Provider"
+msgid "Service provider"
 msgstr "عنوان الخدمة"
 
 #: .\home\templates\arino\providers\providers.html:65
@@ -20097,7 +20097,7 @@ msgstr ""
 
 #: .\home\templates\doccure\product\product.html:109
 #, fuzzy
-#| msgid "Provider"
+#| msgid "provider"
 msgid "We Provide"
 msgstr "مقدم الخدمة"
 

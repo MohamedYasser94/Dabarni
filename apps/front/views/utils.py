@@ -1,5 +1,5 @@
 from apps.front.models.models import *
-from core.models.blog import *
+
 
 
 User = get_user_model()
@@ -76,7 +76,7 @@ def FrontIndexFrontAppData(request):
 
         blogs_block = None
 
-    blogs = BlogArticle.objects.all()
+
 
 
 
@@ -115,7 +115,7 @@ def FrontIndexFrontAppData(request):
         'hero_section': hero_section,
         'hero_section_item': hero_section_item,
         'blogs_block':blogs_block,
-        'blogs': blogs,
+
     }
 
     return context

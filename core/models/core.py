@@ -409,48 +409,7 @@ class CommonSocialLink(models.Model):
 
 
 
-class CommonProfile(models.Model):
-    owner_model = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
-    owner_id = models.PositiveIntegerField(null=True, blank=True)
-    owner = GenericForeignKey('owner_model', 'owner_id')
-    address_title = models.CharField(max_length=50, validators=[UnicodeUsernameValidator], null=True, blank=True)
-    phone = models.CharField(max_length=200, blank=True, null=True)
-    address_type = models.CharField(max_length=20, blank=True, null=True,choices=Address_Type,default='Home')
-    address = models.CharField(max_length=200, blank=True, null=True)
-    country = models.ForeignKey(Country, on_delete=models.CASCADE, blank=True, null=True)
-    governorates = models.ForeignKey(Governorates, on_delete=models.CASCADE, blank=True, null=True)
-    city = models.ForeignKey(City, on_delete=models.CASCADE, blank=True, null=True)
-    area = models.ForeignKey(Area, on_delete=models.CASCADE, blank=True, null=True)
-    shipping_note = models.CharField(max_length=50, validators=[UnicodeUsernameValidator], null=True, blank=True)
-    building_name = models.CharField(max_length=15, validators=[UnicodeUsernameValidator], null=True, blank=True)
-    floor_no = models.CharField(max_length=5, validators=[validate_integer], null=True, blank=True)
-    apartment_no = models.CharField(max_length=5, validators=[validate_integer], null=True, blank=True)
-    nearest_landmark = models.CharField(max_length=50, validators=[UnicodeUsernameValidator], null=True, blank=True)
-    postal_code = models.CharField(max_length=5, validators=[validate_integer], null=True, blank=True)
-    lat = models.FloatField(default=0)
-    lng = models.FloatField(default=0)
-    fcm_token = models.TextField(blank=True)
-    note = models.CharField(max_length=200, blank=True, null=True)
-    code = models.CharField(max_length=50, null=True, blank=True)
-    slug = models.SlugField(unique=True, null=True, blank=True, max_length=128)
-    create_at = models.DateTimeField(auto_now=True, null=False)
-    update_at = models.DateTimeField(auto_now=True)
 
-
-
-    def __str__(self):
-        return self.address_type
-    def get_full_address(self):
-        if self.governorates or self.city or self.address:
-            return f'{self.governorates}  {self.city} {self.address}'
-        else:
-            return self.governorates
-    def save(self, *args, **kwargs):
-        if not self.code and not self.slug:
-            code = f'CommonProfile-{get_random_string(5).upper()}'
-            self.code = code
-            self.slug = slugify(code)
-        super(CommonProfile, self).save(*args, **kwargs)
 
 
 

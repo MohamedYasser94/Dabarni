@@ -4,13 +4,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.db.models import Sum
-
-
-from core.models.blog import BlogArticle
 from core.models.core import SystemSetting, SiteSetting, CommonMediaFiles, CommonSeo
-from core.models.localization import Language, Currency
+from core.models.localization import Language
 from core.models.notifications import Notification
-from core.models.subscriptions import Subscription
+
 
 User = get_user_model()
 
@@ -161,35 +158,7 @@ def language_processors(request):
         }
 
 
-def currency_processors(request):
-    try:
-        currency = Currency.objects.all()
 
-        print('currency', currency)
-        try:
-            return {
-
-                'available_currency': currency,
-                'usd_currency': currency.get(currency_code='USD'),
-                'egp_currency': currency.get(currency_code='EGP'),
-            }
-
-        except Exception as e:
-            print('currency', e)
-
-            return {
-                'available_currency': currency,
-                'usd_currency': None,
-                'egp_currency': None,
-            }
-    except Exception as e:
-        print('currency2', e)
-
-        return {
-            'available_currency': None,
-            'usd_currency': None,
-            'egp_currency': None,
-        }
 
 
 def template_processors(request):
@@ -370,32 +339,7 @@ def template_processors(request):
         }
 
 
-def admin_chart(request):
-    try:
-        order = BlogArticle.objects.values('title', 'circuit', 'first_session')
 
-        data = {
-            'data': [
-                {
-                    'title': item['title'],
-                    'total': float(item['total']),
-                    'first_session': item['first_session'],
-                }
-                for item in order
-            ]
-        }
-
-        return {
-
-            'admin_orders_location': data,
-
-        }
-    except Exception as e:
-        return {
-
-            'admin_orders_location': None,
-
-        }
 
 
 def user_processors(request):
@@ -491,61 +435,4 @@ def notifications(request):
             return {'admin_notifications': None}
 
 
-def admin_summary(request):
-    try:
-        article_view = BlogArticle.objects.filter(pub_type='Publish').aggregate(TOTAL=Sum('views'))['TOTAL']
-        all_user = User.objects.all()
-        return {
-            # 'admin_earnings_total': Order.objects.filter(status='New').aggregate(total=sum('total')),
-            # 'admin_earnings_total': Order.objects.aggregate(total_price=Sum('total')),
-            'admin_article_view': article_view,
-            'all_user': all_user,
 
-        }
-    except Exception as e:
-
-        return {
-            # 'admin_earnings_total':  Order.objects.aggregate(total=Sum('total')),
-            'admin_article_view': None,
-            'admin_products_count': None,
-            'all_user': None,
-
-        }
-
-
-def membership_processors(request):
-    user_membership = 'Inactive'
-    if not request.user.is_authenticated:
-        return {
-            'user_membership': 'Inactive',
-        }
-    try:
-        user = User.objects.get(id=request.user.id)
-        if user.is_superuser == False:
-            user_subscription = Subscription.objects.get(owner_model=ContentType.objects.get(model='User'),
-                                                         owner_id=user.id, )
-            if user_subscription.membership.membership_type == 'Paid' or user_subscription.membership.membership_type == 'PromoCode' \
-                    or user_subscription.membership.membership_type == 'Free':
-
-
-                if user_subscription.remaining_days <= 0:
-                    user_subscription.status = 'Expired'
-                    user_subscription.save()
-                    user_membership = 'Inactive'
-                else:
-                    user_membership = 'Active'
-            else:
-                user_membership = 'Active'
-        else:
-            user_membership = 'Active'
-
-        return {
-            'user_membership': user_membership,
-        }
-    except BaseException as e:
-
-        return {
-
-            'user_membership': user_membership,
-
-        }

@@ -641,128 +641,7 @@ Video_Source = (('Youtube', 'Youtube'), ('Vimeo', 'Vimeo'), ('Self', 'Self'),)
 Absent_Type = (('Sick', 'Sick'), ('Vacation', 'Vacation'), ('Other', 'Other'),)
 Absent_Status = (('Pending', 'Pending'), ('Approved', 'Approved'), ('Rejected', 'Rejected'),)
 
-########################## Ticket#########################
-Ticket_Status = (('Open', 'Open'), ('Closed', 'Closed'), ('Pending', 'Pending'), ('Solved', 'Solved'),)
-Transportation_Type = (('Car', 'Car'), ('Bus', 'Bus'), ('Train', 'Train'), ('Plane', 'Plane'), ('Ship', 'Ship'),
-                       ('limousine', 'limousine'),)
-Registration_Status = (('Pending', 'Pending'), ('Approved', 'Approved'), ('Rejected', 'Rejected'),
-                       ('Canceled', 'Canceled'), ('Completed', 'Completed'), ('Expired', 'Expired'),
-                       ('In Progress', 'In Progress'), ('Waiting', 'Waiting'),)
-########################## Clinic ############################
-Gander_type = (("Male", _("Male")), ("Female", _("Female")),)
-Marital_Status = ("Single", _("Single")), ("Married", _("Married")), ("Divorced", _("Divorced")), ("Widowed",
-                                                                                                   _("Widowed"))
-Blood_type = (("A+", _("A+")), ("A-", _("A-")), ("B+", _("B+")), ("B-", _("B-")), ("O+", _("O+")), ("O-", _("O-")),
-              ("AB+", _("AB+")), ("AB-", _("AB-")),)
-Dose_Time = (("Morning", _("Morning")), ("Afternoon", _("Afternoon")), ("Evening", _("Evening")),
-             ("Night", _("Night")),)
-Medical_Out_Service = (("X-ray", _("X-ray")), ("Lab", _("Lab")), ("Ultrasound", _("Ultrasound")), ("ECG", _("ECG")),
-                       ("Medical analysis", _("Medical analysis")), ("Other", _("Other")),)
-Complete_Status = (("New", _("New")), ("Pending", _("Pending")), ("InProgress", _("InProgress")),
-                   ("Complete", _("Complete")), ("Cancel", _("Cancel")),)
-Examination_type = (('Examination', _('Examination')), ('Followup', _('Followup')), ('Urgent', _('Urgent')),
-                    ('Completed', _('Completed')))
-Appointment_Status = (('New', _('New')), ('Scheduled', _('Scheduled')), ('Medical Service', _('Medical Service')),
-                      ('Results', _('Results')), ('Completed', _('Completed')), ('Followup', _('Followup')),
-                      ('Late', _('Late')), ('Cancelled', _('Cancelled')),)
-Medical_Specialists = (('Anesthesiologist ', _('Anesthesiologist ')), ('Cardiologist', _('Cardiologist')),
-                       ('Dentist', _('Dentist')), ('Dermatologist', _('Dermatologist')),
-                       ('Endocrinologist', _('Endocrinologist')), ('Gastroenterologist', _('Gastroenterologist')),
-                       ('Gynecologist', _('Gynecologist')), ('Hematologist', _('Hematologist')),
-                       ('Internist', _('Internist')), ('Nephrologist', _('Nephrologist')),
-                       ('Neurologist', _('Neurologist')), ('Neurosurgeon', _('Neurosurgeon')),
-                       ('Obstetrician', _('Obstetrician')), ('Oncologist', _('Oncologist')),
-                       ('Ophthalmologist', _('Ophthalmologist')), ('Orthopedist', _('Orthopedist')),
-                       ('Otolaryngologist', _('Otolaryngologist')), ('Pathologist', _('Pathologist')),
-                       ('Pediatrician', _('Pediatrician')), ('Physiologist', _('Physiologist')),
-                       ('Plastic Surgeon', _('Plastic Surgeon')), ('Podiatrist', _('Podiatrist')),
-                       ('Psychiatrist', _('Psychiatrist')), ('Radiologist', _('Radiologist')),
-                       ('Rheumatologist', _('Rheumatologist')), ('Surgeon', _('Surgeon')),
-                       ('Urologist', _('Urologist')), ('Pulmonology', _('Pulmonology')), ('Chest', _('Chest')),
-                       ('Diabetes', _('Diabetes')), ('Endocrinology', _('Endocrinology')),
-                       ('Rheumatology', _('Rheumatology')), ('Hepatology', _('Hepatology')),
-                       ('Internal Medicine', _('Internal Medicine')), ('Ophthalmology', _('Ophthalmology')),
-                       ('Oncology', _('Oncology')), ('Genecology', _('Genecology')), ('Urology', _('Urology')),
-                       ('General Surgery', _('General Surgery')),)
 
-Clinic_Type = (("Hospital", _("Hospital")), ("Clinic", _("Clinic")), ("Pharmacy", _("Pharmacy")),
-               ("Other", _("Other")),)
-ThirdParty_Category = (("Hospital", _("Hospital")), ("Pharmacy", _("Pharmacy")), ("LapTest", _("LapTest")),
-                       ("X-ray", _("X-ray")), ("Clinic", _("Clinic")),)
-Employee_Role = (("Receptionist", _("Receptionist")), ("Accountant", _("Accountant")), ("Designer", _("Designer")),
-                 ("Operator", _("Operator")), ("Store Keeper", _("Store Keeper")), ("None", _("None")),)
-Prescription_Type = (("syrup", _("syrup")), ("capsule", _("capsule")), ("tablet", _("tablet")),
-                     ("injection", _("injection")), ("other", _("other")),)
-Prescription_Dose = (("1", _("1")), ("2", _("2")), ("3", _("3")), ("4", _("4")), ("5", _("5")), ("6", _("6")),
-                     ("7", _("7")), ("8", _("8")), ("9", _("9")), ("10", _("10")),)
-Medicine_Type = (("syrup", _("syrup")), ("capsule", _("capsule")), ("tablet", _("tablet")),
-                 ("injection", _("injection")), ("other", _("other")),)
-Medicine_Dose = (("1", _("1")), ("2", _("2")), ("3", _("3")), ("4", _("4")), ("5", _("5")), ("6", _("6")),
-                 ("7", _("7")), ("8", _("8")), ("9", _("9")), ("10", _("10")),)
-Medicine_Dose_Time = (("Morning", _("Morning")), ("Afternoon", _("Afternoon")), ("Evening", _("Evening")),
-                      ("Night", _("Night")),)
-Medicine_Dose_Duration = (("Days", _("Days")), ("Weeks", _("Weeks")), ("Months", _("Months")), ("Years", _("Years")),)
-Medicine_Dose_Repeat = (("1", _("1")), ("2", _("2")), ("3", _("3")), ("4", _("4")), ("5", _("5")), ("6", _("6")),
-                        ("7", _("7")), ("8", _("8")), ("9", _("9")), ("10", _("10")),)
-Medicine_Unit = (("packets", _("packets")), ("tablets", _("tablets")), ("pill", _("pill")), ("bottles", _("bottles")),
-                 ("boxes", _("boxes")), ('piece', _('piece')), ('sachet', _('sachet')), ('capsule', _('capsule')),
-                 ('vial', _('vial')), ('ampoule', _('ampoule')), ('tube', _('tube')), ('bottle', _('bottle')),
-                 ('syringe', _('syringe')), ('inhaler', _('inhaler')), ('dropper', _('dropper')), ('puff', _('puff')),
-                 ('suppository', _('suppository')), ('patch', _('patch')), ('implant', _('implant')),
-                 ('applicator', _('applicator')), ('other', _('other')),)
-Product_Type = (("packets", _("packets")), ("tablets", _("tablets")), ("pill", _("pill")), ("bottles", _("bottles")),
-                ("boxes", _("boxes")), ('piece', _('piece')), ('sachet', _('sachet')), ('capsule', _('capsule')),
-                ('vial', _('vial')), ('ampoule', _('ampoule')), ('tube', _('tube')), ('bottle', _('bottle')),
-                ('syringe', _('syringe')), ('inhaler', _('inhaler')), ('dropper', _('dropper')), ('puff', _('puff')),
-                ('suppository', _('suppository')), ('patch', _('patch')), ('implant', _('implant')),
-                ('applicator', _('applicator')), ('other', _('other')),)
-########################## CAr ############################
-Transaction_Coast_Type = (("Truncate", _("Truncate")), ("Acquisition", _("Acquisition")),
-                          ("Advance", _("Money Advance")), ("Cost", _("Cost")),)
-Transaction_Operation = (("Overtime", _("Overtime")), ("Acquisition", _("Acquisition")), ("Advance", _("Advance")),
-                         ("Cost", _("Cost")), ("Truncate", _("Truncate")), ("Custody", _("Custody")),
-                         ("Refund", _("Refund")), ("Withdraw", _("Withdraw")), ("Deposit", _("Deposit")),
-                         ("Transfer", _("Transfer")), ("Commission", _("Commission")), ("Shipping", _("Shipping")),
-                         ("Referral", _("Referral")), ("Salary", _("Salary")), ('Rent', _('Rent')),
-                         ('Leasing', _('Leasing')), ('Leasing Cost', _('Leasing Cost')),)
-Overtime_Type = (("Truncate", _("Truncate")), ("Acquisition", _("Acquisition")), ("Cost", _("Cost")))
-Car_Overtime_Type = (("Hour", _("Hour")), ("Day", _("Day")), ("Journey", _("Journey")), ("Kilometer", _("Kilometer")),
-                     ("Friday", _("Friday")))
-Car_Type = (("Car", _("Car")), ("Truck", _("Truck")), ("Bus", _("Bus")), ("Motorcycle", _("Motorcycle")))
-Car_Garage_Status = (("In Garage", _("In Garage")), ("Out Garage", _("Out Garage")), ("Standby", _("Standby")),
-                     ("Maintenance", _("Maintenance")))
-Driver_Garage_Status = (("In Service", _("In Service")), ("Out Service", _("Out Service")), ("Standby", _("Standby")),
-                        ("SickLeave", _("Sick Leave")), ("Vacation", _("Vacation")), ("Maintenance", _("Maintenance")))
-Car_Status = (("Active", _("Active")), ("Inactive", _("Inactive")), ("Maintenance", _("Maintenance")),
-              ("Repair", _("Repair")))
-Car_Insurance_Status = (("Active", _("Active")), ("Inactive", _("Inactive")), ("Expired", _("Expired")))
-Car_Insurance_Type = (("Insurance", _("Insurance")), ("Maintenance", _("Maintenance")), ("Repair", _("Repair")))
-Car_Insurance_Period = (("Yearly", _("Yearly")), ("Monthly", _("Monthly")), ("Daily", _("Daily")))
-Car_Insurance_Period_Type = (("Year", _("Year")), ("Month", _("Month")), ("Day", _("Day")))
-Car_Maintenance_Type = (("Maintenance", _("Maintenance")), ("Repair", _("Repair")))
-Car_Maintenance_Status = (("Active", _("Active")), ("Inactive", _("Inactive")), ("Pending", _("Pending")),
-                          ("Completed", _("Completed")))
-Car_Owner_Type = (("Owner", _("Owner")), ("Contractor", _("Contractor")), ("Company", _("Company")))
-Car_Owner_Status = (("Active", _("Active")), ("Inactive", _("Inactive")), ("Suspend", _("Suspend")))
-contract_Owner_Type = (("Contractor", _("Contractor")), ("Company", _("Company")))
-Reservation_Status = (("New", _("New")), ("Accepted", _("Accepted")), ("Rejected", _("Rejected")),
-                      ("Canceled", _("Canceled")), ("Completed", _("Completed")))
-Reservation_Type = (("Car", _("Car")), ("Driver", _("Driver")), ("Both", _("Both")))
-Car_Reservation_Status = (("Active", _("Active")), ("Ended", _("Ended")), ("Canceled", _("Canceled")))
-Approved_Status = (("Approved", _("Approved")), ("Partial Approval", _("Partial Approval")),
-                   ("Not Approved", _("Not Approved")), ("Pending", _("Pending")))
-Approved_Need = (("All", _("All")), ("Partial", _("Partial")), ("None", _("None")))
-########################## Press ############################
-Media_Type = (('Image', 'Image'), ('Video', 'Video'), ('Audio', 'Audio'), ('File', 'File'),)
-Supply_Type = (('In', _("In")), ('Out', _("Out")),)
-Machine_Feed = (("Paper", _("Paper")), ("Zinc", _("Zinc")), ("Plastic", _("Plastic")), ("Other", _("Other")),)
-Job_Type = (("Printing", _("Printing")), ("Cutting", _("Cutting")), ("Binding", _("Binding")), ("Other", _("Other")),)
-Job_Status = (("New", _("New")), ("Accepted", _("Accepted")), ("Preparing", _("Preparing")),
-              ("OnShipping", _("OnShipping")), ("Completed", _("Completed")), ("Canceled", _("Canceled")),
-              ("Refund", _("Refund")), ("Rejected", _("Rejected")), ("Returned", _("Returned")), ("Draft", _("Draft")),)
-Calculation_Method = (("Unit", _("Unit")), ("Dimensions", _("Dimensions")), ("Options", _("Options")),
-                      ("Weight", _("Weight")), ("Area", _("Area")), ("Volume", _("Volume")),
-                      ("Quantity", _("Quantity")), ("Time", _("Time")), ("Other", _("Other")), (None, _("None")),)
 ########################## Notification  ############################
 Notification_CHOICES = (("New", _("New")), ("Message", _("Message")), ("Application", _("Application")),
                         ("NewR egistration", _("New Registration")), ("New Vendor", _("NewV endor")),
@@ -784,67 +663,16 @@ Subscription_Status = (("New", _("New")), ("Accepted", _("Accepted")), ("Rejecte
                        ("Suspend", _("Suspend")),)
 
 ################### ClassifiedAd ##############################
-Ad_Status = (('New', 'New'), ('Active', 'Active'), ('Inactive', 'Inactive'), ('Expired', 'Expired'),
-             ('Draft', 'Draft'), ('Pending', 'Pending'), ('Rejected', 'Rejected'), ('Sold', 'Sold'),)
 
-Ad_Type = (('Turbo', 'Turbo'), ('Standard', 'Standard'), ('Premium', 'Premium'), ('Basic', 'Basic'),
-              ('Featured', 'Featured'), ('Sponsored', 'Sponsored'), ('Other', 'Other'),)
-Ad_Category = (('AllLocations', 'All Locations'), ('Banner', 'Banner'), ('Featured', 'Featured'),
-                ('List', 'List'), ('Grid', 'Grid'), ('Map', 'Map'), ('Search', 'Search'),
-                ('Category', 'Category'), ('SubCategory', 'Sub Category'), ('Brand', 'Brand'),
-                ('Location', 'Location'), ('Other', 'Other'),)
 REPORT_TYPES = (('Spam', 'Spam'), ('Inappropriate', 'Inappropriate'),
                 ('Fraud', 'Fraud'), ('Scam', 'Scam'), ('Duplicate', 'Duplicate'), ('Other', 'Other'),)
-
-ClassifiedAd_Type = (('Real Estate', 'Real Estate'), ('Vehicles', 'Vehicles'), ('Jobs', 'Jobs'),
-                    ('Services', 'Services'), ('Electronics', 'Electronics'), ('Fashion', 'Fashion'),
-                    ('Home & Garden', 'Home & Garden'), ('Pets', 'Pets'), ('Community', 'Community'),
-                    ('Miscellaneous', 'Miscellaneous'), ('Restaurant', 'Restaurant'),
-                    ('Business', 'Business'), ('Event', 'Event'), ('Travel', 'Travel'), ('Food', 'Food'),
-                    ('Education', 'Education'), ('Health & Beauty', 'Health & Beauty'),
-                    ('Sports & Fitness', 'Sports & Fitness'), ('Entertainment', 'Entertainment'),
-                    ('Hobbies & Crafts', 'Hobbies & Crafts'),
-                    ('Books & Magazines', 'Books & Magazines'), ('Music & Movies', 'Music & Movies'),
-                    ('Toys & Games', 'Toys & Games'), ('Baby & Kids', 'Baby & Kids'),
-                    ('Collectibles', 'Collectibles'), ('Industrial & Commercial', 'Industrial & Commercial'),
-
-                  ('Other', 'Other'),
-                  )
-
 JobProvider_Type = ( ('Company', _("Company")),
                     ('institution', _("Institution")),  ('Freelance Document', _("Freelance Document")),)
-JobProvider_Employee_Role = (('Manager', 'Manager'), ('Customer Service', 'Customer Service'),
-                             ('Technical Support', 'Technical Support'),
 
-                            ('Operations', 'Operations'), )
-
-ClassifiedJob_Cost_Type = (('Fixed', 'Fixed'), ('Variable', 'Variable'), ('Hourly', 'Hourly'),
-                            ('Daily', 'Daily'), ('Weekly', 'Weekly'), ('Monthly', 'Monthly'),
-                            ('Yearly', 'Yearly'), ('Other', 'Other'),)
-
-ClassifiedJob_Benefit_Type = (('Health Insurance', 'Health Insurance'), ('Retirement Plan', 'Retirement Plan'),
-                                ('Paid Time Off', 'Paid Time Off'), ('Flexible Schedule', 'Flexible Schedule'),
-                                ('Professional Development', 'Professional Development'),
-                                ('Work-Life Balance', 'Work-Life Balance'), ('Remote Work', 'Remote Work'),
-                                ('Career Advancement', 'Career Advancement'), ('Other', 'Other'),)
-
-ClassifiedJob_Requirement_Type = (('Education', 'Education'), ('Experience', 'Experience'),
-                                    ('Skills', 'Skills'), ('Certifications', 'Certifications'),
-                                    ('Languages', 'Languages'), ('Other', 'Other'),)
-
-ClassifiedJob_Request_Progress = (('New', 'New'), ('In Progress', 'In Progress'), ('Completed', 'Completed'),
-                                      ('Rejected', 'Rejected'), ('Canceled', 'Canceled'), ('Pending', 'Pending'),
-                                  ('Draft', 'Draft'), ('Expired', 'Expired'),('Rescheduled', 'Rescheduled'),
-                                  ('Postponed', 'Postponed'), ('Waiting', 'Waiting'), ('Waiting Client', 'Waiting Client'),
-                                    ('Waiting Provider', 'Waiting Provider'), ('Resolved', 'Resolved'),
-                                    ('Unresolved', 'Unresolved'), ('Follow Up', 'Follow Up'), ('Other', 'Other')
-
-                                    )
-
-ClassifiedJob_Request_Document_Type = (('Resume', 'Resume'), ('Cover Letter', 'Cover Letter'), ('Portfolio', 'Portfolio'),
-                                        ('References', 'References'), ('Certificates', 'Certificates'),
-                                        ('Other', 'Other'),)
-
+Job_Offer_Status = (('Accepted', 'Accepted'), ('Offered', 'Offered'), ('Rejected', 'Rejected'),
+                    ('New', 'New'), )
+Job_Progress_Status = (('Pending', 'Pending'), ('In Progress', 'In Progress'), ('Completed', 'Completed'),
+                       ('On Hold', 'On Hold'), ('Cancelled', 'Cancelled'), )
 ################### Blog ##############################
 Service_Type = (('Service', 'Service'), ('Work', 'Work'), ('Product', 'Product'), ('Project', 'Project'),
                 ('Portfolio', 'Portfolio'), ('Other', 'Other'))

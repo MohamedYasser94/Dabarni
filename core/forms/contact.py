@@ -1,7 +1,7 @@
 # Create your forms here.
 from django import forms
 import re
-from core.models.services import Contact, Newsletter, NewsletterSubscriber
+from core.models.contact import Contact, Newsletter, NewsletterSubscriber
 
 
 class ContactForm(forms.ModelForm):

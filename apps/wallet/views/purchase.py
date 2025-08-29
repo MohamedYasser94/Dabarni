@@ -1,14 +1,9 @@
-from decimal import Decimal
 
-from django.contrib import messages
-from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-from apps.classified.forms.job import *
+
 from apps.classified.models.job import *
 from apps.wallet.models.billing import Purchase
-from core.utils.backends import RandomPasswordGenerator
 from helper.commonHelper import *
 from helper.decorators import *
 

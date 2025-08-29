@@ -10,7 +10,7 @@
         <!--begin::Logo image-->
         {% if user.access_level == 'SuperAdmin' or user.access_level == 'Admin'  %}
         <a href="{% url 'core:AdminIndex' %}">
-            {% elif user.access_level == 'Provider'  or user.access_level == 'ProviderEmployee' %}
+            {% elif user.access_level == 'provider'  or user.access_level == 'ProviderEmployee' %}
              <a href="{% url 'provider:ProviderDashboard' %}">
                    {% endif %}
             <img alt="Logo" src="{% static '' %}digithup/mix.png" class="h-50px"/>
@@ -33,7 +33,7 @@
                 <span class="menu-link menu-center">
                      {% if user.access_level == 'SuperAdmin' or user.access_level == 'Admin'  %}
                 <a class="menu-link" href="{% url 'core:AdminIndex' %}">
-                {% elif user.access_level == 'Provider'  or user.access_level == 'ProviderEmployee' %}
+                {% elif user.access_level == 'provider'  or user.access_level == 'ProviderEmployee' %}
                 <a class="menu-link" href="{% url 'provider:ProviderDashboard' %}">
                 {% endif %}
 
@@ -52,7 +52,7 @@
          
        
          
-          {% if user.access_level == 'Provider' or  user.access_level == 'ProviderEmployee' %}
+          {% if user.access_level == 'provider' or  user.access_level == 'ProviderEmployee' %}
 
          {% block provider %}{% include 'good/job_provider/partials/sidebar-partials.html' %}{% endblock provider %}
             {% endif %}

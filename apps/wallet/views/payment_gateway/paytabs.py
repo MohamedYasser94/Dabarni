@@ -17,7 +17,6 @@ import json
 
 from rest_framework.response import Response
 
-from apps.classified.models.job import JobRequest
 from apps.wallet.models.Payment import Payment
 from apps.wallet.models.billing import Purchase, Invoice
 from core.utils.notification import notify_user_ticket

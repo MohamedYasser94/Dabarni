@@ -81,7 +81,7 @@
                                             <span class="badge badge-light-danger">{{ item.Progress }}</span>
                                         {% elif item.Progress == 'New' %}
                                             <span class="badge badge-light-primary">{{ item.Progress }}</span>
-                                        {% elif item.Progress == 'Waiting' or item.Progress == 'Waiting Client' or item.Progress == 'Waiting Provider' %}
+                                        {% elif item.Progress == 'Waiting' or item.Progress == 'Waiting Client' or item.Progress == 'Waiting provider' %}
                                             <span class="badge badge-light-info">{{ item.Progress }}</span>
                                         {% else %} {# Catches Pending, Draft, Other, etc. #}
                                             <span class="badge badge-light-dark">{{ item.Progress }}</span>

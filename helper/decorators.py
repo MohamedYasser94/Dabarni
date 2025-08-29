@@ -4,11 +4,9 @@ import time
 
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.contrib.auth.decorators import user_passes_test
-from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import redirect
 
-from core.utils.exceptions import TokenDecodeError
 from Dabarni import settings
 
 User = get_user_model()
@@ -89,8 +87,8 @@ def job_provider_only(function):
         # FIX: First, check if the user is authenticated.
         if request.user.is_authenticated:
             # If they are logged in, now we can safely check their access level.
-            if request.user.access_level in ['Provider', 'ProviderEmployee']:
-                # If they are a Provider or Employee, allow them to proceed.
+            if request.user.access_level in ['provider', 'ProviderEmployee']:
+                # If they are a provider or Employee, allow them to proceed.
                 return function(request, *args, **kwargs)
 
         # If the user is not authenticated OR not a provider, redirect them.
@@ -100,7 +98,7 @@ def job_provider_only(function):
 
 def provider_owner_only(function):
     def _inner(request, *args, **kwargs):
-        return function(request, *args, **kwargs) if request.user.is_authenticated and request.user.access_level == 'Provider' else redirect('provider:ProviderError404')
+        return function(request, *args, **kwargs) if request.user.is_authenticated and request.user.access_level == 'provider' else redirect('provider:ProviderError404')
 
     return _inner
 
@@ -304,11 +302,3 @@ def seller_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, logi
     return actual_decorator
 
 
-def handle_token_decode_error(view_function):
-    @functools.wraps(view_function)
-    def wrapper(*args, **kwargs):
-        try:
-            return view_function(*args, **kwargs)
-        except TokenDecodeError as err:
-            return HttpResponseBadRequest(str(err))
-    return

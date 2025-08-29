@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.classified.views.utils import FrontIndexClassifiedAppData
 from apps.front.views.utils import *
-from core.models.blog import *
+
 from core.models.core import *
 
 from helper.commonHelper import *
@@ -27,13 +27,13 @@ def HomeIndex(request):
         return render(request,  f'frontend/{MAINTENANCE_TEMPLATES}/index.html',context )
     elif system_app.maintenance == 'Inactive':
 
-        articles = BlogArticle.objects.all()
+
         front_data = FrontIndexFrontAppData(request)
         classified_data = FrontIndexClassifiedAppData(request)
 
 
         context = {
-            'articles': articles,
+
             'front_data': front_data,
             'classified_data': classified_data,
             'current_page': 'Home',

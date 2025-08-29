@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from apps.front.models.models import TestimonialItem
 from core.forms.contact import ContactForm, NewsletterSubscriberForm, ContactSendPhoneForm
-from core.models.services import Contact, NewsletterSubscriber
+from core.models.contact import Contact, NewsletterSubscriber
 from core.utils.notification import notify_admin, create_notification_admin
 from core.views.notifications import AdminCommonNotifications
 from helper.commonHelper import BACKEND_TEMPLATES
