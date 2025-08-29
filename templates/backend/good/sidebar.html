@@ -54,17 +54,14 @@
          
           {% if user.access_level == 'provider' or  user.access_level == 'ProviderEmployee' %}
 
-         {% block provider %}{% include 'good/job_provider/partials/sidebar-partials.html' %}{% endblock provider %}
+
             {% endif %}
             {% if user_access == 'SuperAdmin' %}
 
 
-                {% block job %}{% include 'good/job/partials/sidebar-partials.html' %}{% endblock job %}
-                {% block classified %}{% include 'good/classified/partials/sidebar-partials.html' %}{% endblock classified %}
-                {% block wallet %}{% include 'good/wallet/partials/sidebar-partials.html' %}{% endblock wallet %}
-                {% block blog %}{% include 'good/blog/partials/sidebar-partials.html' %}{% endblock blog %}
+
                 {% block front %}{% include 'good/front/partials/sidebar-partials.html' %}{% endblock front %}
-                {% block apps %}{% include 'good/utilities/partials/sidebar-partials.html' %}{% endblock apps %}
+
                 {% block translate %}{% include 'good/rosetta/partials/sidebar-partials.html' %}{% endblock translate %}
 
                 {% block account %}{% include 'good/account/partials/sidebar-partials.html' %}{% endblock account %}

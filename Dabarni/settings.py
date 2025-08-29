@@ -131,11 +131,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
 
-'home.context_processors.home_processors',
-                'home.context_processors.content_processors',
-                # 'home.context_processors.user_agent',
+
                 'core.context_processors.notifications',
-                'core.context_processors.admin_summary',
+
                 'core.context_processors.setting_processors',
                 'core.context_processors.language_processors',
                 'core.context_processors.template_processors',

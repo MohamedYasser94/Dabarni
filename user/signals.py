@@ -13,7 +13,7 @@ user_logged_in = Signal()
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance, note='signals')
+        UserProfile.objects.create(user=instance,)
         UserGeoInfo.objects.create(user=instance)
 
 
