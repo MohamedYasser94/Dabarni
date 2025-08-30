@@ -272,8 +272,8 @@ if os.path.exists(SERVICE_ACCOUNT_KEY_PATH):
 else:
     print("Firebase Service Account Key not found. Backend features requiring Firebase will not work.")
 ############WhatsApp_TOKEN########
-WhatsApp_TOKEN = env('WhatsApp_TOKEN')
-WhatsApp_phone_number = env('WhatsApp_phone_number')
+# WhatsApp_TOKEN = env('WhatsApp_TOKEN')
+# WhatsApp_phone_number = env('WhatsApp_phone_number')
 
 
  ####PayTabs Settings
@@ -306,7 +306,8 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+         'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
