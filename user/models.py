@@ -68,14 +68,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
     email = models.EmailField(verbose_name='email address', max_length=50, validators=[Email_Validator], unique=True,
                               error_messages={
-                                  'unique': "This email has already been registered."})
+                                  'unique': "This email has already been registered."},blank=True, null=True)
 
     first_name = models.CharField(max_length=25, blank=True, null=True)
     middle_name = models.CharField(max_length=25,  blank=True, null=True)
     last_name = models.CharField(max_length=25,  blank=True, null=True)
     position = models.CharField(max_length=30,  blank=True, null=True,
                                 default='Client')
-    phone = models.CharField(max_length=20, validators=[validate_integer], blank=True, null=True)
+    phone = models.CharField(max_length=20, validators=[validate_integer], unique=True,
+     error_messages={  'unique': "This Phone has already been registered."})
     image = models.ImageField(upload_to=get_file_path, blank=True, null=True)
     auth_provider = models.CharField(
         max_length=50, blank=False,
@@ -122,13 +123,28 @@ class User(AbstractBaseUser, PermissionsMixin):
             return self.email
 
     def save(self, *args, **kwargs):
-        if not self.code and not self.slug :
-            self.code = str(get_random_string(5).upper()
-                           + str(uuid.uuid4()).split('-')[1] + 'USER'
-                           + uuid.uuid4().hex[:6].upper())
-            self.slug = slugify(self.email)
-            self.auth_provider = 'email'
+        if not self.code:
+            self.code = (
+                get_random_string(5).upper()
+                + str(uuid.uuid4()).split('-')[1]
+                + 'USER'
+                + uuid.uuid4().hex[:6].upper()
+            )
+
+        if not self.slug:
+            base_slug = slugify(self.phone if self.phone else self.code)
+            slug = base_slug
+            counter = 1
+            while User.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+
+        if not self.auth_provider:
+            self.auth_provider = 'phone'
+
         super(User, self).save(*args, **kwargs)
+
 
         # get token for current user
 
@@ -217,9 +233,22 @@ class UserAddress(models.Model):
     area = models.CharField(max_length=100,  null=True, blank=True)
     address = models.CharField(max_length=200, validators=[UnicodeUsernameValidator], null=True, blank=True)
     postal_code = models.CharField(max_length=100, validators=[validate_integer], null=True, blank=True)
-    apartment = models.CharField(max_length=100, validators=[validate_integer], null=True, blank=True)
-    latitude = models.CharField(max_length=100, validators=[validate_integer], null=True, blank=True)
-    longitude = models.CharField(max_length=100, validators=[validate_integer], null=True, blank=True)
+    apartment = models.CharField(max_length=100, null=True, blank=True)
+    building_name = models.CharField(max_length=255, null=True, blank=True)
+    floor = models.CharField(max_length=50, null=True, blank=True)
+    apartment_number = models.CharField(max_length=50, null=True, blank=True)
+    latitude = models.CharField(max_length=100, null=True, blank=True)
+    longitude = models.CharField(max_length=100, null=True, blank=True)
+    property_type = models.CharField(
+        max_length=20,
+        choices=[
+            ("apartment", "شقة"),
+            ("villa", "فيلا"),
+            ("office", "مكتب"),
+            ("house", "منزل"),
+        ],
+        null=True, blank=True
+    )
     phone = models.CharField(max_length=100, validators=[validate_integer], null=True, blank=True)
     note = models.CharField(max_length=50, validators=[UnicodeUsernameValidator], blank=True, null=True)
     default = models.CharField(max_length=20, choices=Active_Status, default='Inactive', null=True, blank=True)
