@@ -202,7 +202,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class UserProfile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    GENDER_CHOICES = (
+    ('male', 'ذكر'),
+    ('female', 'أنثى'),
+)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     p_year = models.CharField(max_length=4, validators=[validate_integer], null=True, blank=True)
     p_month = models.CharField(max_length=2, validators=[validate_integer], null=True, blank=True)
     p_day = models.CharField(max_length=2, validators=[validate_integer], null=True, blank=True)
@@ -210,6 +214,8 @@ class UserProfile(models.Model):
     nationality = models.CharField(max_length=50, null=True, blank=True)
     residence = models.CharField(max_length=50, null=True, blank=True)
     id_number = models.CharField(max_length=50, null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True)
+    id_image = models.ImageField(upload_to=get_file_path, null=True, blank=True)
     country = models.TextField(max_length=100, choices=Country_List, default='Egypt', null=True, blank=True)
     lang = models.ForeignKey(Language, on_delete=models.CASCADE, null=True, blank=True)
     dark_mode = models.CharField(max_length=10, choices=Active_Status, default='Inactive', null=True, blank=True)
