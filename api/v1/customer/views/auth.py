@@ -12,11 +12,11 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
+
+
 VALID_ACCESS_LEVELS = ['Client', 'Provider']
-
-
+@extend_schema(request=RegisterSerializer,tags=["CustomerAuth"] , auth=[])
 @api_view(['POST'])
-@extend_schema(request=RegisterSerializer, auth=[])
 @permission_classes([AllowAny])
 @authentication_classes([])
 def register(request):
@@ -61,8 +61,8 @@ def register(request):
         "otp_demo": otp  
     }, status=status.HTTP_201_CREATED)
 
+@extend_schema(request=ConfirmOTPSerializer, auth=[],tags=["CustomerAuth"])
 @api_view(['POST'])
-@extend_schema(request=ConfirmOTPSerializer, auth=[])
 @permission_classes([AllowAny])
 @authentication_classes([])
 def verify_otp(request):
@@ -99,7 +99,7 @@ def verify_otp(request):
     }, status=status.HTTP_200_OK)
 
 @extend_schema(
-    request=LogoutSerializer,
+    request=LogoutSerializer,tags=["CustomerAuth"],
     responses={200: {'message': 'Logged out successfully'}, 400: {'error': 'Invalid or expired token'}}
 )
 @api_view(['POST'])
@@ -116,29 +116,3 @@ def logout(request):
         return Response({"message": "Logged out successfully"}, status=200)
     except Exception:
         return Response({"error": "Invalid or expired token"}, status=400)
-
-
-
-@extend_schema(request=UserAddressSerializer)
-@api_view(['POST'])
-def save_address(request):
-    """
-    Create user address (manual or map selection)
-    """
-    serializer = UserAddressSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(user=request.user)  
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# @extend_schema(responses=UserAddressSerializer(many=True))
-# @api_view(['GET'])
-# def list_addresses(request):
-#     """
-#     Get all addresses for logged-in user
-#     """
-#     addresses = UserAddress.objects.filter(user=request.user)
-#     serializer = UserAddressSerializer(addresses, many=True)
-#     return Response(serializer.data, status=status.HTTP_200_OK)

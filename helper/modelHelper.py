@@ -672,7 +672,7 @@ JobProvider_Type = ( ('Company', _("Company")),
 Job_Offer_Status = (('Accepted', 'Accepted'), ('Offered', 'Offered'), ('Rejected', 'Rejected'),
                     ('New', 'New'), )
 Job_Progress_Status = (('Pending', 'Pending'), ('In Progress', 'In Progress'), ('Completed', 'Completed'),
-                       ('On Hold', 'On Hold'), ('Cancelled', 'Cancelled'), )
+                       ('On Hold', 'On Hold'), ('Cancelled', 'Cancelled'),)
 ################### Blog ##############################
 Service_Type = (('Service', 'Service'), ('Work', 'Work'), ('Product', 'Product'), ('Project', 'Project'),
                 ('Portfolio', 'Portfolio'), ('Other', 'Other'))

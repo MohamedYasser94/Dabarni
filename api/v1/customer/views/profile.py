@@ -1,11 +1,25 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from user.models import UserProfile
+from api.v1.customer.serializers.auth_serializer import UserAddressSerializer
+from user.models import UserAddress, UserProfile
 from api.v1.customer.serializers.profile_serializer import UserProfileSerializer
 from drf_spectacular.utils import extend_schema
 from rest_framework.parsers import MultiPartParser, FormParser
-
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from django.utils import timezone
+from django.utils.crypto import get_random_string
+from datetime import timedelta
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from user.models import User
+from api.v1.customer.serializers.auth_serializer import RegisterSerializer , ConfirmOTPSerializer , UserAddressSerializer ,LogoutSerializer
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from api.v1.response import success_response, error_response
 
 class GetProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -22,8 +36,59 @@ class UpdateProfileView(APIView):
         responses=UserProfileSerializer)
     def put(self, request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        print("Request data ------------------",request.data)
         serializer = UserProfileSerializer(profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "تم تحديث البيانات بنجاح", "data": serializer.data})
         return Response(serializer.errors, status=400)
+
+
+
+#----------------------------
+
+@extend_schema(request=UserAddressSerializer, tags=["CustomerAuth"])
+@api_view(['POST'])
+def save_address(request):
+    serializer = UserAddressSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user=request.user)
+        return success_response(
+            message="تم إضافة العنوان بنجاح",
+            data=serializer.data,
+            status_code=201
+        )
+    return error_response(
+        message="خطأ في البيانات المرسلة",
+        errors=serializer.errors,
+        status_code=400
+    )
+
+
+@extend_schema(tags=["Profile"], responses=UserAddressSerializer(many=True))
+@api_view(['GET'])
+def list_addresses(request):
+    addresses = UserAddress.objects.filter(user=request.user).order_by("-created_at")
+    serializer = UserAddressSerializer(addresses, many=True)
+    return success_response(
+        message="تم جلب العناوين بنجاح",
+        data=serializer.data
+    )
+
+
+@extend_schema(tags=["Profile"])
+@api_view(['DELETE'])
+def delete_address(request, pk):
+    try:
+        address = UserAddress.objects.get(pk=pk, user=request.user)
+    except UserAddress.DoesNotExist:
+        return error_response(
+            message="العنوان غير موجود",
+            status_code=404
+        )
+
+    address.delete()
+    return success_response(
+        message="تم حذف العنوان بنجاح",
+        status_code=200
+    )
