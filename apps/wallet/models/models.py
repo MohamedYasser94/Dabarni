@@ -41,6 +41,8 @@ class WalletLocked(models.Model):
             self.code = code
             self.slug = slugify(code)
         super(WalletLocked, self).save(*args, **kwargs)
+
+
 class WalletResetPassword(models.Model):
     wallet_locked = models.OneToOneField(WalletLocked, related_name='wallet_reset', on_delete=models.PROTECT)
     user = models.OneToOneField(User, related_name='reset_user', on_delete=models.PROTECT, null=True, blank=True)
@@ -64,7 +66,7 @@ class WalletResetPassword(models.Model):
             self.slug = slugify(code)
         super(WalletResetPassword, self).save(*args, **kwargs)
 
-#
+
 class Wallet(models.Model):
     wallet_locked = models.OneToOneField(WalletLocked, related_name='wallet_locked', on_delete=models.PROTECT)
     user = models.OneToOneField(User, related_name='wallet_user', on_delete=models.PROTECT, null=True, blank=True)
@@ -99,13 +101,14 @@ class Wallet(models.Model):
         super(Wallet, self).save(*args, **kwargs)
 
 class WalletMoney(models.Model):
-    wallet = models.OneToOneField(Wallet, on_delete=models.PROTECT)
+    wallet = models.OneToOneField(Wallet, on_delete=models.PROTECT, null=True, blank=True)
     user = models.OneToOneField(User, on_delete=models.PROTECT , null=True, blank=True)
     owner_model = models.ForeignKey(ContentType, on_delete=models.PROTECT, null=True, blank=True)
     owner_id = models.PositiveIntegerField(null=True, blank=True)
     owner = GenericForeignKey('owner_model', 'owner_id')
     transaction_category = models.CharField(choices=Transaction_Money_Category, null=True, blank=True, max_length=50)
-    amount = models.DecimalField(max_digits=50, decimal_places=2, default=0, null=True, blank=True)   # 100.00
+    actual_balance = models.DecimalField(max_digits=50, decimal_places=2, default=0, null=True, blank=True)   # 100.00
+    reversed_balance = models.DecimalField(max_digits=50, decimal_places=2, default=0, null=True, blank=True)
     earning = models.DecimalField(max_digits=50, decimal_places=2, default=0, null=True, blank=True)   # 100.00
     paid = models.DecimalField(max_digits=50, decimal_places=2, default=0, null=True, blank=True) 
     due = models.DecimalField(max_digits=50, decimal_places=2, default=0, null=True, blank=True) 
@@ -131,6 +134,8 @@ class WalletMoney(models.Model):
             self.code = code
             self.slug = slugify(code)
         super(WalletMoney, self).save(*args, **kwargs)
+
+
 class SystemWallet(models.Model):
     wallet_locked = models.OneToOneField(WalletLocked, related_name='systemwallet_locked', on_delete=models.PROTECT,null=True, blank=True)
     user = models.OneToOneField(User, related_name='systemwallet_user', on_delete=models.PROTECT, null=True, blank=True)

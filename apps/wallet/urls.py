@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.wallet.views import purchase, payments
+from apps.wallet.views import purchase, payments, points
 from apps.wallet.views.wallet import UserWalletLocked, CreateWallet, AdminWalletUserView, UserWalletChangeInfo, \
     walletLogout, AdminWalletUserReset
 
@@ -25,5 +25,10 @@ urlpatterns = [
     # path('payment/gateway/create/', payment.AdminPaymentGatewayCreate, name='AdminPaymentGatewayCreate'),
     path('wallet/payment/gateway/edit/<slug:slug>/', payments.AdminPaymentGatewayUpdate, name='AdminPaymentGatewayUpdate'),
     path('wallet/payment/gateway/delete/<slug:slug>/', payments.AdminPaymentGatewayDelete, name='AdminPaymentGatewayDelete'),
+
+    ################### Point System ####################
+    path('points/settings/', points.AdminPointSetting, name='AdminPointSetting'),
+    path('points/update/<slug:slug>/', points.AdminPointSettingUpdate, name='AdminPointSettingUpdate'),
+    path('points/delete/<slug:slug>/', points.AdminPointSettingDelete, name='AdminPointSettingDelete'),
 
 ]

@@ -26,16 +26,17 @@
                 <span class="menu-title">{% translate 'Payments' %}</span>
             </a>
         </div>
-        <div class="menu-item">
-            <a class="menu-link" href="{% url 'provider:ProviderCompanyEmployeeList' %}">
-                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
-                <span class="menu-title">{% translate 'Employees' %}</span>
-            </a>
-        </div>
+
          <div class="menu-item">
             <a class="menu-link" href="{% url 'wallet:AdminPaymentGatewayList' %}">
                 <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
                 <span class="menu-title">{% translate 'Payment Gateway' %}</span>
+            </a>
+        </div>
+        <div class="menu-item">
+            <a class="menu-link" href="{% url 'wallet:AdminPointSetting' %}">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">{% translate 'Point System' %}</span>
             </a>
         </div>
     </div>

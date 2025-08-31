@@ -47785,7 +47785,7 @@ function _applyPMREM( cubeUVRenderTarget ) {
  * vertically and horizontally, but this breaks down on a cube. Here we apply
  * the blur latitudinally (around the poles), and then longitudinally (towards
  * the poles) to approximate the orthogonally-separable blur. It is least
- * accurate at the poles, but still does a decent job.
+ * accurate at the poles, but still does a decent provider.
  */
 function _blur( cubeUVRenderTarget, lodIn, lodOut, sigma, poleAxis ) {
 

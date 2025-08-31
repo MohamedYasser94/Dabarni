@@ -156,13 +156,13 @@
                                              data-kt-menu="true">
                                             <!--begin::Menu item-->
                                             <div class="menu-item px-3">
-                                                <a href="{% url 'classified:AdminClassifiedCategoryUpdate' item.slug %}"
+                                                <a href="{% url 'classified:AdminJobCategoryUpdate' item.slug %}"
                                                    class="menu-link px-3">{% translate 'Edit' %}</a>
                                             </div>
                                             <!--end::Menu item-->
                                             <div class="menu-item px-3">
                                                 <form id="{{ item.slug }}" method="POST"
-                                                      action="{% url 'classified:AdminClassifiedCategoryDelete' item.slug %}">
+                                                      action="{% url 'classified:AdminJobCategoryDelete' item.slug %}">
                                                     {% csrf_token %} </form>
 
 
@@ -234,7 +234,7 @@
                         <div class="modal-content">
                             <!--begin::Form-->
                             <form class="form" id="kt_modal_add_category" enctype="multipart/form-data"
-                                  action="{% url 'classified:AdminClassifiedCategoriesList' %}"
+                                  action="{% url 'classified:AdminJobCategoriesList' %}"
                                   method="POST"
                             >
                                 {% csrf_token %}
@@ -284,17 +284,7 @@
 
                                             <!--end::Input-->
                                         </div>
-                                         <div class="fv-row mb-7">
-                                            <!--begin::Label-->
-                                            <label class="required fs-6 fw-bold mb-2">{% translate 'Keyword' %}</label>
-                                            <!--end::Label-->
-                                            <!--begin::Input-->
-                                            <input type="text" class="form-control form-control-solid"
-                                                   placeholder="{% translate 'Keyword' %}"
-                                                   name="keyword" required/>
 
-                                            <!--end::Input-->
-                                        </div>
 
                                       <div class="fv-row mb-7">
                                             <!--begin::Label-->

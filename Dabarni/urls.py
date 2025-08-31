@@ -51,11 +51,15 @@ urlpatterns = [path('i18n/', include('django.conf.urls.i18n')),
 urlpatterns += i18n_patterns(
 
     path('dashboard/', include('core.urls'), name='core'),
-    path('dashboard/classified/', include('apps.classified.classified_urls'), name='classified'),
-    path('dashboard/', include('apps.front.urls'), name='front'),
-
-    path('dashboard/', include('apps.wallet.urls'), name='wallet'), path('', include('home.urls'), name='home'),
-    path('', include('user.urls', namespace='user')), path('api/dialogs/', dialog_list_view, name='dialog_list'),
+    path('dashboard/classified/', include('apps.classified.urls'), name='classified'),
+    path('dashboard/customer/', include('apps.customer.urls'), name='customer'),
+    path('dashboard/employee/', include('apps.employee.urls'), name='employee'),
+    path('dashboard/front/', include('apps.front.urls'), name='front'),
+    path('dashboard/provider/', include('apps.provider.urls'), name='provider'),
+    path('dashboard/wallet/', include('apps.wallet.urls'), name='wallet'),
+    path('', include('home.urls'), name='home'),
+    path('', include('user.urls', namespace='user')),
+    path('api/dialogs/', dialog_list_view, name='dialog_list'),
 
     # path('^inbox/notifications/', include(notifications.urls, namespace='notifications')),
     prefix_default_language=True

@@ -2,7 +2,7 @@
 from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 
-from apps.classified.models.job import *
+from apps.classified.models.models import *
 from apps.wallet.models.billing import Purchase
 from helper.commonHelper import *
 from helper.decorators import *

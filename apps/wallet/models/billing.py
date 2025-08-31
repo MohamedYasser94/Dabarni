@@ -1,10 +1,17 @@
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django.urls import reverse
+from slugify import slugify
 
-from core.models.core import *
-from helper.decorators import *
+
 from helper.modelHelper import *
 from helper.viewHelper import *
 
 User = get_user_model()
+
+
 class Purchase(models.Model):
     sender_model = models.ForeignKey(ContentType,related_name='purchase_sender', on_delete=models.CASCADE, null=True, blank=True)
     sender_id = models.PositiveIntegerField(null=True, blank=True)

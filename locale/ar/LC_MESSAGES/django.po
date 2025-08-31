@@ -23975,7 +23975,7 @@ msgstr "إعادة تعيين كلمة المرور كاملة"
 
 #, fuzzy
 #~| msgid "Add driver to a reservation."
-#~ msgid "Add printer to a job."
+#~ msgid "Add printer to a provider."
 #~ msgstr "اضافة سائق للحجز."
 
 #, fuzzy

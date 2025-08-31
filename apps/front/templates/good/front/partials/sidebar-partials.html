@@ -1,22 +1,41 @@
-{% load static %}
 {% load i18n %}
 
-
-{% if user.is_author %}
-    <!--begin:Menu item-->
-    <div data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-placement="right-start"
-         class="menu-item py-1">
-        <!--begin:Menu link-->
-        <span class="menu-link menu-center">
+<!--begin:Menu item-->
+<div data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-placement="right-start"
+     class="menu-item py-1">
+    <!--begin:Menu link-->
+    <span class="menu-link menu-center">
 										<span class="menu-icon me-0">
 										<i class="ki-outline ki-feather  fs-2hx"></i>
 										</span>
 									</span>
-        <!--end:Menu link-->
+    <!--end:Menu link-->
+    <!--begin:Menu sub-->
+    <div class="menu-sub menu-sub-dropdown px-lg-2 py-lg-4 w-200px w-lg-225px">
+        <!--begin:Menu item-->
+        <div class="menu-item">
+            <!--begin:Menu content-->
+            <div class="menu-content">
+                <span class="menu-section fs-5 fw-bolder ps-1 py-1">{% translate 'Setting' %}</span>
+            </div>
+            <!--end:Menu content-->
+        </div>
+        <!--end:Menu item-->
+
+
 
     </div>
-    <!--end:Menu item-->
+    <!--end:Menu sub-->
+</div>
+<!--end:Menu item-->
 
-{% endif %}
+
+
+
+
+
+
+
+
 
 

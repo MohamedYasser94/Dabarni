@@ -27,13 +27,13 @@ class SupportTicketSerializer(serializers.ModelSerializer):
 class ServiceReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceReview
-        # FIX: Add 'job' and 'user' to the fields list, but make them read-only.
-        fields = ('id', 'job', 'user', 'rating', 'name', 'email', 'comment', 'created_at')
-        read_only_fields = ('id', 'job', 'user', 'created_at')
+        # FIX: Add 'provider' and 'user' to the fields list, but make them read-only.
+        fields = ('id', 'provider', 'user', 'rating', 'name', 'email', 'comment', 'created_at')
+        read_only_fields = ('id', 'provider', 'user', 'created_at')
 
     def create(self, validated_data):
-        # The `job` and `user` objects are automatically passed into validated_data
-        # by the serializer.save(job=job, user=user) call in the view.
+        # The `provider` and `user` objects are automatically passed into validated_data
+        # by the serializer.save(provider=provider, user=user) call in the view.
         return ServiceReview.objects.create(**validated_data)
 
 class ReportSerializer(serializers.ModelSerializer):

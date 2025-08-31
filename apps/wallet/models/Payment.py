@@ -63,10 +63,6 @@ class PaymentGatewaySetting(models.Model):
             super(PaymentGatewaySetting, self).save(*args, **kwargs)
 
 
-
-
-
-
 class SubscriptionPlan(models.Model):
     title = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -177,18 +173,45 @@ class Payment(models.Model):
             self.slug = slugify(code)
             super(Payment, self).save(*args, **kwargs)
 
+class Banks(models.Model):
+    name = models.CharField(max_length=100, blank=True, null=True, )
+    description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to=get_file_path, null=True, blank=True)
+    status = models.CharField(max_length=100, choices=Active_Status, default='Active')
+    code = models.CharField(unique=True, max_length=100, )
+    slug = models.SlugField(null=True, blank=True, max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_image(self):
+        try:
+            return self.image.url
+        except:
+            return None
+
+    def save(self, *args, **kwargs):
+        if not self.code and not self.slug:
+            code = f'Banks-{get_random_string(5).upper()}'
+            self.code = code
+            self.slug = slugify(code)
+            super(Banks, self).save(*args, **kwargs)
+
+
 class BankAccount(models.Model):
-    receiver_model = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
-    receiver_id = models.PositiveIntegerField(null=True, blank=True)
-    receiver = GenericForeignKey('receiver_model', 'receiver_id')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bank_accounts')
     bank_name = models.CharField(max_length=100, blank=True, null=True, )
     account_number = models.CharField(max_length=100, blank=True, null=True, )
+    iban = models.CharField(max_length=100, blank=True, null=True, )
     swift_code = models.CharField(max_length=100, blank=True, null=True, )
     account_name = models.CharField(max_length=100, blank=True, null=True, )
     country = models.CharField(max_length=100, blank=True, null=True, )
     account_email = models.CharField(max_length=100, blank=True, null=True, )
     crypto_address = models.CharField(max_length=100, blank=True, null=True, )
     description = models.TextField(blank=True, null=True)
+    default_account = models.BooleanField(default=False)
     status = models.CharField(max_length=100, choices=Active_Status, default='Active')
     code = models.CharField(unique=True, max_length=100, )
     slug = models.SlugField(null=True, blank=True, max_length=100, unique=True)

@@ -78,7 +78,10 @@ OWN_APPS = [
     'user.apps.UserConfig',
     'api.apps.ApiConfig',
     'apps.classified.apps.ClassifiedConfig',
+    'apps.customer.apps.CustomerConfig',
+    'apps.employee.apps.EmployeeConfig',
     'apps.front.apps.FrontConfig',
+    'apps.provider.apps.ProviderConfig',
     'apps.wallet.apps.WalletConfig',
 
 ]

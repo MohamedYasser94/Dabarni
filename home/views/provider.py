@@ -3,7 +3,7 @@ from django.shortcuts import render , redirect
 from django.utils import timezone
 
 
-from apps.classified.models.job import *
+from apps.classified.models.models import *
 from apps.wallet.models.billing import Purchase
 from helper.commonHelper import ACTIVE_FRONTEND_TEMPLATES
 
@@ -18,12 +18,12 @@ def FrontProviderList(request):
 
 
 def FrontProviderJobAdd(request):
-    # This view is for adding a job by the provider
-    # You can implement the logic for adding a job here
+    # This view is for adding a provider by the provider
+    # You can implement the logic for adding a provider here
 
     if request.method == 'POST':
-        # Handle the form submission for adding a job
-        # You can use a form class to validate and save the job data
+        # Handle the form submission for adding a provider
+        # You can use a form class to validate and save the provider data
         job_form  = AdminJobForm(request.POST, request.FILES)
         if job_form:
             user = request.user
@@ -44,7 +44,7 @@ def FrontProviderJobAdd(request):
             requirement_description = request.POST.getlist('[requirement_description]')
             is_required = request.POST.getlist('[is_required]')
 
-            # Create a new job instance
+            # Create a new provider instance
             job_object = Job(
                 user=user,
                 title=title,
@@ -61,7 +61,7 @@ def FrontProviderJobAdd(request):
             )
             job_object.save()
 
-            # Create job requirements
+            # Create provider requirements
             for i in range(len(requirement_type)):
                 requirement = JobRequirement(
                     classified_job=job_object,
@@ -73,11 +73,11 @@ def FrontProviderJobAdd(request):
                 requirement.save()
             # Redirect to a success page or render a success message
             messages.success(request, 'Job Posted Successfully',extra_tags='FrontProviderJobAdd')
-            return render(request, f'{ACTIVE_FRONTEND_TEMPLATES}/provider/post_job_success.html', {'job': job_object})
+            return render(request, f'{ACTIVE_FRONTEND_TEMPLATES}/provider/post_job_success.html', {'provider': job_object})
         else:
-            messages.error(request, 'Failed to post job. Please check the form data.', extra_tags='FrontProviderJobAdd')
+            messages.error(request, 'Failed to post provider. Please check the form data.', extra_tags='FrontProviderJobAdd')
     else:
-        # Render the job posting form
+        # Render the provider posting form
         job_form = AdminJobForm()
     context = {
         'job_form': job_form,
@@ -137,7 +137,7 @@ def FrontProviderJobDetail(request, slug):
     job.views += 1
     job.save()
     context = {
-        'job': job,
+        'provider': job,
         'job_user': job_user,
         'job_requirements': job_requirements,
         'user_request': user_request,     
@@ -175,7 +175,7 @@ def FrontSubmitJobRequest(request, slug):
             )
             messages.success(request, 'Your request has been submitted successfully!')
         else:
-            messages.error(request, 'You have already submitted a request for this job.')
+            messages.error(request, 'You have already submitted a request for this provider.')
 
     
     user_request = JobRequest.objects.filter(classified_job=job, user=request.user).first()
@@ -184,7 +184,7 @@ def FrontSubmitJobRequest(request, slug):
     
 
     context = {
-        'job': job,
+        'provider': job,
         'job_user': job_user,
         'user_request': user_request,
         'proposal_form': proposal_form,
@@ -199,7 +199,7 @@ def FrontProviderJobPayment(request, slug):
     try:
         job_request = JobRequest.objects.get(slug=slug,)
     except JobRequest.DoesNotExist:
-        messages.error(request, 'The job request does not exist or you do not have permission to access it.')
+        messages.error(request, 'The provider request does not exist or you do not have permission to access it.')
         return render(request, f'{ACTIVE_FRONTEND_TEMPLATES}/404.html', status=404)
     user = request.user
     purchase = Purchase(
@@ -318,7 +318,7 @@ def FrontProviderJobEdit(request, slug):
             messages.success(request, 'Job request updated successfully!')
             return redirect('home:FrontProviderJobRequestList')
         else:
-            messages.error(request, 'Failed to update job request. Please check the form data.')
+            messages.error(request, 'Failed to update provider request. Please check the form data.')
     else:
         form = JobRequestForm(instance=job_request)
 
@@ -326,7 +326,7 @@ def FrontProviderJobEdit(request, slug):
         'form': form,
         'job_request': job_request,
     }
-    return render(request, f'{ACTIVE_FRONTEND_TEMPLATES}/provider/dashboard/edit-job.html', context)
+    return render(request, f'{ACTIVE_FRONTEND_TEMPLATES}/provider/dashboard/edit-provider.html', context)
 
 def FrontProviderJobChat(request, dialog_id=None):
     """

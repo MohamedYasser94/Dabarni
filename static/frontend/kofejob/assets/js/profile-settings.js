@@ -41,7 +41,7 @@ Version      : 1.0
 		}
 	});
 	
-	$('#job_type input[name="job"]').on('change', function() {
+	$('#job_type input[name="provider"]').on('change', function() {
 		if ((this.checked == true) && ($(this).val() == 'job_2')) {
 			$('#job_date').show();
 		}

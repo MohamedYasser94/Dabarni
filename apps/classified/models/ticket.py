@@ -5,7 +5,7 @@ from django.db.models import Avg, Count
 from django.utils.crypto import get_random_string
 from slugify import slugify
 
-from apps.classified.models.job import Job
+from apps.classified.models.models import Job
 
 User = get_user_model()
 

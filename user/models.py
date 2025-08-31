@@ -13,7 +13,6 @@ from django.utils.crypto import get_random_string
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
-
 from core.models.localization import  Language
 from helper.modelHelper import Active_Status, User_Position, Email_Validator, Access_Level, User_Status, Country_List, \
     Governorates_List, SAUDI_CITIES_BY_GOVERNORATE
@@ -93,6 +92,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     have_wallet = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     fcm_token = models.TextField(blank=True)
+    firebase_uid = models.CharField(max_length=255, blank=True, null=True, unique=True)
     otp = models.CharField(max_length=6, blank=True, null=True)
     otp_expiry = models.DateTimeField(blank=True, null=True)
     otp_verified = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
@@ -202,25 +202,51 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class UserProfile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    p_year = models.CharField(max_length=4, validators=[validate_integer], null=True, blank=True)
-    p_month = models.CharField(max_length=2, validators=[validate_integer], null=True, blank=True)
-    p_day = models.CharField(max_length=2, validators=[validate_integer], null=True, blank=True)
+    # --- RELATIONSHIP ---
+    # Changed to OneToOneField for a strict one-to-one link.
+    # Uses settings.AUTH_USER_MODEL to prevent circular import errors.
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+
+    # --- PERSONAL & IDENTITY INFO ---
+    # Simplified to use just the DateField. The p_year, p_month, p_day fields were redundant.
     dob = models.DateField(null=True, blank=True)
     nationality = models.CharField(max_length=50, null=True, blank=True)
     residence = models.CharField(max_length=50, null=True, blank=True)
+
+    # This is the single source of truth for the user's ID number now.
     id_number = models.CharField(max_length=50, null=True, blank=True)
+
+    # --- IDENTITY DOCUMENTS (Moved from JobProvider) ---
+    # These fields verify the person, so they belong on the personal profile.
+    id_image_front = models.ImageField(upload_to=get_file_path, blank=True, null=True,
+                                       help_text="Front of National ID/Passport")
+    id_image_back = models.ImageField(upload_to=get_file_path, blank=True, null=True,
+                                      help_text="Back of National ID/Passport")
+    residence_image = models.ImageField(upload_to=get_file_path, blank=True, null=True,
+                                        help_text="Proof of residence document")
+
+    # --- LOYALTY POINTS ---
+    current_points = models.PositiveIntegerField(default=0)
+    lifetime_points = models.PositiveIntegerField(default=0)
+    points_spent = models.PositiveIntegerField(default=0)
+
+    # --- PREFERENCES & SETTINGS ---
     country = models.TextField(max_length=100, choices=Country_List, default='Egypt', null=True, blank=True)
     lang = models.ForeignKey(Language, on_delete=models.CASCADE, null=True, blank=True)
     dark_mode = models.CharField(max_length=10, choices=Active_Status, default='Inactive', null=True, blank=True)
     notification = models.CharField(max_length=10, choices=Active_Status, default='Active', null=True, blank=True)
     deactivate = models.CharField(max_length=10, choices=Active_Status, default='Inactive', null=True, blank=True)
     delete_account = models.CharField(max_length=10, choices=Active_Status, default='Inactive', null=True, blank=True)
+
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.id
+        # A more descriptive name for the admin panel.
+        return f"{self.user.get_full_name()}'s Profile"
+
+
 
 
 class UserAddress(models.Model):
@@ -312,18 +338,33 @@ class UserToken(models.Model):
     def __str__(self):
         return self.token
 
-    @property
-    def lifetime(self):
-        app_settings = DjangoRestJwtRegistrationConfig.settings
-        return {
-            UserToken.REGISTRATION_TOKEN: app_settings['REGISTRATION_TOKEN_LIFETIME'],
-            UserToken.REGISTRATION_DELETE_TOKEN: app_settings['REGISTRATION_DELETE_TOKEN_LIFETIME'],
-            UserToken.PASSWORD_CHANGE_TOKEN: app_settings['PASSWORD_CHANGE_TOKEN_LIFETIME'],
-            UserToken.EMAIL_CHANGE_TOKEN: app_settings['EMAIL_CHANGE_TOKEN_LIFETIME'],
-        }[self.type]
+
 
     @property
     def expires_at(self):
         return self.created_at.astimezone(datetime.timezone.utc) + datetime.timedelta(seconds=self.lifetime)
 
 
+class OtpCode(models.Model):
+    OTP_TYPE_CHOICES = [
+        ('general', 'General'),
+        ('signup', 'Signup'),
+        ('reset', 'Reset'),
+    ]
+
+    phone = models.CharField(max_length=20)
+    otp = models.CharField(max_length=6)
+    type = models.CharField(max_length=10, choices=OTP_TYPE_CHOICES, default='general')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + datetime.timedelta(seconds=300)  # 5 minutes default
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        return timezone.now() < self.expires_at
+
+    class Meta:
+        ordering = ['-created_at']  # Latest first

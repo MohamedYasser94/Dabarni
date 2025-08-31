@@ -105,7 +105,7 @@
                                     </table>
                                 </div>
                             {% else %}
-                                <p class="text-center text-muted py-5">{% translate 'No specific requirements listed for this job.' %}</p>
+                                <p class="text-center text-muted py-5">{% translate 'No specific requirements listed for this provider.' %}</p>
                             {% endif %}
                         </div>
 
@@ -122,7 +122,7 @@
                                             <input type="file" class="form-control" name="requirement_{{ requirement.id }}" id="requirement_{{ requirement.id }}">
                                         </div>
                                     {% empty %}
-                                        <p class="text-muted">{% translate 'There are no requirements to upload for this job.' %}</p>
+                                        <p class="text-muted">{% translate 'There are no requirements to upload for this provider.' %}</p>
                                     {% endfor %}
                                     
                                     {% if job_requirements %}
@@ -222,7 +222,7 @@
             <form action="{% url 'home:FrontSubmitJobRequest' job.slug %}" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p>{% translate 'You are submitting a proposal for the job:' %} <strong>{{ job.title }}</strong></p>
+                    <p>{% translate 'You are submitting a proposal for the provider:' %} <strong>{{ job.title }}</strong></p>
                     <hr>
                     
                     <div class="mb-3">

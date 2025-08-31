@@ -4,7 +4,7 @@ from django.urls import path
 from apps.front.views import views, blocks 
 from api.v1.customer.views import auth
 
-app_name = 'customer'
+app_name = 'customer_api'
 
 urlpatterns = [
 

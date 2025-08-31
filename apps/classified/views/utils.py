@@ -1,4 +1,4 @@
-from apps.classified.models.job import *
+from apps.classified.models.models import *
 from helper.decorators import authenticated_staff, staff_only
 
 User = get_user_model()
