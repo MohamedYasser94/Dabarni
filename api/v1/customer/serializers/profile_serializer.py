@@ -6,12 +6,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source="user.last_name", required=False)
     email = serializers.EmailField(source="user.email", required=False)
     phone = serializers.CharField(source="user.phone", required=False)
-    id_image = serializers.ImageField(required=False, allow_null=True)
+    id_image_front = serializers.ImageField(required=False, allow_null=True)
+    id_image_back = serializers.ImageField(required=False, allow_null=True)
     class Meta:
         model = UserProfile
         fields = [
             "first_name", "last_name", "email", "phone",
-            "dob", "id_number", "id_image", "gender",
+            "dob", "id_number",  "id_image_front", "id_image_back", "gender",
         ]
 
     def update(self, instance, validated_data):

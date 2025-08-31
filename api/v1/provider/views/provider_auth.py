@@ -2,8 +2,6 @@ import random
 import json
 import random
 from datetime import timedelta
-
-
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.db.models import Count, Q

@@ -66,7 +66,7 @@ class JobCategories(MPTTModel):
 
 
 class Job(models.Model):
-
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jobs')
     title = models.CharField(max_length=255)
     description = models.TextField()
     quantity = models.IntegerField()
@@ -103,12 +103,13 @@ class Job(models.Model):
         self.review_count = agg_data['count'] or 0
         self.save()
 
-    def save(self):
+    def save(self, *args, **kwargs):
         if not self.code and not self.slug:
             code = f'Job{get_random_string(5).upper()}'
             self.code = code
             self.slug = slugify(code)
-        super(Job, self).save()
+        # Pass all arguments to the parent save method
+        super(Job, self).save(*args, **kwargs)
 
 class JobMedia(models.Model):
     job= models.ForeignKey(Job, on_delete=models.CASCADE, related_name='media')
@@ -295,7 +296,7 @@ class JobNegotiate(models.Model):
 class JobProgress(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='progresses')
     offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE, related_name='progresses', blank=True, null=True)
-    provider = models.ForeignKey(JobProvider, on_delete=models.CASCADE, related_name='progresses')
+    provider = models.ForeignKey(JobProvider, on_delete=models.CASCADE, related_name='progresses',blank=True,null=True)
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_progresses')
     extra_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     extra_request_time = models.DateTimeField(blank=True, null=True)
@@ -310,7 +311,7 @@ class JobProgress(models.Model):
     end_at = models.DateTimeField(blank=True, null=True)
     completed_at = models.DateTimeField(blank=True, null=True)
     canceled_at = models.DateTimeField(blank=True, null=True)
-    canceled_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='canceled_jobs')
+    canceled_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='canceled_jobs',null=True,blank=True)
     cancel_system_approved = models.BooleanField(default=False)
     cancel_system_decision = models.TextField(blank=True, null=True)
     cancel_provider_approved = models.BooleanField(default=False)

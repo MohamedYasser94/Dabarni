@@ -224,7 +224,7 @@ class UserProfile(models.Model):
                                       help_text="Back of National ID/Passport")
     residence_image = models.ImageField(upload_to=get_file_path, blank=True, null=True,
                                         help_text="Proof of residence document")
-
+    gender = models.CharField(max_length=10, choices=[("M", "Male"), ("F", "Female")], null=True, blank=True)
     # --- LOYALTY POINTS ---
     current_points = models.PositiveIntegerField(default=0)
     lifetime_points = models.PositiveIntegerField(default=0)
