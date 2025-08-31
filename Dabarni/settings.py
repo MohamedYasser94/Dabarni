@@ -70,7 +70,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "drf_spectacular_sidecar",
 ]
-
+print("INSTALLED_APPS:", INSTALLED_APPS)
 OWN_APPS = [
     # internal apps
     'core.apps.CoreConfig',
@@ -116,7 +116,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # "allauth.account.middleware.AccountMiddleware",
+    # Custome middleware for check token if it in BlackList "user made logout"
+    'api.v1.middleware.CheckTokenBlacklistMiddleware',
 ]
 
 ROOT_URLCONF = 'Dabarni.urls'

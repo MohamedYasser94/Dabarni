@@ -32,3 +32,5 @@ class UserAddressSerializer(serializers.ModelSerializer):
             "property_type",
             "note",
         ]
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
