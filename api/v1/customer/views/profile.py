@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from api.v1.customer.serializers.auth_serializer import UserAddressSerializer
+from api.v1.global_serializer.auth_serializer import UserAddressSerializer
 from user.models import UserAddress, UserProfile
 from api.v1.customer.serializers.profile_serializer import UserProfileSerializer
 from drf_spectacular.utils import extend_schema
@@ -14,7 +14,7 @@ from django.utils.crypto import get_random_string
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from user.models import User
-from api.v1.customer.serializers.auth_serializer import RegisterSerializer , ConfirmOTPSerializer , UserAddressSerializer ,LogoutSerializer
+from api.v1.global_serializer.auth_serializer import RegisterSerializer , ConfirmOTPSerializer , UserAddressSerializer ,LogoutSerializer
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken

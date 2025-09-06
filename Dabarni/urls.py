@@ -23,6 +23,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework_simplejwt import views as jwt_views
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from api.v1 import authentication
 
 from home.views.chat import dialog_list_view
 
@@ -45,7 +46,12 @@ urlpatterns = [path('i18n/', include('django.conf.urls.i18n')),
 
     path('api/v1/customer/', include('api.v1.customer.urls'), name='customer_api'),
     path('api/v1/provider/', include('api.v1.provider.urls'), name='provider_api'),
-
+    path('auth/', include([
+        path('register/', authentication.register, name='auth-register'),
+        path('verify-otp/', authentication.verify_otp, name='auth-verify-otp'),
+        path('logout/', authentication.logout, name='auth-logout'),
+    ]), name='authentication_api'),
+ 
 ]
 
 urlpatterns += i18n_patterns(

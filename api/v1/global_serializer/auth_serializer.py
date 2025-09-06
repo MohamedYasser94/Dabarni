@@ -16,6 +16,7 @@ class RegisterSerializer(serializers.Serializer):
 class ConfirmOTPSerializer(serializers.Serializer):
     phone = serializers.CharField()
     otp = serializers.CharField()
+    access_level = serializers.ChoiceField(choices=['Client', 'Provider'])
 
 class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
