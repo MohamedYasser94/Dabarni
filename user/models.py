@@ -212,7 +212,7 @@ class UserProfile(models.Model):
     dob = models.DateField(null=True, blank=True)
     nationality = models.CharField(max_length=50, null=True, blank=True)
     residence = models.CharField(max_length=50, null=True, blank=True)
-
+    is_citizen = models.BooleanField(default=False, help_text="Is the user a citizen?")
     # This is the single source of truth for the user's ID number now.
     id_number = models.CharField(max_length=50, null=True, blank=True)
 

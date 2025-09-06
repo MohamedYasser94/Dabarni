@@ -17,7 +17,15 @@ urlpatterns = [
     path("auth/password-reset/by-phone/", provider_auth.reset_password_by_phone, name="reset_password_by_phone"),
 
     # ===================== Profile & Home URLs =====================
+      path('profile/complete-info/', provider_auth.completeProviderProfile, name='provider-profile-complete-info'),
+      path('profile/', provider_home.retrieveProviderProfile, name='provider-profile-detail'),
+     path('profile/update/', provider_home.updateProviderProfile, name='provider-profile-update'),
+      #---------------------------------------------------------------------------
     path("home/", provider_home.ProviderHome, name="ProviderHome"),
+    path('jobs/available/', provider_home.RetrieveAvailableJobs, name='provider-available-jobs'),
+    path('jobs/<int:job_id>/details/', provider_home.GetJobDetails, name='provider-job-details'),
+    path('jobs/make-request/', provider_home.SendNewOffer, name='providerSendOffer'),
+    path('jobs/<int:job_id>/accept/', provider_home.AcceptJob, name='providerAcceptJob'),
     path("profile/", ProviderProfile, name="ProviderProfile"),
     path("profile/update/", ProviderUpdateProfile, name="ProviderUpdateProfile"),
     path("profile/reviews/", provider_home.ProviderJobReviews, name="ProviderJobReviews"),
@@ -25,7 +33,7 @@ urlpatterns = [
 
     # ===================== Job & Order URLs =====================
     path("orders/<str:progress_status>/", provider_home.ProviderMyOrders, name="ProviderMyOrders"),
-    path("jobs/<slug:job_slug>/details/", provider_home.ProviderJobDetails, name="ProviderJobDetails"),
+    # path("jobs/<slug:job_slug>/details/", provider_home.ProviderJobDetails, name="ProviderJobDetails"),
     path("jobs/offers/<slug:offer_slug>/details/", provider_home.ProviderJobOfferDetails, name="ProviderJobOfferDetails"),
     path("jobs/offers/<slug:offer_slug>/update-status/", provider_home.ProviderUpdateJobOfferStatus, name="ProviderUpdateJobOfferStatus"),
     path("jobs/progress/<slug:progress_slug>/details/", provider_home.ProviderJobProgressDetails, name="ProviderJobProgressDetails"),

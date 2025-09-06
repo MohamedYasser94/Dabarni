@@ -57,3 +57,20 @@ class JobReviewMediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobReviewMedia
         fields = '__all__'
+
+class JobOfferCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for a provider to make a new offer on a job.
+    """
+    class Meta:
+        model = JobOffer
+        fields = ['job', 'price']
+        read_only_fields = ['provider']
+
+class JobProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobProgress
+        fields = '__all__'
+
+
+

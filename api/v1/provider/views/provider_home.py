@@ -1,12 +1,101 @@
+import math
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from api.v1.customer.serializers.jop_request_serializer import JobDetailSerializer
+from api.v1.provider.serializers.auth import ProviderProfileDetailSerializer, ProviderProfileUpdateSerializer
 from api.v1.provider.serializers.classified import *
 from apps.classified.models.models import *
+from rest_framework.decorators import api_view, permission_classes
+from drf_spectacular.utils import extend_schema
+from django.db.models import Count, Q
+from apps.classified.models.models import Job
+from api.v1.response import success_response, error_response
+from api.v1.customer.serializers.profile_serializer import UserProfileSerializer
+from django.db.models.expressions import RawSQL
 
+@extend_schema(
+    tags=["Provider Profile"],
+    responses={200: ProviderProfileDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def retrieveProviderProfile(request):
+    """
+    API endpoint to get the authenticated provider's full profile details.
+    """
+    try:
+        provider_profile = get_object_or_404(JobProvider, user=request.user)
+        
+        serializer = ProviderProfileDetailSerializer(provider_profile, context={'request': request})
+        
+        return success_response(
+            message="تم جلب ملف مقدم الخدمة بنجاح",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+    except JobProvider.DoesNotExist:
+        return error_response(
+            message="ملف مقدم الخدمة غير موجود. يرجى إتمام التسجيل أولاً.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء جلب الملف",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+@extend_schema(
+    tags=["Provider Profile"],
+    request=ProviderProfileUpdateSerializer,
+    responses={200: ProviderProfileDetailSerializer, 400: 'Error Response'}
+)
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def updateProviderProfile(request):
+    """
+    API endpoint to update a provider's profile.
+    Accepts partial data and saves it across multiple models.
+    """
+    user = request.user
+    
+    try:
+        provider_profile = JobProvider.objects.get(user=user)
+    except JobProvider.DoesNotExist:
+        return error_response(
+            message="ملف مقدم الخدمة غير موجود. يرجى إتمام التسجيل أولاً.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    serializer = ProviderProfileUpdateSerializer(
+        provider_profile,
+        data=request.data,
+        partial=True,
+        context={'request': request}
+    )
+
+    if serializer.is_valid():
+        try:
+            provider_profile = serializer.save()
+            return success_response(
+                message="تم تحديث ملف مقدم الخدمة بنجاح",
+                data=ProviderProfileDetailSerializer(provider_profile).data,
+                status_code=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return error_response(
+                message="حدث خطأ أثناء تحديث الملف",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                errors={'detail': str(e)}
+            )
+    else:
+        return error_response(
+            message="فشل تحديث ملف مقدم الخدمة",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            errors=serializer.errors
+        )
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -24,43 +113,257 @@ def ProviderHome(request):
         "job_offer": job_offer_serializer.data,
     }
     return Response(data, status=status.HTTP_200_OK)
-
-
+@extend_schema(
+    tags=["Provider Orders"],
+    responses={200: 'ProviderOrdersResponse', 404: 'Not Found Response', 500: 'Error Response'}
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def ProviderMyOrders(request,progress_status):
-    provider = JobProvider.objects.get(id=request.user.id)
-    job_progress = JobProgress.objects.filter(provider=provider,status=progress_status)
-    job_offer = JobOffer.objects.filter(provider=provider,status=progress_status)
-
-    ### serializers
-    job_progress_serializer = JobProgressSerializer(job_progress, many=True,context={'request': request})
-    job_offer_serializer = JobOfferSerializer(job_offer, many=True,context={'request': request})
-
-    data = {
-        "job_progress": job_progress_serializer.data,
-        "job_offer": job_offer_serializer.data,
-    }
-    return Response(data, status=status.HTTP_200_OK)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def ProviderJobDetails(request,job_slug):
-    provider = JobProvider.objects.get(id=request.user.id)
+def ProviderMyOrders(request, progress_status):
+    """
+    API endpoint to retrieve a provider's orders based on a specific progress status.
+    This includes jobs they have offers on or are actively working on.
+    """
     try:
-        job = Job.objects.get(slug=job_slug,provider=provider)
-    except Job.DoesNotExist:
-        return Response({"error": "Job not found or you do not have permission to view this job."}, status=status.HTTP_404_NOT_FOUND)
+        provider = get_object_or_404(JobProvider, user=request.user)
+        
+        jobProgress = JobProgress.objects.filter(provider=provider, progress_status=progress_status)
+        jobOffer = JobOffer.objects.filter(provider=provider, status=progress_status)
 
-    ### serializers
-    job_serializer = JobSerializer(job, context={'request': request})
+        jobProgressSerializer = JobProgressSerializer(jobProgress, many=True, context={'request': request})
+        jobOfferSerializer = JobOfferSerializer(jobOffer, many=True, context={'request': request})
 
-    data = {
-        "job": job_serializer.data,
-    }
-    return Response(data, status=status.HTTP_200_OK)
+        data = {
+            "jobProgress": jobProgressSerializer.data,
+            "jobOffer": jobOfferSerializer.data,
+        }
+        
+        return success_response(
+            message="تم جلب الطلبات بنجاح.",
+            data=data,
+            status_code=status.HTTP_200_OK
+        )
+    except JobProvider.DoesNotExist:
+        return error_response(
+            message="ملف مقدم الخدمة غير موجود. يرجى التأكد من أنك سجلت كمقدم خدمة.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء جلب الطلبات.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
 
 
+
+@extend_schema(
+    tags=["Provider Jobs"],
+    responses={200: JobDetailSerializer(many=True), 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def RetrieveAvailableJobs(request):
+    """
+    API endpoint to list jobs available for a provider, filtered by their category
+    and geographical location using Python-based calculation.
+    """
+    try:
+        # 1. Get the authenticated provider's profile and their location
+        provider = get_object_or_404(JobProvider, user=request.user)
+
+        if not provider.latitude or not provider.longitude:
+            return error_response(
+                message="يرجى إكمال ملفك الشخصي وإضافة موقعك لتتمكن من رؤية الوظائف المتاحة.",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        providerLat = float(provider.latitude)
+        providerLong = float(provider.longitude)
+        searchRadiusKm = 50.0  # 50 kilometers radius
+
+        # 2. Get jobs filtered by category and prefetch the related UserAddress data
+        jobsQueryset = Job.objects.filter(
+            category=provider.category,
+            progresses__progress_status='Pending'
+        ).select_related('location')
+
+        # 3. Calculate distance for each job and filter in Python
+        availableJobs = []
+        for job in jobsQueryset:
+            if job.location and job.location.latitude and job.location.longitude:
+                jobLat = float(job.location.latitude)
+                jobLong = float(job.location.longitude)
+                
+                # Haversine formula calculation in Python
+                R = 6371 # Earth radius in km
+                dLat = math.radians(jobLat - providerLat)
+                dLon = math.radians(jobLong - providerLong)
+                a = math.sin(dLat/2) * math.sin(dLat/2) + math.cos(math.radians(providerLat)) * math.cos(math.radians(jobLat)) * math.sin(dLon/2) * math.sin(dLon/2)
+                c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+                distance = R * c
+
+                if distance <= searchRadiusKm:
+                    # Add a distance attribute to the job object for sorting later
+                    job.distance = distance
+                    availableJobs.append(job)
+
+        # Sort the list of jobs by distance
+        availableJobs.sort(key=lambda x: x.distance)
+
+        # 4. Serialize the filtered jobs
+        serializer = JobDetailSerializer(availableJobs, many=True)
+        
+        return success_response(
+            message="تم جلب قائمة الوظائف المتاحة لك بنجاح.",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+    except JobProvider.DoesNotExist:
+        return error_response(
+            message="ملف مقدم الخدمة غير موجود. يرجى إكمال ملفك الشخصي.",
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return error_response(
+            message=f"حدث خطأ أثناء جلب قائمة الوظائف: {str(e)}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+    
+@extend_schema(
+    tags=["Provider Jobs"],
+    responses={200: JobDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def GetJobDetails(request, job_id):
+    """
+    API endpoint for a provider to get the full details of a specific job.
+    """
+    try:
+        job = get_object_or_404(Job, pk=job_id)
+        serializer = JobDetailSerializer(job)
+        return success_response(
+            message="تم جلب تفاصيل الطلب بنجاح.",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء جلب تفاصيل الطلب.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+
+@extend_schema(
+    tags=["Provider Jobs"],
+    responses={200: JobDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def AcceptJob(request, job_id):
+    """
+    API endpoint for a provider to immediately accept a job at the client's price.
+    """
+    try:
+        provider = get_object_or_404(JobProvider, user=request.user)
+        job = get_object_or_404(Job, pk=job_id)
+        
+        # Check if an offer already exists from this provider for this job
+        existingOffer = JobOffer.objects.filter(job=job, provider=provider).first()
+
+        if existingOffer:
+            return error_response(
+                message="لقد قمت بتقديم عرض على هذا الطلب بالفعل. يمكنك تعديل عرضك.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+            
+        # Create a new offer with the job's original price
+        offer = JobOffer.objects.create(
+            job=job,
+            provider=provider,
+            price=job.price,
+            provider_accepted=True,
+            status='InProgress',
+        )
+
+        return success_response(
+            message="تم قبول الطلب بنجاح. سيتم إخطار العميل.",
+            data=JobOfferSerializer(offer).data,
+            status_code=status.HTTP_201_CREATED
+        )
+    except JobProvider.DoesNotExist:
+        return error_response(
+            message="ملف مقدم الخدمة غير موجود. يرجى إكمال ملفك الشخصي.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء قبول الطلب.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+        
+@extend_schema(
+    tags=["Provider Jobs"],
+    request=JobOfferCreateSerializer,
+    responses={201: JobOfferCreateSerializer, 400: 'Error Response', 404: 'Not Found Response'}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def SendNewOffer(request):
+    """
+    API endpoint for a provider to send a new price offer or update an existing one.
+    """
+    try:
+        provider = get_object_or_404(JobProvider, user=request.user)
+
+        serializer = JobOfferCreateSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            jobId = serializer.validated_data.get('job').id
+            price = serializer.validated_data.get('price')
+
+            existingOffer = JobOffer.objects.filter(job_id=jobId, provider=provider).first()
+
+            if existingOffer:
+                existingOffer.price = price
+                existingOffer.status = 'New'
+                existingOffer.save()
+                offer = existingOffer
+                message = "تم تحديث عرضك بنجاح."
+                status_code = status.HTTP_200_OK
+            else:
+                offer = serializer.save(provider=provider)
+                message = "تم تقديم عرضك بنجاح."
+                status_code = status.HTTP_201_CREATED
+
+            return success_response(
+                message=message,
+                data=JobOfferSerializer(offer).data,
+                status_code=status_code
+            )
+        else:
+            return error_response(
+                message="فشل تقديم عرضك.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                errors=serializer.errors
+            )
+            
+    except JobProvider.DoesNotExist:
+        return error_response(
+            message="ملف مقدم الخدمة غير موجود. يرجى إكمال ملفك الشخصي.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء تقديم العرض.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+
+#============================================= last edits ============================================= 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ProviderJobOfferDetails(request,offer_slug):
