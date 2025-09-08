@@ -12,10 +12,12 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken ,TokenError
 from rest_framework.permissions import IsAuthenticated
+from api.v1.response import success_response, error_response
+from apps.classified.models.models import JobProvider, JobCategories
 
 VALID_ACCESS_LEVELS = ['Client', 'Provider']
 
-@extend_schema(request=RegisterSerializer, tags=["Auth"],auth=[])
+@extend_schema(request=RegisterSerializer, tags=["Auth"], auth=[])
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @authentication_classes([])
@@ -27,47 +29,77 @@ def register(request):
     access_level = request.data.get("access_level")
 
     if not phone or not access_level:
-        return Response({"error": "Phone and access_level are required"}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(
+            message="Phone and access_level are required",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
 
     if access_level not in VALID_ACCESS_LEVELS:
-        return Response({"error": f"access_level must be one of {VALID_ACCESS_LEVELS}"}, status=status.HTTP_400_BAD_REQUEST)
-
+        return error_response(
+            message=f"access_level must be one of {VALID_ACCESS_LEVELS}",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+    
+    user = None
+    created = False
     try:
         user = User.objects.get(phone=phone)
-       
+        
         if user.access_level != access_level:
-            return Response({"error": "This phone is already registered with a different role. Please use another phone number."}, 
-                            status=status.HTTP_400_BAD_REQUEST)
-        created = False
+            return error_response(
+                message="This phone is already registered with a different role. Please use another phone number.",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+        
     except User.DoesNotExist:
-
-        user = User.objects.create(phone=phone, access_level=access_level, position=access_level)
-        created = True
+        try:
+            user = User.objects.create(phone=phone, access_level=access_level, position=access_level)
+            created = True
+        except Exception as e:
+            return error_response(
+                message=f"An error occurred while creating the user: {str(e)}",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    if created and access_level == 'Provider':
+        try:
+            JobProvider.objects.create(
+                user=user,
+                business_phone=phone
+                # Category is not set here, as it's now nullable
+            )
+        except Exception as e:
+            user.delete()
+            return error_response(
+                message=f"An error occurred while creating provider profile: {str(e)}",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     if user.otp_attempts_reset_time and timezone.now() > user.otp_attempts_reset_time:
         user.otp_attempts = 0
 
     if user.otp_attempts >= user.otp_attempts_limit:
-        return Response({"error": "Too many OTP requests. Please wait and try again later."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        return error_response(
+            message="Too many OTP requests. Please wait and try again later.",
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS
+        )
 
     otp = get_random_string(6, allowed_chars="0123456789")
-    user.access_level = access_level
-    user.is_active = "Inactive"
     user.otp = otp
     user.otp_expiry = timezone.now() + timedelta(minutes=5)
     user.otp_attempts += 1
     user.otp_attempts_reset_time = timezone.now() + timedelta(minutes=user.otp_attempts_reset_interval)
     user.save()
 
-    # send_sms(phone, f"Your OTP is {otp}")
-
-    return Response({
-        "message": "OTP sent to phone. Please confirm your account.",
-        "phone": phone,
-        "access_level": access_level,
-        "otp_demo": otp
-    }, status=status.HTTP_201_CREATED)
-
+    return success_response(
+        message="OTP sent to phone. Please confirm your account.",
+        data={
+            "phone": phone,
+            "access_level": access_level,
+            "otp_demo": otp
+        },
+        status_code=status.HTTP_201_CREATED
+    )
 
 @extend_schema(request=ConfirmOTPSerializer,  tags=["Auth"],auth=[])
 @api_view(['POST'])

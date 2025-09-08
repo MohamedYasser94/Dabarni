@@ -6,11 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 from django.shortcuts import get_object_or_404
-from apps.classified.models.models import Job, JobProgress
-
+from apps.classified.models.models import Job, JobOffer, JobProgress
+from django.db import transaction
 from api.v1.customer.serializers.jop_request_serializer import (
     JobCreateSerializer,
     JobDetailSerializer,
+    ProviderOfferSerializer,
 )
 from api.v1.response import success_response, error_response
 
@@ -200,6 +201,108 @@ def cancel_job(request, job_id):
     except Exception as e:
         return error_response(
             message="حدث خطأ أثناء إلغاء الوظيفة",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+@extend_schema(
+    tags=["Customer Jobs"],
+    responses={200: ProviderOfferSerializer(many=True), 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getOffersByJob(request, job_id):
+    """
+    API endpoint for a customer to view all offers for a specific job.
+    """
+    try:
+        # Get the job, ensuring it belongs to the authenticated user
+        job = get_object_or_404(Job, pk=job_id, customer=request.user)
+
+        # Corrected line: Use select_related to get the provider and its user in one query
+        offers = JobOffer.objects.filter(job=job).select_related('provider__user')
+
+        # Serialize the offers
+        serializer = ProviderOfferSerializer(offers, many=True)
+
+        return success_response(
+            message="تم جلب العروض بنجاح.",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+    except Job.DoesNotExist:
+        return error_response(
+            message="لم يتم العثور على الطلب.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء جلب العروض.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+
+@extend_schema(
+    tags=["Customer Jobs"],
+    responses={200: JobDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def customerAcceptOffer(request, offer_id):
+    """
+    API endpoint for a customer to accept a specific job offer.
+    """
+    try:
+        # Get the offer, ensuring it belongs to the authenticated customer's job
+        offer = get_object_or_404(JobOffer.objects.select_related('job__customer'), pk=offer_id)
+
+        # Check if the offer's job is owned by the current user
+        if offer.job.customer != request.user:
+            return error_response(
+                message="ليس لديك صلاحية لقبول هذا العرض.",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        if offer.status in ['Accepted', 'Rejected']:
+            return error_response(
+                message="لا يمكن قبول هذا العرض. لقد تم قبوله أو رفضه بالفعل.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            # 1. Update the accepted offer
+            offer.customer_accepted = True
+            offer.status = 'Accepted'
+            offer.save()
+            
+            # 2. Update the main Job record
+            job = offer.job
+            job.status = 'Assigned' # Job is now assigned
+            job.save()
+
+            # 3. Update the JobProgress record to link the accepted offer
+            job_progress, created = JobProgress.objects.get_or_create(job=job)
+            job_progress.offer = offer
+            job_progress.provider = offer.provider
+            job_progress.progress_status = 'Assigned' # Progress is now assigned
+            job_progress.total_cost = offer.price # Set the total cost to the accepted price
+            job_progress.save()
+
+            # 4. Reject all other offers for this job
+            JobOffer.objects.filter(job=job).exclude(pk=offer_id).update(status='Rejected')
+
+        return success_response(
+            message="تم قبول العرض بنجاح. لقد تم تعيين مقدم الخدمة.",
+            data=JobDetailSerializer(job).data,
+            status_code=status.HTTP_200_OK
+        )
+    except JobOffer.DoesNotExist:
+        return error_response(
+            message="العرض غير موجود.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء قبول العرض.",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )

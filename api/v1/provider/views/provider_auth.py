@@ -17,8 +17,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.status import *
+from drf_spectacular.utils import extend_schema
 from rest_framework_simplejwt.tokens import RefreshToken
+from api.v1.response import success_response, error_response
+from api.v1.provider.serializers.auth import ProviderProfileCompletionSerializer, ProviderProfileDetailSerializer
 
+from apps.classified.models.models import JobProvider
 from user.models import OtpCode
 
 User = get_user_model()
@@ -322,10 +326,59 @@ def UserChangePassword(request):
 
 
 
+@extend_schema(
+    tags=["Provider Profile"],
+    request=ProviderProfileCompletionSerializer,
+    responses={200: ProviderProfileDetailSerializer, 400: 'Error Response'}
+)
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def completeProviderProfile(request):
+    """
+    API endpoint to save all provider details in a single update request.
+    This is intended to be called once after a user's initial phone verification.
+    """
+    user = request.user
+    
+    # Check if the provider profile exists. If not, it's a 404 error.
+    try:
+        provider_profile = JobProvider.objects.get(user=user)
+    except JobProvider.DoesNotExist:
+        return error_response(
+            message="ملف مقدم الخدمة غير موجود. يرجى إتمام التسجيل أولاً.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
 
+    serializer = ProviderProfileCompletionSerializer(
+        provider_profile, 
+        data=request.data, 
+        partial=True,
+        context={'request': request}
+    )
 
-
-
+    if serializer.is_valid():
+        try:
+            # The serializer's create method will now be used for the one-time completion
+            # of the profile.
+            provider_profile = serializer.save()
+            return success_response(
+                message="تم إكمال ملف مقدم الخدمة بنجاح",
+                data=ProviderProfileDetailSerializer(provider_profile).data,
+                status_code=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return error_response(
+                message="حدث خطأ أثناء إكمال الملف",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                errors={'detail': str(e)}
+            )
+    else:
+        return error_response(
+            message="فشل إكمال ملف مقدم الخدمة",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            errors=serializer.errors
+        )
+#============================================= last edits  ============================================= 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @csrf_exempt
