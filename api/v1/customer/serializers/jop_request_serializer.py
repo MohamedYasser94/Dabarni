@@ -4,6 +4,7 @@ from apps.classified.models.models import Job, JobCategories, JobMedia, JobNegot
 from user.models import UserAddress
 from django.utils import timezone
 from django.db import transaction
+from apps.classified.models.models import JobNegotiate
 
 User = get_user_model()
 
@@ -159,3 +160,17 @@ class JobDetailSerializer(serializers.ModelSerializer):
             "category", "location", "media", "scheduled_at",
             "progresses", "offers", "negotiations", "views", "code", "slug", "create_at"
         ]
+
+
+class JobNegotiateCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for a customer to make a new negotiation offer.
+    """
+    class Meta:
+        model = JobNegotiate
+        fields = ['customer_price']
+
+    def validate_customer_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("السعر يجب أن يكون أكبر من الصفر.")
+        return value

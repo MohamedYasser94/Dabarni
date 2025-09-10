@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from api.v1.customer.serializers.jop_request_serializer import JobDetailSerializer
 from api.v1.provider.serializers.auth import ProviderProfileDetailSerializer, ProviderProfileUpdateSerializer
+from api.v1.provider.serializers.review_serializer import ProviderProfileWithReviewsDetailSerializer
 from api.v1.provider.serializers.classified import *
 from apps.classified.models.models import *
 from rest_framework.decorators import api_view, permission_classes
@@ -47,6 +48,41 @@ def retrieveProviderProfile(request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+    
+@extend_schema(
+    tags=["Provider Profile"],
+    responses={200: ProviderProfileWithReviewsDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def RetrieveProviderProfileById(request, provider_id):
+    """
+    API endpoint for a customer to get a provider's full profile details by their ID.
+    This includes the provider's details, average rating, and a list of their reviews.
+    """
+    try:
+        provider_profile = get_object_or_404(JobProvider, pk=provider_id)
+        
+        serializer = ProviderProfileWithReviewsDetailSerializer(provider_profile, context={'request': request})
+        
+        return success_response(
+            message="تم جلب ملف مقدم الخدمة بنجاح",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+    except JobProvider.DoesNotExist:
+        return error_response(
+            message="ملف مقدم الخدمة غير موجود.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء جلب الملف",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+    
+
 @extend_schema(
     tags=["Provider Profile"],
     request=ProviderProfileUpdateSerializer,

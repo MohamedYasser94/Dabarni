@@ -19,8 +19,9 @@ urlpatterns = [
     # ===================== Profile & Home URLs =====================
       path('profile/complete-info/', provider_auth.completeProviderProfile, name='provider-profile-complete-info'),
       path('profile/', provider_home.retrieveProviderProfile, name='provider-profile-detail'),
-     path('profile/update/', provider_home.updateProviderProfile, name='provider-profile-update'),
-      #---------------------------------------------------------------------------
+      path('profile/<int:provider_id>/', provider_home.RetrieveProviderProfileById, name='providerProfileByIdWithReviews'),
+      path('profile/update/', provider_home.updateProviderProfile, name='provider-profile-update'),
+      #------------------------------- Provider Home Jobs --------------------------------------------
     path("home/", provider_home.ProviderHome, name="ProviderHome"),
     path('jobs/available/', provider_home.RetrieveAvailableJobs, name='provider-available-jobs'),
     path('jobs/<int:job_id>/details/', provider_home.GetJobDetails, name='provider-job-details'),

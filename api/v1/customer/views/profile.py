@@ -23,7 +23,7 @@ from api.v1.response import success_response, error_response
 
 class GetProfileView(APIView):
     permission_classes = [IsAuthenticated]
-    @extend_schema(tags=["Profile"], responses=UserProfileSerializer)
+    @extend_schema(tags=["Customer Profile"], responses=UserProfileSerializer)
     def get(self, request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         serializer = UserProfileSerializer(profile)
@@ -32,7 +32,7 @@ class GetProfileView(APIView):
 class UpdateProfileView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
-    @extend_schema(tags=["Profile"], request=UserProfileSerializer,
+    @extend_schema(tags=["Customer Profile"], request=UserProfileSerializer,
         responses=UserProfileSerializer)
     def put(self, request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
@@ -47,7 +47,7 @@ class UpdateProfileView(APIView):
 
 #----------------------------
 
-@extend_schema(request=UserAddressSerializer, tags=["CustomerAuth"])
+@extend_schema(request=UserAddressSerializer, tags=["Customer Profile"])
 @api_view(['POST'])
 def save_address(request):
     serializer = UserAddressSerializer(data=request.data)
@@ -65,7 +65,7 @@ def save_address(request):
     )
 
 
-@extend_schema(tags=["Profile"], responses=UserAddressSerializer(many=True))
+@extend_schema(tags=["Customer Profile"], responses=UserAddressSerializer(many=True))
 @api_view(['GET'])
 def list_addresses(request):
     addresses = UserAddress.objects.filter(user=request.user).order_by("-created_at")
@@ -76,7 +76,7 @@ def list_addresses(request):
     )
 
 
-@extend_schema(tags=["Profile"])
+@extend_schema(tags=["Customer Profile"])
 @api_view(['DELETE'])
 def delete_address(request, pk):
     try:
