@@ -357,12 +357,12 @@ class JobReview(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.rating} stars"
 
-    def save(self):
+    def save(self, *args, **kwargs):  # Updated function signature
         if not self.code and not self.slug:
             code = f'JobReview-{get_random_string(5).upper()}'
             self.code = code
             self.slug = slugify(code)
-        super(JobReview, self).save()
+        super(JobReview, self).save(*args, **kwargs) # Pass arguments to super()
 
 class JobReviewMedia(models.Model):
     review = models.ForeignKey(JobReview, on_delete=models.CASCADE, related_name='media')

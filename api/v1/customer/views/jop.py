@@ -6,14 +6,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 from django.shortcuts import get_object_or_404
-from apps.classified.models.models import Job, JobOffer, JobProgress
+from apps.classified.models.models import Job, JobNegotiate, JobOffer, JobProgress
 from django.db import transaction
 from api.v1.customer.serializers.jop_request_serializer import (
     JobCreateSerializer,
     JobDetailSerializer,
+    JobNegotiateCreateSerializer,
     ProviderOfferSerializer,
 )
 from api.v1.response import success_response, error_response
+from apps.wallet.models.models import Wallet
 
 
 @extend_schema(
@@ -204,8 +206,88 @@ def cancel_job(request, job_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+    
 @extend_schema(
     tags=["Customer Jobs"],
+    request={'reason': 'text'},
+    responses={200: JobDetailSerializer, 400: 'Error Response', 404: 'Not Found Response'}
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def CancelJobWithFee(request, job_id):
+    """
+    API endpoint for a customer to cancel a job with a cancellation fee.
+    """
+    reason = request.data.get('reason')
+    if not reason:
+        return error_response(
+            message="الرجاء تقديم سبب للإلغاء.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        with transaction.atomic():
+            # Get the Job and its related progress record
+            job_instance = get_object_or_404(Job, pk=job_id, customer=request.user)
+            job_progress = get_object_or_404(JobProgress, job=job_instance)
+
+            # Check if the job is already completed or canceled
+            if job_progress.progress_status in ['Completed', 'Cancelled']:
+                return error_response(
+                    message="لا يمكن إلغاء هذه الوظيفة لأنها مكتملة أو ملغية بالفعل.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+            
+            # Define the cancellation fee based on your business rules
+            cancellationFee = 10.00
+            
+            # Get the customer's wallet and check the balance
+            try:
+                wallet = get_object_or_404(Wallet, user=request.user)
+            except Wallet.DoesNotExist:
+                return error_response(
+                    message="محفظة العميل غير موجودة.",
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+
+            if wallet.amount < cancellationFee:
+                return error_response(
+                    message="رصيدك غير كافٍ لإلغاء الطلب.",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+            # Deduct the fee from the customer's wallet
+            wallet.amount -= cancellationFee
+            wallet.save()
+
+            # Update the JobProgress record with cancellation details
+            job_progress.progress_status = 'Cancelled'
+            job_progress.reason = reason
+            job_progress.canceled_at = timezone.now()
+            job_progress.canceled_by = request.user
+            job_progress.cancel_cost = cancellationFee
+            job_progress.end_at = timezone.now()
+            job_progress.save()
+
+            # Update the main Job's status
+            job_instance.status = 'Canceled'
+            job_instance.save()
+            
+            # Return success response with the updated job details
+            return success_response(
+                message=f"تم إلغاء الطلب بنجاح. تم خصم {cancellationFee} ريال.",
+                data=JobDetailSerializer(job_instance).data,
+                status_code=status.HTTP_200_OK
+            )
+            
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء إلغاء الطلب",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+    
+@extend_schema(
+    tags=["Customer Offers"],
     responses={200: ProviderOfferSerializer(many=True), 404: 'Not Found Response', 500: 'Error Response'}
 )
 @api_view(['GET'])
@@ -242,7 +324,7 @@ def getOffersByJob(request, job_id):
         )
 
 @extend_schema(
-    tags=["Customer Jobs"],
+    tags=["Customer Offers"],
     responses={200: JobDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
 )
 @api_view(['POST'])
@@ -303,6 +385,79 @@ def customerAcceptOffer(request, offer_id):
     except Exception as e:
         return error_response(
             message="حدث خطأ أثناء قبول العرض.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+
+
+
+@extend_schema(
+    tags=["Customer Offers"],
+    request=JobNegotiateCreateSerializer,
+    responses={200: JobNegotiateCreateSerializer, 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def NegotiateOffer(request, offer_id):
+    """
+    API endpoint for a customer to negotiate on a provider's offer.
+    """
+    try:
+        # Get the offer, ensuring it belongs to the authenticated customer's job
+        offer = get_object_or_404(JobOffer.objects.select_related('job__customer'), pk=offer_id)
+
+        if offer.job.customer != request.user:
+            return error_response(
+                message="ليس لديك صلاحية للتفاوض على هذا العرض.",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+        
+        # Check if the offer is in a state that allows negotiation
+        if offer.status in ['Accepted', 'Rejected']:
+            return error_response(
+                message="لا يمكن التفاوض على هذا العرض. لقد تم قبوله أو رفضه بالفعل.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = JobNegotiateCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            customerPrice = serializer.validated_data.get('customer_price')
+
+            # Check if a negotiation record already exists for this offer
+            negotiation_record, created = JobNegotiate.objects.get_or_create(
+                job=offer.job,
+                offer=offer,
+                provider=offer.provider,
+                customer=request.user
+            )
+
+            # Update the negotiation record with the new customer price
+            negotiation_record.customer_price = customerPrice
+            negotiation_record.save()
+            
+            # Update the offer status to indicate negotiation is in progress
+            offer.status = 'Negotiating'
+            offer.save()
+            
+            return success_response(
+                message="تم إرسال عرض التفاوض بنجاح.",
+                data=JobNegotiateCreateSerializer(negotiation_record).data,
+                status_code=status.HTTP_200_OK
+            )
+        else:
+            return error_response(
+                message="فشل إرسال عرض التفاوض.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                errors=serializer.errors
+            )
+    except JobOffer.DoesNotExist:
+        return error_response(
+            message="العرض غير موجود.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء التفاوض.",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
