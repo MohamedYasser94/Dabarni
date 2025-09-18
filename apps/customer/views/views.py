@@ -5,10 +5,11 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-
+from datetime import datetime
 
 from helper.commonHelper import *
 from helper.decorators import *
+from user.models import UserAddress, UserProfile
 
 # Assumption: Your models are in one of these locations. Adjust as needed.
 
@@ -21,44 +22,82 @@ User = get_user_model()
 @authenticated_staff
 @staff_only
 def AdminCustomerList(request):
-    customer = User.objects.filter(access_level='Customer')
+    customers = User.objects.filter(access_level='Client').order_by('-id')
 
 
     context = {
-        'customer': customer,
-
-        'current_page': _('Customer')
+        'customers': customers,
+        'current_page': 'العملاء'
     }
     return render(request, f'{BACKEND_TEMPLATES}/customer/customer/admin.html', context)
-
 
 @authenticated_staff
 @staff_only
 def AdminCustomerUpdate(request, slug):
-    customer = User.objects.get(slug=slug)
+    customer = get_object_or_404(User, slug=slug)
+
+    # اجلب profile و address بأمان (filter().first() ما بترميش استثناء)
+    profile = UserProfile.objects.filter(user=customer).first()
+    address = UserAddress.objects.filter(user=customer, default='Active').first()
+
     if request.method == "POST":
-        customer.first_name = request.POST.get('first_name')
-        customer.last_name = request.POST.get('last_name')
-        customer.email = request.POST.get('email')
-        customer.phone = request.POST.get('phone')
-        customer.is_active = True if request.POST.get('is_active') == 'on' else False
-        customer.save()
-        messages.success(request, _("Customer Updated Successfully"), extra_tags='Customer')
-        return HttpResponseRedirect(reverse_lazy('customer:AdminCustomerList'))
+        try:
+            with transaction.atomic():
+                customer.first_name = request.POST.get('first_name', '').strip() or None
+                customer.last_name = request.POST.get('last_name', '').strip() or None
+                customer.email = request.POST.get('email', '').strip() or None
+                customer.phone = request.POST.get('phone', '').strip() or None
+                customer.is_active = 'Active' if 'is_active' in request.POST else 'Inactive'
+                customer.save()
+
+                if not profile:
+                    profile = UserProfile.objects.create(user=customer)
+
+                profile.is_citizen = 'is_citizen' in request.POST
+
+                dob_str = request.POST.get('date_of_birth', '').strip()
+                if dob_str:
+                    try:
+                        profile.dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        profile.dob = None
+                else:
+                    profile.dob = None
+
+                if request.FILES.get('id_image_front'):
+                    profile.id_image_front = request.FILES['id_image_front']
+                if request.FILES.get('id_image_back'):
+                    profile.id_image_back = request.FILES['id_image_back']
+                if request.FILES.get('residence_image'):
+                    profile.residence_image = request.FILES['residence_image']
+
+                profile.save()
+
+                if not address:
+                    address = UserAddress.objects.create(user=customer, default='Active')
+
+                address.address = request.POST.get('address', '').strip() or None
+                address.save()
+
+            messages.success(request, "Customer Updated Successfully", extra_tags='Customer')
+            return HttpResponseRedirect(reverse_lazy('customer:AdminCustomerList'))
+
+        except Exception as e:
+            messages.error(request, f"Error updating customer: {str(e)}", extra_tags='Customer')
 
     context = {
         'customer': customer,
-        'current_page': _('Customer')
+        'profile': profile,
+        'address': address,
+        'current_page': 'تعديل عميل',
     }
-    return render(request, f'{BACKEND_TEMPLATES}/customer/customer/edit.html', context)
-
+    return render(request, f'{BACKEND_TEMPLATES}/customer/customer/update.html', context)
 
 @authenticated_staff
 @staff_only
 def AdminCustomerDelete(request, slug):
     customer = get_object_or_404(User, slug=slug)
-    customer.delete()
-    messages.success(request, _("Customer Deleted Successfully"), extra_tags='Customer')
+    customer.is_active = 'Archived' # Soft delete logic
+    customer.save()
+    messages.success(request, "Customer Deleted Successfully", extra_tags='Customer')
     return HttpResponseRedirect(reverse_lazy('customer:AdminCustomerList'))
-
-

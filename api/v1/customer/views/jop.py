@@ -358,7 +358,7 @@ def customerAcceptOffer(request, offer_id):
             
             # 2. Update the main Job record
             job = offer.job
-            job.status = 'Assigned' # Job is now assigned
+            job.status = 'In Progress' # Job is now assigned
             job.save()
 
             # 3. Update the JobProgress record to link the accepted offer

@@ -1,0 +1,70 @@
+{% extends BACKEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+    <div class="d-flex flex-column flex-column-fluid">
+        <div id="kt_app_content" class="app-content flex-column-fluid">
+            <div id="kt_app_content_container" class="app-container container-fluid">
+                <div class="card card-flush">
+                    <div class="card-header align-items-center py-5 gap-2 gap-md-5">
+                        <div class="card-title">
+                            <h3 class="fw-bolder m-0">{% translate current_page %}</h3>
+                        </div>
+                        <div class="card-toolbar">
+                            <input type="text" data-kt-ecommerce-job-filter="search" class="form-control form-control-solid w-250px ps-14" placeholder="{% translate 'Search jobs' %}"/>
+                        </div>
+                    </div>
+                    <div class="card-body pt-0">
+                        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_ecommerce_job_table">
+                            <thead>
+                                <tr class="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
+                                    <th class="min-w-20px">#</th>
+                                    <th class="min-w-150px">{% translate 'Job Title' %}</th>
+                                    <th class="min-w-125px">{% translate 'Customer Name' %}</th>
+                                    <th class="min-w-125px">{% translate 'Customer Email' %}</th>
+                                    <th class="min-w-125px">{% translate 'Category' %}</th>
+                                    <th class="min-w-100px">{% translate 'Price' %}</th>
+                                    <th class="min-w-125px">{% translate 'Current Status' %}</th>
+                                    <th class="min-w-100px">{% translate 'Offers' %}</th>
+                                    <th class="text-end min-w-100px">{% translate 'Actions' %}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="fw-semibold text-gray-600">
+                                {% for job in jobs %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td><a href="#">{{ job.title|default:"-" }}</a></td>
+                                        <td>{{ job.customer.get_full_name|default:"-" }}</td>
+                                        <td>{{ job.customer.email|default:"-" }}</td>
+                                        <td>{{ job.category.title|default:"-" }}</td>
+                                        <td>{{ job.price|default:"-" }}</td>
+                                        <td>
+                                            {% with progress=job.progresses.first %}
+                                                {% if progress %}
+                                                    <span class="badge badge-light-primary">{{ progress.progress_status|default:"-" }}</span>
+                                                {% else %}
+                                                    <span class="badge badge-light-secondary">{% translate "No Progress" %}</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>{{ job.offers.count|default:"0" }}</td>
+                                        <td class="text-end">
+                                            <a href="#" class="btn btn-sm btn-light-primary">{% translate 'View Details' %}</a>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">{% translate "No jobs found" %}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
