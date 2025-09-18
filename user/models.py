@@ -243,8 +243,12 @@ class UserProfile(models.Model):
     update_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        # A more descriptive name for the admin panel.
-        return f"{self.user.get_full_name()}'s Profile"
+        if self.user and (self.user.first_name or self.user.last_name):
+            return f"{self.user.first_name} {self.user.last_name}"
+        return f"UserProfile #{self.pk}"
+
+    def save(self, *args, **kwargs):
+        super(UserProfile, self).save(*args, **kwargs)
 
 
 

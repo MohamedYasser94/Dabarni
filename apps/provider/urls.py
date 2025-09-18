@@ -12,6 +12,7 @@ urlpatterns = [
     path('provider/details/<slug:slug>/', views.AdminProviderDetails, name='AdminProviderDetails'),
     path('provider/edit/<slug:slug>/', views.AdminProviderUpdate, name='AdminProviderUpdate'),
     path('provider/delete/<slug:slug>/', views.AdminProviderDelete, name='AdminProviderDelete'),
+    path('provider/create/', views.AdminProviderCreate, name='AdminProviderCreate'),
 
 
 

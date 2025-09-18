@@ -1,150 +1,205 @@
 {% extends BACKEND_BASE %}
-
 {% load static %}
 {% load i18n %}
 
-
 {% block body %}
-    <!--begin::Page Vendor Stylesheets(used by this page)-->
-    <link href="{% static 'details.html' %}{{ BACKEND_ASSETS }}/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet"
-          type="text/css"/>
-    <!--end::Page Vendor Stylesheets-->
-    <!--end::Header-->
-    <!--begin::Content-->
-    <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
-        <!--begin::Container-->
-        <div id="kt_content_container" class="container-fluid">
-            <!--begin::Form-->
-            <form id="kt_ecommerce_edit_order_form" class="form d-flex flex-column flex-lg-row"
-                  enctype="multipart/form-data" action="{% url 'core:AdminUpdateBlogCategory' object.id %}"
-                  method="POST">
-                {% csrf_token %}
+<style>
+//* Layout */
+.provider-header { padding: 18px; }
+.provider-avatar { 
+  width:120px; height:120px; object-fit:cover; border-radius:50%; 
+  border:3px solid #fff; box-shadow:0 6px 18px rgba(0,0,0,.08); 
+}
+.info-row { 
+  border-bottom: 1px dashed var(--border-color); 
+  padding: 16px 0; align-items: center; 
+}
+.cards { 
+  border-radius:10px; 
+  box-shadow:0 6px 20px rgba(18,38,63,.05); 
+  border:1px solid var(--border-color); 
+  background: var(--card-bg); 
+}
 
-                <!--begin::Main column-->
-                <div class="d-flex flex-column flex-lg-row-fluid gap-7 gap-lg-10">
+/* Labels vs Values */
+.info-label { 
+  font-size:14px; 
+  font-weight:600; 
+  color: weight;
+  margin-bottom:6px; 
+  display:block; 
+}
+.info-value { 
+  font-size:13px; 
+  font-weight:500; 
+  color: var(--value-color); 
+  word-break:break-word; 
+}
+.info-value a { 
+  color: var(--value-color); 
+  text-decoration: underline; 
+}
 
-                    <!--begin::Order details-->
-                    <div class="card card-flush py-4">
-                        <!--begin::Card header-->
-                        <div class="card-header">
-                            <div class="card-title">
-                                <h2>{% translate 'Client Data' %}</h2>
-                            </div>
-                        </div>
-                        <!--end::Card header-->
-                        <!--begin::Card body-->
-                        <div class="card-body pt-0">
-                            <!--begin::Billing address-->
-                            <div class="d-flex flex-column gap-5 gap-md-7">
-                                <!--begin::Title-->
-                                <div class="fs-3 fw-bolder mb-n2">{% translate 'Basic' %}</div>
-                                <!--end::Title-->
-                                <!--begin::Input group-->
-                                <div class="d-flex flex-column flex-md-row gap-5">
-                                    <div class="fv-row flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="required form-label">{% translate 'Name' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <input class="form-control" name="name"
-                                               placeholder="{% translate 'Court Name' %}" value="{{ blogcategories.title }}"/>
-                                        <!--end::Input-->
-                                    </div>
-                                    <div class="flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="form-label">{% translate 'Active_Status' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <select class="form-select" data-placeholder="Select an option"
-                                                name="status" id="kt_ecommerce_edit_order_shipping_country">
+/* Light Mode */
+:root {
+  --card-bg: #ffffff;
+  --border-color: #e6e6e6;
+  --label-color: #222222;   
+  --value-color: #666666;   
+}
 
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --card-bg: #1e1e1e;
+    --border-color: #333333;
+    --label-color: #f5f5f5; 
+    --value-color: #aaaaaa;   
+  }
+}
 
-                                            {% for value, text in form.status.field.choices %}
-                                                <option value="{{ value }}">{{ text }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <!--end::Input-->
-                                    </div>
-                                </div>
-                                <!--end::Input group-->
+</style>
 
+<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+  <div class="d-flex flex-column flex-column-fluid">
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+      <div id="kt_app_content_container" class="app-container container-fluid">
 
+        <!-- Header -->
+        <div class="card cards mb-4">
+          <div class="card-body provider-header d-flex">
+            <div class="me-4">
+              <img src="{% if provider.user.image %}{{ provider.user.image.url }}{% else %}{% static 'assets/media/avatars/avatar.png' %}{% endif %}"
+                   alt="{% translate 'Provider Image' %}" class="provider-avatar">
+            </div>
 
-                            </div>
-                            <!--end::Billing address-->
-                        </div>
-                        <!--end::Card body-->
-                        <div class="card-body pt-0">
-                            {% if form_show_errors %}
-                            {% endif %}
-                            {% if form.errors %}
-                                {% for error_field, error_message in form.errors.items %}
+            <div class="flex-grow-1">
+              <h3 class="mb-1 fw-bold">{{ provider.user.get_full_name|default:"-" }}</h3>
+              <div class="text-muted mb-2">{{ provider.category.title|default:"-" }}</div>
+              <div class="text-muted small">
+                <i class="fas fa-map-marker-alt me-1"></i> {{ provider.address|default:"-" }}
+                &nbsp; • &nbsp;
+                <i class="fas fa-envelope me-1"></i> {{ provider.user.email|default:"-" }}
+              </div>
+            </div>
 
-                                    <div class="alert alert-danger">
-                                        {{ error_field|striptags }}: {{ error_message|striptags }}
-                                        <strong>{{ error|escape }}</strong>
-                                    </div>
-                                {% endfor %}
-
-                            {% endif %}
-                        </div>
-                    </div>
-                    <!--end::Order details-->
-                    <div class="d-flex justify-content-end">
-                        <!--begin::Button-->
-                        <a href="../dist/apps/ecommerce/catalog/products.html" id="kt_ecommerce_edit_order_cancel"
-                           class="btn btn-light me-5">Cancel</a>
-                        <!--end::Button-->
-                        <!--begin::Button-->
-                        <button type="submit" id="kt_ecommerce_edit_order_submit" class="btn btn-primary">
-                            <span class="indicator-label">Save Changes</span>
-                            <span class="indicator-progress">Please wait...
-											<span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
-                        </button>
-                        <!--end::Button-->
-                    </div>
-                </div>
-                <!--end::Main column-->
-            </form>
-            <!--end::Form-->
+            <div class="d-flex align-items-start">
+              <a href="{% url 'provider:AdminProviderUpdate' slug=provider.slug %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-edit me-1"></i> {% translate 'Edit Profile' %}
+              </a>
+            </div>
+          </div>
         </div>
-        <!--end::Container-->
+
+        <!-- Details: each row contains 2 fields -->
+        <div class="card cards mb-4">
+          <div class="card-body p-4">
+            <!-- Row 1 -->
+            <div class="row info-row">
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Service / Category' %}</label>
+                <div class="info-value">{{ provider.category.title|default:"-" }}</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Company' %}</label>
+                <div class="info-value">{{ provider.company|default:"-" }}</div>
+              </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="row info-row">
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Address' %}</label>
+                <div class="info-value">{{ provider.address|default:"-" }}</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Email' %}</label>
+                <div class="info-value">
+                  <a href="mailto:{{ provider.user.email }}">{{ provider.user.email|default:"-" }}</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3 -->
+            <div class="row info-row">
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Website' %}</label>
+                <div class="info-value">
+                  {% if provider.website %}
+                    <a href="{{ provider.website }}" target="_blank" rel="noopener">{{ provider.website }}</a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Bank Account' %}</label>
+                <div class="info-value">{{ provider.bank_account|default:"-" }}</div>
+              </div>
+            </div>
+
+            <!-- Row 4 -->
+            <div class="row info-row">
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Bio' %}</label>
+                <div class="info-value">{{ provider.bio|default:"-" }}</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Experience (Years)' %}</label>
+                <div class="info-value">{{ provider.experience_years|default:"0" }}</div>
+              </div>
+            </div>
+
+            <!-- Row 5 (Profile completion) -->
+            <div class="row" style="padding-top:12px;">
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Profile Completion' %}</label>
+                <div class="info-value">{{ provider.profile_completion_percentage|default:"0" }}%</div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="info-label">{% translate 'Contact Phone' %}</label>
+                <div class="info-value">{{ provider.user.phone|default:"-" }}</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Documents -->
+        <div class="card cards mb-4">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">{% translate 'Documents' %}</h5>
+            <div class="row g-3">
+              {% if provider.commercial_image %}
+              <div class="col-12 col-md-4">
+                <label class="info-label">{% translate 'Commercial Image' %}</label>
+                <a href="{{ provider.commercial_image.url }}" target="_blank">
+                  <img src="{{ provider.commercial_image.url }}" class="img-fluid rounded" alt="{% translate 'Commercial Image' %}">
+                </a>
+              </div>
+              {% endif %}
+              {% if provider.vat_image %}
+              <div class="col-12 col-md-4">
+                <label class="info-label">{% translate 'VAT Image' %}</label>
+                <a href="{{ provider.vat_image.url }}" target="_blank">
+                  <img src="{{ provider.vat_image.url }}" class="img-fluid rounded" alt="{% translate 'VAT Image' %}">
+                </a>
+              </div>
+              {% endif %}
+              {% if provider.license_image %}
+              <div class="col-12 col-md-4">
+                <label class="info-label">{% translate 'License Image' %}</label>
+                <a href="{{ provider.license_image.url }}" target="_blank">
+                  <img src="{{ provider.license_image.url }}" class="img-fluid rounded" alt="{% translate 'License Image' %}">
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
-    <!--end::Content-->
-
-
-
-
-
-    {% if uploaded_file_url %}
-        <p>File uploaded at: <a href="{{ uploaded_file_url }}">{{ uploaded_file_url }}</a></p>
-    {% endif %}
-
+  </div>
+</div>
 {% endblock %}
-{% block custom_js %}
-
-
-    <!--begin::Page Vendors Javascript(used by this page)-->
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/plugins/custom/datatables/datatables.bundle.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/plugins/custom/formrepeater/formrepeater.bundle.js"></script>
-    <!--end::Page Vendors Javascript-->
-    <!--begin::Page Custom Javascript(used by this page)-->
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/apps/ecommerce/sales/save-order.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/widgets.bundle.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/widgets.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/apps/chat/chat.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/type.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/budget.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/settings.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/team.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/targets.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/files.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/complete.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/create-project/main.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/upgrade-plan.js"></script>
-    <script src="{% static 'details.html' %}{{ BACKEND_ASSETS }}/js/custom/utilities/modals/users-search.js"></script>
-    <!--end::Page Custom Javascript-->
-
-{% endblock custom_js %}
-{% block foot %} {% include BACKEND_FOOTER %}  {% endblock %}
-{% block js %} {% include BACKEND_JS %}  {% endblock %}

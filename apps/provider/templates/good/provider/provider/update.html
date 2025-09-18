@@ -2,221 +2,165 @@
 {% load static %}
 {% load i18n %}
 
-
 {% block body %}
-
-    <!--end::Header-->
-    <!--begin::Content-->
-    <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
-        <!--begin::Container-->
-        <div id="kt_content_container" class="container-fluid">
-            <!--begin::Form-->
-            <form id="kt_ecommerce_edit_order_form" class="form d-flex flex-column flex-lg-row"
-                  enctype="multipart/form-data" action="{% url 'provider:AdminClassifiedCategoryUpdate' category.slug %}"
-                  method="POST">
-                {% csrf_token %}
-
-                <!--begin::Main column-->
-                <div class="d-flex flex-column flex-lg-row-fluid gap-7 gap-lg-10">
-
-                    <!--begin::Order details-->
-                    <div class="card card-flush py-4">
-                        <!--begin::Card header-->
-                        <div class="card-header">
-                            <div class="card-title">
-                                <h2>{% translate 'Category Data' %}</h2>
+    <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+        <div class="d-flex flex-column flex-column-fluid">
+            <div id="kt_app_content" class="app-content flex-column-fluid">
+                <div id="kt_app_content_container" class="app-container container-fluid">
+                    <div class="card mb-5 mb-xl-10">
+                        <div class="card-header border-0 cursor-pointer" role="button">
+                            <div class="card-title m-0">
+                                <h3 class="fw-bolder m-0">{% translate 'Edit Provider Profile' %}</h3>
+                            </div>
+                            <div class="card-toolbar">
+                                <a href="{% url 'provider:AdminProviderList' %}" class="btn btn-sm btn-light-primary">
+                                    <i class="fas fa-arrow-left me-1"></i> {% translate 'Back to list' %}
+                                </a>
                             </div>
                         </div>
-                        <!--end::Card header-->
-                        <!--begin::Card body-->
-                        <div class="card-body pt-0">
-                            <!--begin::Billing address-->
-                            <div class="d-flex flex-column gap-5 gap-md-7">
-                                <!--begin::Title-->
-                                <div class="fs-3 fw-bolder mb-n2">{% translate 'Basic' %}</div>
-                                <!--end::Title-->
-                                <!--begin::Input group-->
-                                <div class="d-flex flex-column flex-md-row gap-5">
-                                    <div class="fv-row flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="required form-label">{% translate 'Name' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <input class="form-control" name="title"
-                                               placeholder="{% translate 'Name' %}" value="{{ category.title }}"/>
-                                        <!--end::Input-->
-                                    </div>
-                                  <div class="fv-row flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="required form-label">{% translate 'Translate Name' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <input class="form-control" name="title_tr"
-                                               placeholder="{% translate 'Translate Name' %}" value="{{ translate.title }}"/>
-                                        <!--end::Input-->
-                                    </div>
-
+                        <div id="kt_account_profile_details" class="collapse show">
+                            {% if messages %}
+                                <div class="card-body">
+                                    {% for message in messages %}
+                                        <div class="alert alert-{{ message.tags|striptags|lower }} alert-dismissible fade show" role="alert">
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    {% endfor %}
                                 </div>
-                                <!--end::Input group-->
-                            <!--begin::Input group-->
-                                <div class="d-flex flex-column flex-md-row gap-5">
-                                    <div class="fv-row flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="required form-label">{% translate 'Keyword' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <input class="form-control" name="keyword"
-                                               placeholder="{% translate 'Keyword' %}" value="{{ category.keyword }}"/>
-                                        <!--end::Input-->
-                                    </div>
-                                  <div class="fv-row flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="required form-label">{% translate 'Translate Keyword' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <input class="form-control" name="keyword_tr"
-                                               placeholder="{% translate 'Translate Keyword' %}" value="{{ translate.keyword }}"/>
-                                        <!--end::Input-->
-                                    </div>
-
-                                </div>
-                                <!--end::Input group-->
-                             <!--begin::Input group-->
-                                <div class="d-flex flex-column flex-md-row gap-5">
-
-                                    <div class="flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="form-label">{% translate 'Category' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <select name="parent" aria-label="{% translate 'Select a category..' %}"
-                                                data-control="select2"
-                                                data-placeholder="{% translate 'Select a category..' %}"
-                                                class="form-select form-select-solid form-select-lg">
-                                         <option value="{{ category.parent.id }}">{{ category.parent }}</option>
-                                            {% for value, text in category_form.parent.field.choices %}
-                                                <option value="{{ value }}">{{ text }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <!--end::Input-->
-                                    </div>
-                                  <div class="fv-row flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="required form-label">{% translate 'Color' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <select name="color" aria-label="{% translate 'Color' %}"
-                                                    data-control="select2" data-placeholder="{% translate 'Color' %}"
-
-
-                                                    class="form-select form-select-solid fw-bolder">
-                                                <option value="{{ category.color }}" selected="">{{ category.get_color }}</option>
-                                                {% for value, text in category_form.color.field.choices %}
-                                                    <option value="{{ value }}"> <span style="color:{{ value }} ">{{ text }}</span></option>
-                                                {% endfor %}
-                                            </select>
-                                        <!--end::Input-->
-                                    </div>
-                                </div>
-                                <!--end::Input group-->
-                                <!--begin::Input group-->
-                                <div class="d-flex flex-column flex-md-row gap-5">
-                                    <div class="fv-row flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="required form-label">{% translate 'Image' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <input class="form-control" name="image" type="file"
-                                               placeholder="{% translate 'Image' %}" />
-                                        <!--end::Input-->
-                                    </div>
-
-                                    <div class="flex-row-fluid">
-                                        <!--begin::Label-->
-                                        <label class="form-label">{% translate 'Status' %}</label>
-                                        <!--end::Label-->
-                                        <!--begin::Input-->
-                                        <select name="status" aria-label="{% translate 'Select a status..' %}"
-                                                data-control="select2"
-                                                data-placeholder="{% translate 'Select a status..' %}"
-                                                class="form-select form-select-solid form-select-lg">
-                                         <option value="{{ category.status }}">{{ category.status }}</option>
-
-                                            {% for value, text in category_form.status.field.choices %}
-                                                <option value="{{ value }}">{{ text }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <!--end::Input-->
-                                    </div>
-                                </div>
-                                <!--end::Input group-->
-
-
-                            </div>
-                            <!--end::Billing address-->
-                        </div>
-                        <!--end::Card body-->
-                        <div class="card-body pt-0">
-                            {% if form_show_errors %}
                             {% endif %}
-                            {% if category_form.errors %}
-                                {% for error_field, error_message in category_form.errors.items %}
-
-                                    <div class="alert alert-danger">
-                                        {{ error_field|striptags }}: {{ error_message|striptags }}
-                                        <strong>{{ error|escape }}</strong>
+                            <form id="kt_account_profile_details_form" class="form" method="POST" enctype="multipart/form-data" action="{% url 'provider:AdminProviderUpdate' slug=provider.slug %}">
+                                {% csrf_token %}
+                                <div class="card-body border-top p-9">
+                                    <h4 class="fw-bolder mb-5">{% translate 'Personal Information' %}</h4>
+                                    <div class="row mb-6">
+                                        <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Name' %}</label>
+                                        <div class="col-lg-8">
+                                            <div class="row">
+                                                <div class="col-lg-6 fv-row">
+                                                    <input type="text" name="first_name" class="form-control form-control-lg form-control-solid mb-3 mb-lg-0" placeholder="{% translate 'First Name' %}" value="{{ provider.user.first_name|default:'' }}" />
+                                                </div>
+                                                <div class="col-lg-6 fv-row">
+                                                    <input type="text" name="last_name" class="form-control form-control-lg form-control-solid" placeholder="{% translate 'Last Name' %}" value="{{ provider.user.last_name|default:'' }}" />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                {% endfor %}
+                                    <div class="row mb-6">
+                                        <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Contact Info' %}</label>
+                                        <div class="col-lg-8">
+                                            <div class="row">
+                                                <div class="col-lg-6 fv-row">
+                                                    <input type="email" name="email" class="form-control form-control-lg form-control-solid mb-3 mb-lg-0" placeholder="{% translate 'Email' %}" value="{{ provider.user.email|default:'' }}" />
+                                                </div>
+                                                <div class="col-lg-6 fv-row">
+                                                    <input type="text" name="phone" class="form-control form-control-lg form-control-solid" placeholder="{% translate 'Phone Number' %}" value="{{ provider.user.phone|default:'' }}" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-6">
+                                        <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Account Status' %}</label>
+                                        <div class="col-lg-8 d-flex align-items-center">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if provider.user.is_active == 'Active' %} checked {% endif %}/>
+                                                <label class="form-check-label" for="is_active">
+                                                    {% translate "Active" %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="separator my-10"></div>
 
-                            {% endif %}
-                        {% for message in messages %}
-                        {% if message.extra_tags == 'Category' %}
-                            {% if message.tags == 'Category success' %}
-                                <div class="alert alert-info">
-                            {% elif message.tags == 'Category danger' %}
-                                <div class="alert alert-danger">
-                            {% endif %}
-                        {{ message.extra_tags|striptags }}: {{ message|striptags }}
+                                    <h4 class="fw-bolder mb-5">{% translate 'Professional Details' %}</h4>
+                                    <div class="row mb-6">
+                                        <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Company Details' %}</label>
+                                        <div class="col-lg-8">
+                                            <div class="row">
+                                                <div class="col-lg-6 fv-row">
+                                                    <label class="form-label fs-6 fw-bold">{% translate 'Company Name' %}</label>
+                                                    <input type="text" name="company" class="form-control form-control-solid" placeholder="{% translate 'Company Name' %}" value="{{ provider.company|default:'' }}" />
+                                                </div>
+                                                <div class="col-lg-6 fv-row">
+                                                    <label class="form-label fs-6 fw-bold">{% translate 'Website' %}</label>
+                                                    <input type="text" name="website" class="form-control form-control-solid" placeholder="{% translate 'Website URL' %}" value="{{ provider.website|default:'' }}" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-6">
+                                        <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Category & Experience' %}</label>
+                                        <div class="col-lg-8">
+                                            <div class="row">
+                                                <div class="col-lg-6 fv-row">
+                                                    <label class="form-label fs-6 fw-bold">{% translate 'Category' %}</label>
+                                                    <select name="category" class="form-control form-control-solid">
+                                                        <option value="">{% translate 'Select a category' %}</option>
+                                                        {% for category in categories %}
+                                                            <option value="{{ category.id }}" {% if provider.category == category %} selected {% endif %}>{{ category.title }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-lg-6 fv-row">
+                                                    <label class="form-label fs-6 fw-bold">{% translate 'Experience Years' %}</label>
+                                                    <input type="number" name="experience_years" class="form-control form-control-solid" placeholder="{% translate 'Experience Years' %}" value="{{ provider.experience_years|default:'' }}" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-6">
+                                        <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Bio' %}</label>
+                                        <div class="col-lg-8 fv-row">
+                                            <textarea name="bio" class="form-control form-control-solid" rows="3" placeholder="{% translate 'Tell us about your experience' %}">{{ provider.bio|default:'' }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="separator my-10"></div>
+                                    
+                                    <h4 class="fw-bolder mb-5">{% translate 'Documents' %}</h4>
+                                    <div class="row g-6">
+                                        <div class="col-md-6 fv-row">
+                                            <label class="form-label fs-6 fw-bold">{% translate 'Commercial Image' %}</label>
+                                            {% if provider.commercial_image %}
+                                                <img src="{{ provider.commercial_image.url }}" alt="{% translate 'Commercial Image' %}" class="img-fluid rounded mb-2 w-100">
+                                            {% endif %}
+                                            <input type="file" class="form-control form-control-solid" name="commercial_image"/>
+                                        </div>
+                                        <div class="col-md-6 fv-row">
+                                            <label class="form-label fs-6 fw-bold">{% translate 'VAT Image' %}</label>
+                                            {% if provider.vat_image %}
+                                                <img src="{{ provider.vat_image.url }}" alt="{% translate 'VAT Image' %}" class="img-fluid rounded mb-2 w-100">
+                                            {% endif %}
+                                            <input type="file" class="form-control form-control-solid" name="vat_image"/>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row g-6 mt-6">
+                                        <div class="col-md-6 fv-row">
+                                            <label class="form-label fs-6 fw-bold">{% translate 'License Image' %}</label>
+                                            {% if provider.license_image %}
+                                                <img src="{{ provider.license_image.url }}" alt="{% translate 'License Image' %}" class="img-fluid rounded mb-2 w-100">
+                                            {% endif %}
+                                            <input type="file" class="form-control form-control-solid" name="license_image"/>
+                                        </div>
+                                        <div class="col-md-6 fv-row">
+                                            <label class="form-label fs-6 fw-bold">{% translate 'Bank Account' %}</label>
+                                            <input type="text" name="bank_account" class="form-control form-control-solid" placeholder="{% translate 'Bank Account Number' %}" value="{{ provider.bank_account|default:'' }}" />
+                                        </div>
+                                    </div>
+                                    </div>
+                                <div class="card-footer d-flex justify-content-end py-6 px-9">
+                                    <button type="reset" class="btn btn-light me-3">{% translate 'Discard' %}</button>
+                                    <button type="submit" class="btn btn-primary">{% translate 'Save Changes' %}</button>
+                                </div>
+                            </form>
                         </div>
-                        {% endif %}
-                    {% endfor %}
-                        </div>
-                    </div>
-                    <!--end::Order details-->
-                    <div class="d-flex justify-content-end">
-                        <!--begin::Button-->
-                        <a href="{% url 'provider:AdminClassifiedCategoriesList' %}" id="kt_ecommerce_edit_order_cancel"
-                           class="btn btn-light me-5">{% translate 'Cancel' %}</a>
-                        <!--end::Button-->
-                        <!--begin::Button-->
-                        <button type="submit" id="kt_ecommerce_edit_order_submit" class="btn btn-primary">
-                            <span class="indicator-label">{% translate 'Save' %}</span>
-                            <span class="indicator-progress">{% translate 'Please wait...' %}
-											<span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
-                        </button>
-                        <!--end::Button-->
                     </div>
                 </div>
-                <!--end::Main column-->
-            </form>
-            <!--end::Form-->
+            </div>
         </div>
-        <!--end::Container-->
     </div>
-    <!--end::Content-->
-
-
-
-
-
-
 {% endblock %}
 {% block custom_js %}
-
-
-
-    <!--end::Page Custom Javascript-->
-
-{% endblock custom_js %}
+{% endblock %}
 {% block foot %} {% include BACKEND_FOOTER %}  {% endblock %}
 {% block js %} {% include BACKEND_JS %}  {% endblock %}
