@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     "drf_spectacular",
     "drf_spectacular_sidecar",
+    'apps.TEST_PROCESS',
 ]
 print("INSTALLED_APPS:", INSTALLED_APPS)
 OWN_APPS = [

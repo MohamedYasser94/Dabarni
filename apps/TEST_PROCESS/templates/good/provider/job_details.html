@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دبرني | تفاصيل الطلب</title>
+    <style>
+        :root {
+            --primary-color: #f7b731;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --dark-color: #1a2a4b;
+            --light-color: #f8f9fa;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            direction: rtl;
+            text-align: right;
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 980px;
+            margin: 20px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+        .card-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1a2a4b;
+        }
+        .job-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #222;
+        }
+        .grid-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .col {
+            flex: 1 1 45%;
+            min-width: 250px;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .value {
+            color: #222;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .badge.Pending { background: #f1c40f; }
+        .badge.Completed { background: #2ecc71; }
+        .badge.Cancelled { background: #e74c3c; }
+        .badge.InProgress { background: #3498db; }
+        .images { margin-top: 20px; }
+        .images h3 { margin-bottom: 10px; color: #444; }
+        /* تم تعديل هذا الجزء لجعل الصور grid وتصغير حجمها */
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px;
+            padding: 8px;
+            background: #fdfdfd;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            align-items: center;
+        }
+        .images-grid img {
+            width: 100%;
+            height: 90px; /* حجم أصغر */
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.18s;
+        }
+        .images-grid img:hover { transform: scale(1.05); }
+        .debug { margin-top: 20px; text-align: right; }
+        .debug pre {
+            max-height: 220px;
+            overflow: auto;
+            background: #111;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .error { color: #e74c3c; font-weight: bold; text-align: center; padding: 15px 0; }
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .action-button {
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 48%;
+        }
+        .accept-button {
+            background-color: var(--success-color);
+            color: #fff;
+        }
+        .negotiate-button {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .modal-body input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .modal-footer button {
+            width: 45%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .modal-footer .confirm-btn {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>تفاصيل الطلب</h2>
+                {% comment %} <a href="#" class="btn btn-sm btn-light-primary">{% translate 'Back' %}</a> {% endcomment %}
+            </div>
+            <div id="jobDetail">
+                <div class="text-center">جاري التحميل...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="negotiate-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>تقديم عرض جديد</h2>
+            </div>
+            <div class="modal-body">
+                <p>أدخل السعر الجديد الذي تقترحه:</p>
+                <input type="number" id="negotiate-price-input" placeholder="قيمة العرض" required>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-button" onclick="closeNegotiateModal()">إلغاء</button>
+                <button class="modal-button confirm-btn" id="send-offer-button">موافقة</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            const jobId = pathSegments[pathSegments.length - 1];
+            const token = localStorage.getItem("access_token");
+
+            async function fetchJobDetails() {
+                try {
+                    const response = await fetch(`/api/v1/provider/jobs/${jobId}/details/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+                    
+                    if (data.isSuccess) {
+                        renderJobDetails(data.data);
+                        attachEventListeners(jobId, token);
+                    } else {
+                        document.getElementById('jobDetail').innerHTML = `<div class="error">${data.message}</div>`;
+                    }
+                } catch (error) {
+                    document.getElementById('jobDetail').innerHTML = `<div class="error">فشل تحميل تفاصيل الطلب: ${error.message}</div>`;
+                }
+            }
+
+            function renderJobDetails(job) {
+                const status = (job.progresses[0]?.progress_status || 'غير محدد');
+                const jobDetailsHtml = `
+                    <h1 class="job-title">${job.title || 'بدون عنوان'}</h1>
+                    <div class="meta">تاريخ الإنشاء: ${safeFormatDate(job.create_at)}</div>
+                    <hr>
+                    
+                    <div class="grid-row">
+                        <div class="col">
+                            <span class="label">الحالة</span>
+                            <div class="value"><span class="badge ${status}">${status}</span></div>
+                        </div>
+                        <div class="col">
+                            <span class="label">فئة الخدمة</span>
+                            <div class="value">${job.category?.title || 'غير محدد'}</div>
+                        </div>
+                        <div class="col">
+                            <span class="label">ميزانية الطلب</span>
+                            <div class="value">${job.price} ر.س</div>
+                        </div>
+                        <div class="col">
+                            <span class="label">عدد القطع</span>
+                            <div class="value">${job.quantity}</div>
+                        </div>
+                        <div class="col">
+                            <span class="label">الوقت والتاريخ</span>
+                            <div class="value">${safeFormatDate(job.scheduled_at)}</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5">
+                        <h3 class="section-title">وصف الخدمة</h3>
+                        <p>${job.description || 'لا يوجد وصف'}</p>
+                    </div>
+
+                    <div class="images mt-5">
+                        <h3 class="section-title">الصور المرفقة</h3>
+                        <div class="images-grid">
+                            ${job.media.map(m => m.image_url ? `<img src="${m.image_url}" alt="صورة الطلب" onclick="openLightbox('${m.image_url}')">` : '').join('')}
+                        </div>
+                    </div>
+
+                    <div class="mt-5">
+                        <h3 class="section-title">تفاصيل الموقع والسكن</h3>
+                        <div class="grid-row">
+                            <div class="col">
+                                <span class="label">الموقع</span>
+                                <span class="value">${job.location?.address || 'غير محدد'}</span>
+                            </div>
+                            <div class="col">
+                                <span class="label">اسم البناية</span>
+                                <span class="value">${job.location?.building_name || 'غير محدد'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="action-button accept-button" id="accept-job-button">قبول الطلب</button>
+                        <button class="action-button negotiate-button" id="negotiate-job-button">تفاوض</button>
+                    </div>
+                `;
+                document.getElementById('jobDetail').innerHTML = jobDetailsHtml;
+            }
+
+            function attachEventListeners(jobId, token) {
+                const acceptButton = document.getElementById('accept-job-button');
+                const negotiateButton = document.getElementById('negotiate-job-button');
+                const sendOfferButton = document.getElementById('send-offer-button');
+                const priceInput = document.getElementById('negotiate-price-input');
+                const negotiateModal = document.getElementById('negotiate-modal');
+
+                if (acceptButton) {
+                    acceptButton.addEventListener('click', async () => {
+                        if (confirm('هل أنت متأكد أنك تريد قبول هذا الطلب بالسعر المحدد؟')) {
+                            try {
+                                const response = await fetch(`/api/v1/provider/jobs/${jobId}/accept/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                });
+                                const data = await response.json();
+                                alert(data.message);
+                                if (data.isSuccess) {
+                                    window.location.reload();
+                                }
+                            } catch (error) {
+                                console.error('Error accepting job:', error);
+                                alert('فشل قبول الطلب');
+                            }
+                        }
+                    });
+                }
+                
+                if (negotiateButton) {
+                    negotiateButton.addEventListener('click', () => {
+                        negotiateModal.style.display = 'flex';
+                    });
+                }
+
+                if (sendOfferButton) {
+                    sendOfferButton.addEventListener('click', async () => {
+                        const price = priceInput.value;
+                        if (!price || price <= 0) {
+                            alert('الرجاء إدخال سعر صالح.');
+                            return;
+                        }
+                        
+                        try {
+                            const response = await fetch(`/api/v1/provider/jobs/make-request/`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ job: jobId, price: price })
+                            });
+                            const data = await response.json();
+                            console.log('Offer sent:', data);
+                            alert(data.message);
+                            if (data.isSuccess) {
+                                closeNegotiateModal();
+                                window.location.reload();
+                            }
+                        } catch (error) {
+                            console.error('Error sending offer:', error);
+                            alert('فشل إرسال العرض.');
+                        }
+                    });
+                }
+            }
+            
+            function closeNegotiateModal() {
+                const negotiateModal = document.getElementById('negotiate-modal');
+                negotiateModal.style.display = 'none';
+            }
+
+            function safeFormatDate(dateStr) {
+                if (!dateStr) return "غير متوفر";
+                const d = new Date(dateStr);
+                return isNaN(d.getTime()) ? dateStr : d.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+            }
+            
+            function openLightbox(url) {
+                const lb = document.createElement('div');
+                lb.className = 'lightbox';
+                lb.onclick = () => document.body.removeChild(lb);
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'صورة مكبرة';
+                lb.appendChild(img);
+                document.body.appendChild(lb);
+            }
+
+            fetchJobDetails();
+        });
+    </script>
+</body>
+</html>

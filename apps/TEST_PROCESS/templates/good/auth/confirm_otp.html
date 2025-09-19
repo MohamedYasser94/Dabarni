@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Confirm OTP</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; margin: 0; color: #fff;
+    }
+    .container {
+      background: rgba(255,255,255,0.1);
+      padding: 30px; border-radius: 15px;
+      width: 350px; text-align: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    h2 { margin-bottom: 20px; }
+    input, button {
+      width: 100%; padding: 12px; margin: 10px 0;
+      border: none; border-radius: 8px; font-size: 16px;
+    }
+    input { background: #fff; color: #333; }
+    button {
+      background: #11998e; color: #fff;
+      cursor: pointer; font-weight: bold;
+      transition: background 0.3s;
+    }
+    button:hover { background: #0e7c72; }
+    .msg { margin-top: 10px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Confirm OTP</h2>
+    <input type="text" id="otpInput" placeholder="Enter OTP code"/>
+    <button onclick="verifyOtp()">Verify</button>
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <script>
+    // ✅ عند تحميل الصفحة، لو otp_demo موجود نعرضه
+    window.onload = function() {
+      const otpDemo = localStorage.getItem("otp_demo");
+      if (otpDemo) {
+        document.getElementById("otpInput").value = otpDemo; // نحطه في input
+        document.getElementById("msg").textContent = "OTP للتجربة: " + otpDemo;
+        document.getElementById("msg").style.color = "yellow";
+      }
+    };
+
+    async function verifyOtp() {
+      const otpInput = document.getElementById('otpInput');
+      const msg = document.getElementById('msg');
+      const phone = localStorage.getItem("phone");
+      const access_level = localStorage.getItem("access_level");
+      const otp = otpInput.value.trim();
+
+      if (!otp) {
+        msg.textContent = "Please enter OTP.";
+        msg.style.color = "yellow";
+        return;
+      }
+
+      try {
+        const res = await fetch("/auth/verify-otp/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, otp, access_level })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          msg.textContent = data.error || "Invalid OTP.";
+          msg.style.color = "red";
+          return;
+        }
+
+        msg.textContent = "Verified successfully!";
+        msg.style.color = "lightgreen";
+
+        // Save tokens
+        localStorage.setItem("tokens", JSON.stringify(data.tokens));
+        localStorage.setItem("access_token", data.tokens.access);
+        localStorage.setItem("refresh_token", data.tokens.refresh);
+
+        // Redirect based on role
+        if (access_level === "Client") {
+          window.location.href = "/test/client/home/";
+        } else {
+          window.location.href = "/test/provider/home/";
+          
+        }
+        console.log("User verified and logged in:", data);
+        
+      } catch (err) {
+        msg.textContent = "Network error, try again.";
+        msg.style.color = "red";
+      }
+    }
+  </script>
+</body>
+</html>

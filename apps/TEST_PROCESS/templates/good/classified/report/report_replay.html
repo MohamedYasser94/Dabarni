@@ -1,0 +1,157 @@
+{% extends BACKEND_BASE %}
+{% load i18n %}
+
+{% block body %}
+<div class="d-flex flex-column flex-column-fluid" id="chat-app" v-pre>
+    <div class="app-content flex-column-fluid">
+        <div class="app-container container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        {# Display the slug in the title for consistency #}
+                        {{ title }} for Report #{{ report.slug }} (Customer: {{ report.buyer.get_full_name|default:report.buyer.email }})
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <h6 class="">{{ report.report }}</h6>
+                </div>
+                <div class="card-body">
+                    <div id="message-list" class="scroll-y me-n5 pe-5 h-400px" ref="messageContainer">
+                        <div v-if="isLoading" class="d-flex justify-content-center p-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div v-for="msg in messages" :key="msg.id" :class="['d-flex mb-10', msg.sender_type === 'admin' ? 'justify-content-end' : 'justify-content-start']">
+                            <div :class="['d-flex flex-column', msg.sender_type === 'admin' ? 'align-items-end' : 'align-items-start']">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div v-if="msg.sender_type !== 'admin'" class="symbol symbol-35px symbol-circle me-3">
+                                        <span class="symbol-label bg-light-info text-info fs-6 fw-bolder">[[ customerUsername.charAt(0).toUpperCase() ]]</span>
+                                    </div>
+                                    <div :class="['p-5 rounded fw-semibold', msg.sender_type === 'admin' ? 'bg-light-primary text-dark' : 'bg-light-info text-dark']">
+                                        [[ msg.text ]]
+                                    </div>
+                                </div>
+                                <span class="text-muted fs-7 mb-1">[[ formatTimestamp(msg.createdAt) ]]</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <form @submit.prevent="sendMessage">
+                        <div class="input-group">
+                            <input v-model="newMessage" @keyup.enter="sendMessage" type="text" class="form-control" placeholder="Type your message here..." :disabled="isLoading">
+                           <button class="btn btn-primary" type="submit" :disabled="!(newMessage || '').trim()">Send</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<script type="application/json" id="chat-data">
+{
+    "reportSlug": "{{ report.slug|escapejs }}",
+    "adminUserSlug": "{{ request.user.slug }}",
+    "customerUserSlug": "{{ report.buyer.slug }}",
+    "customerUsername": "{{ report.buyer.get_full_name|default:report.buyer.email|escapejs }}"
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatData = JSON.parse(document.getElementById('chat-data').textContent);
+    const firebaseConfig = {
+         apiKey: "AIzaSyDlv8r2NeYlbAjJHnLp1FeQmf8u_-0EVpw",
+         authDomain: "manfz-35648.firebaseapp.com",
+         projectId: "manfz-35648",
+         storageBucket: "manfz-35648.firebasestorage.app",
+         messagingSenderId: "184321323791",
+         appId: "1:184321323791:web:fab1a41b5827fb2753847a",
+         measurementId: "G-MYC8K2FZWG"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    const ChatApp = Vue.createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                reportSlug: chatData.reportSlug,
+                adminUserSlug: chatData.adminUserSlug,
+                customerUserSlug: chatData.customerUserSlug,
+                customerUsername: chatData.customerUsername,
+                messages: [],
+                newMessage: '',
+                db: db,
+                unsubscribe: null,
+                isLoading: true
+            };
+        },
+        methods: {
+           sendMessage() {
+                if (!this.newMessage.trim()) return;
+                const originalMessage = this.newMessage;
+                this.newMessage = '';
+
+                const messagesRef = this.db.collection('report_chats').doc(this.reportSlug).collection('messages');
+                messagesRef.add({
+                    text: originalMessage,
+                    sender_slug: this.adminUserSlug,
+                    sender_type: 'admin',
+                    receiver_slug: this.customerUserSlug,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // FIX: Update the URL to pass the slug
+                const apiUrl = "{% url 'provider:ApiAdminSaveReportMessage' report_slug=report.slug %}";
+                fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ text: originalMessage }),
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => console.log('Admin message saved to DB:', data))
+                .catch(error => console.error('Error saving admin message to DB:', error));
+            },
+            listenForMessages() {
+                // FIX: Use the slug to listen to the correct document
+                const messagesRef = this.db.collection('report_chats').doc(this.reportSlug).collection('messages').orderBy('createdAt', 'asc');
+                this.unsubscribe = messagesRef.onSnapshot(snapshot => {
+                    const newMessages = [];
+                    snapshot.forEach(doc => newMessages.push({ id: doc.id, ...doc.data() }));
+                    this.messages = newMessages;
+                    this.isLoading = false;
+                    this.$nextTick(() => { this.scrollToBottom(); });
+                }, error => {
+                    console.error("Error listening for messages: ", error);
+                    this.isLoading = false;
+                });
+            },
+            scrollToBottom() {
+                const container = this.$refs.messageContainer;
+                if(container) container.scrollTop = container.scrollHeight;
+            },
+            formatTimestamp(timestamp) {
+                if (!timestamp) return 'Sending...';
+                return timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+        },
+        mounted() { this.listenForMessages(); },
+        beforeUnmount() { if (this.unsubscribe) { this.unsubscribe(); } }
+    });
+    ChatApp.mount('#chat-app');
+});
+</script>
+{% endblock custom_js %}

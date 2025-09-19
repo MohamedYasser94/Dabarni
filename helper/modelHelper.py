@@ -669,8 +669,7 @@ REPORT_TYPES = (('Spam', 'Spam'), ('Inappropriate', 'Inappropriate'),
 JobProvider_Type = ( ('Company', _("Company")),
                     ('institution', _("Institution")),  ('Freelance Document', _("Freelance Document")),)
 
-Job_Offer_Status = (('Accepted', 'Accepted'), ('Offered', 'Offered'), ('Rejected', 'Rejected'),
-                    ('New', 'New'), )
+Job_Offer_Status = (('Accepted', 'Accepted'), ('Rejected', 'Rejected'), ('Pending', 'Pending'), )
 Job_Progress_Status = (('Pending', 'Pending'), ('In Progress', 'In Progress'), ('Completed', 'Completed'),
                        ('On Hold', 'On Hold'), ('Cancelled', 'Cancelled'),)
 ################### Blog ##############################

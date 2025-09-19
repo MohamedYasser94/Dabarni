@@ -71,6 +71,17 @@ class JobProgressSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobProgress
         fields = '__all__'
+        
 
+class ProviderNegotiateCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for a provider to make a new negotiation offer.
+    """
+    class Meta:
+        model = JobNegotiate
+        fields = ['provider_price']
 
-
+    def validate_provider_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("السعر يجب أن يكون أكبر من الصفر.")
+        return value

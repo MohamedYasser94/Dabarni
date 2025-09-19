@@ -59,6 +59,7 @@ urlpatterns += i18n_patterns(
     path('dashboard/', include('core.urls'), name='core'),
     path('dashboard/classified/', include('apps.classified.urls'), name='classified'),
     path('dashboard/customer/', include('apps.customer.urls'), name='customer'),
+    path('test/', include('apps.TEST_PROCESS.urls'), name='test_process'),
     path('dashboard/employee/', include('apps.employee.urls'), name='employee'),
     path('dashboard/front/', include('apps.front.urls'), name='front'),
     path('dashboard/provider/', include('apps.provider.urls'), name='provider'),

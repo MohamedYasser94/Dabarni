@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register - Choose Role</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh; margin: 0;
+      color: #fff;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+      width: 350px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    h2 { margin-bottom: 20px; }
+    select, input, button {
+      width: 100%; padding: 12px; margin: 10px 0;
+      border: none; border-radius: 8px; font-size: 16px;
+    }
+    select, input { background: #fff; color: #333; }
+    button {
+      background: #2575fc; color: #fff;
+      cursor: pointer; font-weight: bold;
+      transition: background 0.3s;
+    }
+    button:hover { background: #1a5ed8; }
+    .msg { margin-top: 10px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Register</h2>
+    <select id="role">
+      <option value="">-- Choose Role --</option>
+      <option value="Client">Client</option>
+      <option value="Provider">Provider</option>
+    </select>
+    <input type="text" id="phone" placeholder="Enter your phone number"/>
+    <button onclick="registerUser()">Continue</button>
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <script>
+    async function registerUser() {
+      const phone = document.getElementById('phone').value.trim();
+      const access_level = document.getElementById('role').value;
+      const msg = document.getElementById('msg');
+
+      if (!phone || !access_level) {
+        msg.textContent = "Please select role and enter phone.";
+        msg.style.color = "yellow";
+        return;
+      }
+
+     try {
+  const res = await fetch("/auth/register/", {   // ✅ مصحح
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, access_level })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    msg.textContent = data.message || "Error occurred.";
+    msg.style.color = "red";
+    return;
+  }
+
+  // Save data locally for next step
+  localStorage.setItem("phone", phone);
+  localStorage.setItem("access_level", access_level);
+
+  // Demo: Show OTP in console (since real SMS not hooked)
+  console.log("OTP:", data.data.otp_demo);
+localStorage.setItem("otp_demo", data.data.otp_demo);
+  // Redirect user to frontend page confirm-otp
+    window.location.href = "/test/confirm-otp/";
+} catch (err) {
+  msg.textContent = "Network error, try again.";
+  msg.style.color = "red";
+}
+
+
+    }
+  </script>
+</body>
+</html>

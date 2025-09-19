@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>طلباتي</title>
+  <style>
+    body { font-family: Tahoma, sans-serif; background: #f4f4f4; }
+    .container { max-width: 800px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
+    h2 { text-align: center; margin-bottom: 20px; }
+    .job-card {
+      border: 1px solid #ddd; padding: 15px; border-radius: 8px;
+      margin-bottom: 10px; background: #fafafa;
+    }
+    .job-card h3 { margin: 0 0 10px; }
+    .actions button {
+      margin: 5px; padding: 8px 12px;
+      border: none; border-radius: 5px; cursor: pointer;
+    }
+    .view { background: #3498db; color: white; }
+    .cancel { background: #e74c3c; color: white; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>طلباتي الحالية</h2>
+    <div id="jobsList">جاري التحميل...</div>
+  </div>
+
+<script>
+async function loadMyJobs() {
+  const jobsList = document.getElementById("jobsList");
+  try {
+    const res = await fetch("/api/v1/customer/jobs/my/", {
+      headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") }
+    });
+    const data = await res.json();
+
+    if (!data.isSuccess) throw new Error(data.message);
+
+    jobsList.innerHTML = "";
+    if (data.data && data.data.length > 0) {
+      data.data.forEach(job => {
+        jobsList.innerHTML += `
+          <div class="job-card">
+            <h3>${job.title}</h3>
+            <p>${job.description}</p>
+            <p><b>السعر:</b> ${job.price}</p>
+            <p><b>الحالة:</b> ${job.progresses[0]?.progress_status || 'غير محدد'}</p>
+            <div class="actions">
+              <button class="view" onclick="viewJob(${job.id})">عرض</button>
+              <button class="cancel" onclick="cancelJob(${job.id})">إلغاء</button>
+          </div>
+        </div>
+      `;
+      });
+    } else {
+      jobsList.textContent = "لا توجد طلبات لعرضها حاليًا.";
+    }
+  } catch (err) {
+    jobsList.textContent = "فشل تحميل الطلبات ❌";
+    console.error(err);
+  }
+}
+
+function viewJob(id) {
+  window.location.href = `/test/client/job/${id}/`;
+}
+
+async function cancelJob(id) {
+  const reason = prompt("ادخل سبب الإلغاء:");
+  if (!reason) return;
+
+  try {
+    const res = await fetch(`/api/v1/customer/jobs/${id}/cancel/`, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ reason })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || "فشل الإلغاء");
+      return;
+    }
+    alert("تم إلغاء الطلب ✅");
+    loadMyJobs();
+  } catch (err) {
+    alert("خطأ في الشبكة ❌");
+  }
+}
+
+loadMyJobs();
+</script>
+</body>
+</html>
