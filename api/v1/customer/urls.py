@@ -24,14 +24,13 @@ urlpatterns = [
     # Path for retrieving a single job by ID
     path('jobs/<int:job_id>/', jop.retrieve_job, name='customer-job-retrieve'),
     # Path for listing jobs by progress status
-    path('jobs/<int:job_id>/accept-offer/', jop.customerAcceptOffer, name='customer-accept-offer'),
     
     path('jobs/status/<str:status_param>/', jop.list_jobs_by_progress_status, name='customer-jobs-by-status'),
     path('jobs/<int:job_id>/cancel/', jop.cancel_job, name='customer-job-cancel'),
      #--------------------- Cancel Job with Fee ----------------------------
     path('jobs/<int:job_id>/cancel-with-fee/', jop.CancelJobWithFee, name='customer-cancel-job-with-fee'),
     path('jobs/<int:job_id>/offers/', jop.getOffersByJob, name='customer-job-offers'),
-    path('offers/<int:offer_id>/accept/', jop.customerAcceptOffer, name='customer-accept-offer'),
+    path('offers/<int:offer_id>/accept/', jop.CustomerAcceptOffer, name='customer-accept-offer'),
     #--------------------- Category ----------------------------
      path("categories/", category.list_categories, name="category-list"),
      path("categories/<slug:slug>/", category.retrieve_category, name="category-detail"),

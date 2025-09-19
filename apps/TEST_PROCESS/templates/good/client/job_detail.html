@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دبرني | تفاصيل الطلب</title>
+    <style>
+        :root {
+            --primary-color: #f7b731;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --dark-color: #1a2a4b;
+            --light-color: #f8f9fa;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            direction: rtl;
+            text-align: right;
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 980px;
+            margin: 20px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+        .card-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1a2a4b;
+        }
+        .job-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #222;
+        }
+        .grid-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .col {
+            flex: 1 1 45%;
+            min-width: 250px;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .value {
+            color: #222;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .badge.Pending { background: #f1c40f; }
+        .badge.Completed { background: #2ecc71; }
+        .badge.Cancelled { background: #e74c3c; }
+        .badge.InProgress { background: #3498db; }
+        .images { margin-top: 20px; }
+        .images h3 { margin-bottom: 10px; color: #444; }
+        .images-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 10px;
+            background: #fdfdfd;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .images-gallery img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.18s;
+        }
+        .images-gallery img:hover { transform: scale(1.05); }
+        .debug { margin-top: 20px; text-align: right; }
+        .debug pre {
+            max-height: 220px;
+            overflow: auto;
+            background: #111;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .error { color: #e74c3c; font-weight: bold; text-align: center; padding: 15px 0; }
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .action-button {
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 48%;
+        }
+        .view-offers-button {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+        .cancel-button {
+            background-color: var(--danger-color);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>تفاصيل الطلب</h2>
+
+            </div>
+            <div id="jobDetail">
+                <div class="text-center">جاري التحميل...</div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="action-button view-offers-button" id="view-offers-button">مشاهدة العروض</button>
+                <button class="action-button cancel-button" id="cancel-job-button">إلغاء الطلب</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            const jobId = pathSegments[pathSegments.length - 1];
+            const token = localStorage.getItem("access_token");
+
+            async function fetchJobDetails() {
+                try {
+                    const response = await fetch(`/api/v1/customer/jobs/${jobId}/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+                    
+                    if (data.isSuccess) {
+                        renderJobDetails(data.data);
+                        // <-- استدعاء attachEventListeners بعد عرض التفاصيل (هنا التعديل الأساسي)
+                        attachEventListeners(jobId, token);
+                    } else {
+                        document.getElementById('jobDetail').innerHTML = `<div class="error">${data.message}</div>`;
+                    }
+                } catch (error) {
+                    document.getElementById('jobDetail').innerHTML = `<div class="error">فشل تحميل تفاصيل الطلب: ${error.message}</div>`;
+                }
+            }
+
+            function renderJobDetails(job) {
+                const status = (job.progresses[0]?.progress_status || 'غير محدد');
+                const jobDetailsHtml = `
+                    <h1 class="job-title">${job.title || 'بدون عنوان'}</h1>
+                    <div class="meta">تاريخ الإنشاء: ${safeFormatDate(job.create_at)}</div>
+                    <hr>
+                    
+                    <div class="grid-row">
+                        <div class="col">
+                            <span class="label">الحالة</span>
+                            <div class="value"><span class="badge ${status}">${status}</span></div>
+                        </div>
+                        <div class="col">
+                            <span class="label">فئة الخدمة</span>
+                            <div class="value">${job.category?.title || 'غير محدد'}</div>
+                        </div>
+                        <div class="col">
+                            <span class="label">ميزانية الطلب</span>
+                            <div class="value">${job.price} ر.س</div>
+                        </div>
+                        <div class="col">
+                            <span class="label">عدد القطع</span>
+                            <div class="value">${job.quantity}</div>
+                        </div>
+                        <div class="col">
+                            <span class="label">الوقت والتاريخ</span>
+                            <div class="value">${safeFormatDate(job.scheduled_at)}</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5">
+                        <h3 class="section-title">وصف الخدمة</h3>
+                        <p>${job.description || 'لا يوجد وصف'}</p>
+                    </div>
+
+                    <div class="images mt-5">
+                        <h3 class="section-title">الصور المرفقة</h3>
+                        <div class="images-gallery">
+                            ${(job.media || []).map(m => m.image_url ? `<img src="${m.image_url}" alt="صورة الطلب" onclick="openLightbox('${m.image_url}')">` : '').join('')}
+                        </div>
+                    </div>
+
+                    <div class="mt-5">
+                        <h3 class="section-title">تفاصيل الموقع والسكن</h3>
+                        <div class="grid-row">
+                            <div class="col">
+                                <span class="label">الموقع</span>
+                                <span class="value">${job.location?.address || 'غير محدد'}</span>
+                            </div>
+                            <div class="col">
+                                <span class="label">اسم البناية</span>
+                                <span class="value">${job.location?.building_name || 'غير محدد'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('jobDetail').innerHTML = jobDetailsHtml;
+            }
+
+            function attachEventListeners(jobId, token) {
+                const viewOffersButton = document.getElementById('view-offers-button');
+                const cancelButton = document.getElementById('cancel-job-button');
+
+                console.log("attachEventListeners attached");
+
+                if (viewOffersButton) {
+                    viewOffersButton.addEventListener('click', () => {
+                        window.location.href = `/test/client/offers/${jobId}/`; // Redirect to a new offers page
+                    });
+                }
+                
+                if (cancelButton) {
+                    cancelButton.addEventListener('click', () => {
+                        const reason = prompt("ما هو سبب إلغاء الطلب؟");
+                        if (reason) {
+                            if (confirm('هل أنت متأكد من إلغاء الطلب؟')) {
+                                // TODO: Implement cancel logic with API call
+                                alert('وظيفة إلغاء الطلب لم يتم تطبيقها بعد.');
+                            }
+                        }
+                    });
+                }
+            }
+            
+            function safeFormatDate(dateStr) {
+                if (!dateStr) return "غير متوفر";
+                const d = new Date(dateStr);
+                return isNaN(d.getTime()) ? dateStr : d.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+            }
+            
+            function openLightbox(url) {
+                const lb = document.createElement('div');
+                lb.className = 'lightbox';
+                lb.onclick = () => document.body.removeChild(lb);
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'صورة مكبرة';
+                lb.appendChild(img);
+                document.body.appendChild(lb);
+            }
+
+            fetchJobDetails();
+        });
+    </script>
+</body>
+</html>

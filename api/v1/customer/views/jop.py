@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 from django.shortcuts import get_object_or_404
+from api.v1.constants import JobOfferStatus, JobProgressStatus
 from apps.classified.models.models import Job, JobNegotiate, JobOffer, JobProgress
 from django.db import transaction
 from api.v1.customer.serializers.jop_request_serializer import (
@@ -63,8 +64,8 @@ def list_my_jobs(request):
     API endpoint to list jobs for the current authenticated user.
     """
     try:
-        jobs = Job.objects.filter(customer=request.user)
-        serializer = JobDetailSerializer(jobs, many=True)
+        jobs = Job.objects.filter(customer=request.user).select_related('customer', 'category')
+        serializer = JobDetailSerializer(jobs, many=True, context={'request': request})
         return success_response(
             message="تم جلب قائمة الوظائف بنجاح",
             data=serializer.data,
@@ -76,6 +77,7 @@ def list_my_jobs(request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+
 
 @extend_schema(
     tags=["Customer Jobs"],
@@ -89,7 +91,7 @@ def retrieve_job(request, job_id):
     """
     try: 
         job = get_object_or_404(Job, pk=job_id)
-        serializer = JobDetailSerializer(job)
+        serializer = JobDetailSerializer(job, context={"request": request})
         return success_response(
             message="تم جلب الوظيفة بنجاح",
             data=serializer.data,
@@ -101,6 +103,7 @@ def retrieve_job(request, job_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+
 @extend_schema(
     tags=["Customer Jobs"],
     responses={200: JobDetailSerializer(many=True), 500: 'Error Response'},
@@ -323,34 +326,34 @@ def getOffersByJob(request, job_id):
             errors={'detail': str(e)}
         )
 
+
 @extend_schema(
-    tags=["Customer Offers"],
+    tags=["Customer Jobs"],
     responses={200: JobDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def customerAcceptOffer(request, offer_id):
+def CustomerAcceptOffer(request, offer_id):
     """
     API endpoint for a customer to accept a specific job offer.
     """
     try:
-        # Get the offer, ensuring it belongs to the authenticated customer's job
-        offer = get_object_or_404(JobOffer.objects.select_related('job__customer'), pk=offer_id)
-
-        # Check if the offer's job is owned by the current user
-        if offer.job.customer != request.user:
-            return error_response(
-                message="ليس لديك صلاحية لقبول هذا العرض.",
-                status_code=status.HTTP_403_FORBIDDEN,
-            )
-
-        if offer.status in ['Accepted', 'Rejected']:
-            return error_response(
-                message="لا يمكن قبول هذا العرض. لقد تم قبوله أو رفضه بالفعل.",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
         with transaction.atomic():
+            # Get the offer, ensuring it belongs to the authenticated customer's job
+            offer = get_object_or_404(JobOffer.objects.select_related('job__customer', 'provider'), pk=offer_id)
+
+            # Check if the offer's job is owned by the current user
+            if offer.job.customer != request.user:
+                return error_response(
+                    message="ليس لديك صلاحية لقبول هذا العرض.",
+                    status_code=status.HTTP_403_FORBIDDEN,
+                )
+            if offer.customer_accepted:
+                return error_response(
+                    message="لقد تم قبول هذا العرض بالفعل.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
             # 1. Update the accepted offer
             offer.customer_accepted = True
             offer.status = 'Accepted'
@@ -358,17 +361,27 @@ def customerAcceptOffer(request, offer_id):
             
             # 2. Update the main Job record
             job = offer.job
-            job.status = 'In Progress' # Job is now assigned
+            job.status = 'Assigned'
             job.save()
 
             # 3. Update the JobProgress record to link the accepted offer
             job_progress, created = JobProgress.objects.get_or_create(job=job)
             job_progress.offer = offer
             job_progress.provider = offer.provider
-            job_progress.progress_status = 'Assigned' # Progress is now assigned
-            job_progress.total_cost = offer.price # Set the total cost to the accepted price
+            job_progress.progress_status = 'Assigned'
+            job_progress.total_cost = offer.price
             job_progress.save()
 
+            job_negotiations = JobNegotiate.objects.filter(job=job, provider=offer.provider)
+            for negotiation in job_negotiations:
+                negotiation.status = 'Accepted'
+                negotiation.customer_accepted = True
+                negotiation.offer = offer
+                negotiation.job_progress = job_progress
+                negotiation.provider_accepted = True
+                negotiation.customer_price = offer.price  # Ensure customer_price matches the accepted offer price
+                negotiation.provider_price = offer.price  # Ensure provider_price matches the accepted offer price
+                negotiation.save()
             # 4. Reject all other offers for this job
             JobOffer.objects.filter(job=job).exclude(pk=offer_id).update(status='Rejected')
 
@@ -388,8 +401,6 @@ def customerAcceptOffer(request, offer_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
-
-
 
 @extend_schema(
     tags=["Customer Offers"],
@@ -436,7 +447,7 @@ def NegotiateOffer(request, offer_id):
             negotiation_record.save()
             
             # Update the offer status to indicate negotiation is in progress
-            offer.status = 'Negotiating'
+            offer.status = JobOfferStatus.NEGOTIATING
             offer.save()
             
             return success_response(

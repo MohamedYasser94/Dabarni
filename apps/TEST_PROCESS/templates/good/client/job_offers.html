@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>عروض الطلب</title>
+    <style>
+        body { font-family: "Tahoma", sans-serif; background: #f4f6f9; color: #222; margin: 0; padding: 20px; }
+        .wrap { max-width: 980px; margin: 24px auto; }
+        h1 { color:#1a73e8; text-align:center; margin-bottom:18px; }
+        .controls { display:flex; justify-content:space-between; gap:8px; margin-bottom:12px; }
+        .btn { padding:8px 12px; border-radius:8px; background:#1a73e8; color:#fff; text-decoration:none; display:inline-block; cursor:pointer; }
+        .btn.secondary { background:#f7b731; color:#111; }
+        .msg { text-align:center; margin:16px 0; font-weight:600; color:#666; }
+
+        .offer-card { background:#fff; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.06); padding:14px; margin-bottom:14px; display:flex; gap:12px; align-items:flex-start; }
+        .avatar { width:64px; height:64px; border-radius:10px; overflow:hidden; flex: 0 0 64px; background:#eee; display:flex; align-items:center; justify-content:center; }
+        .avatar img { width:100%; height:100%; object-fit:cover; }
+
+        .offer-body { flex:1; }
+        .provider-name { font-weight:700; font-size:16px; color:#1a2a4b; margin-bottom:6px; }
+        .offer-meta { font-size:13px; color:#444; margin-bottom:8px; }
+        .price { font-weight:800; font-size:18px; color:#2c7a2c; margin-right:6px; }
+        .status { display:inline-block; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:700; color:#fff; }
+        .status.Pending { background:#f1c40f; color:#111; }
+        .status.Negotiating { background:#3498db; }
+        .status.Accepted { background:#2ecc71; }
+        .status.Rejected { background:#e74c3c; }
+        .meta-row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+        .actions { display:flex; gap:8px; margin-top:8px; }
+
+        .toggle-json { background:#f5f5f5; border-radius:8px; padding:10px; font-family: monospace; font-size:12px; overflow:auto; max-height:260px; margin-top:10px; display:none; }
+
+        .small { font-size:12px; color:#666; }
+
+        .empty { text-align:center; color:#888; padding:40px 10px; background:#fff; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.03); }
+
+        @media (max-width:600px){
+            .offer-card { flex-direction:column; }
+            .avatar { width:56px; height:56px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>العروض الواردة على الطلب</h1>
+        <div class="controls">
+            <div>
+                <button id="backBtn" class="btn secondary">عودة للتفاصيل</button>
+            </div>
+            <div>
+                <button id="refreshBtn" class="btn">تحديث</button>
+            </div>
+        </div>
+
+        <div id="msg" class="msg">جاري جلب العروض...</div>
+
+        <div id="offersContainer"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            const jobId = pathSegments[pathSegments.length - 1];
+            const token = localStorage.getItem('access_token');
+
+            const offersContainer = document.getElementById('offersContainer');
+            const msg = document.getElementById('msg');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const backBtn = document.getElementById('backBtn');
+
+            backBtn.addEventListener('click', () => {
+                window.location.href = `/customer/jobs/${jobId}/`;
+            });
+
+            refreshBtn.addEventListener('click', () => fetchOffers());
+
+            async function fetchOffers() {
+                offersContainer.innerHTML = '';
+                msg.textContent = 'جاري جلب العروض...';
+                try {
+                    const res = await fetch(`/api/v1/customer/jobs/${jobId}/offers/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const payload = await res.json();
+                    if (!payload.isSuccess) throw new Error(payload.message || 'فشل جلب العروض');
+
+                    const offers = payload.data || [];
+                    if (offers.length === 0) {
+                        msg.textContent = 'لا توجد عروض حالياً على هذا الطلب.';
+                        offersContainer.innerHTML = `<div class="empty">لا توجد عروض لعرضها الآن.</div>`;
+                        return;
+                    }
+
+                    msg.textContent = `تم جلب ${offers.length} عرض${offers.length > 1 ? '' : ''}.`; // Removed the 's' on 'offers'
+
+                    offers.forEach(offer => {
+                        const card = document.createElement('div');
+                        card.className = 'offer-card';
+
+                        const avatarUrl = offer.provider?.user?.image || '/static/img/avatar-placeholder.png';
+                        const avatarHtml = `<div class="avatar"><img src="${avatarUrl}" alt="avatar" onerror="this.src='/static/img/avatar-placeholder.png'"></div>`;
+
+                        const providerName = offer.providerName || 'مزود غير معروف';
+                        const createdAt = offer.create_at ? (new Date(offer.create_at)).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) : 'غير محدد';
+                        const price = (offer.price !== undefined && offer.price !== null) ? `${offer.price} ر.س` : 'غير محدد';
+                        const statusClass = offer.status ? offer.status.replace(/\s/g, '') : 'Pending';
+
+                        card.innerHTML = `
+                            ${avatarHtml}
+                            <div class="offer-body">
+                                <div class="provider-name">${providerName}</div>
+                                <div class="meta-row">
+                                    <div class="offer-meta"><span class="price">${price}</span></div>
+                                    <div class="offer-meta small">تاريخ الإرسال: ${createdAt}</div>
+                                    <div class="offer-meta"><span class="status ${statusClass}">${offer.status || 'قيد الانتظار'}</span></div>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn" onclick="acceptOffer(${offer.id})">قبول العرض</button>
+                                    <button class="btn secondary" onclick="negotiateOffer(${offer.id})">تفاوض</button>
+                                </div>
+                            </div>
+                        `;
+                        offersContainer.appendChild(card);
+                    });
+
+                } catch (err) {
+                    console.error('Error fetching offers:', err);
+                    msg.textContent = 'فشل جلب العروض. تحقق من الاتصال أو تسجيل الدخول.';
+                    offersContainer.innerHTML = `<div class="empty">حدث خطأ أثناء جلب العروض.</div>`;
+                }
+            }
+
+            // Function to handle accepting an offer
+            async function acceptOffer(offerId) {
+                if (confirm('هل أنت متأكد من قبول هذا العرض؟')) {
+                    try {
+                        const res = await fetch(`/api/v1/customer/offers/${offerId}/accept/`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer ' + token,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        const payload = await res.json();
+                        alert(payload.message);
+                        if (payload.isSuccess) {
+                            window.location.reload();
+                        }
+                    } catch (err) {
+                        alert('فشل قبول العرض.');
+                        console.error('Error accepting offer:', err);
+                    }
+                }
+            }
+            window.acceptOffer = acceptOffer; // Make it globally accessible
+
+            // Function to handle negotiating an offer
+            async function negotiateOffer(offerId) {
+                const newPrice = prompt('أدخل السعر الجديد للتفاوض:');
+                if (newPrice) {
+                    try {
+                        const res = await fetch(`/api/v1/customer/offers/${offerId}/negotiate/`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer ' + token,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ customer_price: newPrice })
+                        });
+                        const payload = await res.json();
+                        alert(payload.message);
+                        if (payload.isSuccess) {
+                            window.location.reload();
+                        }
+                    } catch (err) {
+                        alert('فشل إرسال عرض التفاوض.');
+                        console.error('Error negotiating offer:', err);
+                    }
+                }
+            }
+            window.negotiateOffer = negotiateOffer; // Make it globally accessible
+
+            fetchOffers();
+        });
+    </script>
+</body>
+</html>

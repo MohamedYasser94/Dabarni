@@ -253,7 +253,7 @@ class JobOffer(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='offers')
     provider = models.ForeignKey(JobProvider, on_delete=models.CASCADE, related_name='offers')
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    status = models.CharField(max_length=20, choices=Job_Offer_Status, default='New', null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Job_Offer_Status, default='Pending', null=True, blank=True)
     code = models.CharField(max_length=50, null=True, blank=True)
     slug = models.SlugField(null=True, blank=True, max_length=128, unique=True)
     create_at = models.DateTimeField(auto_now_add=True)

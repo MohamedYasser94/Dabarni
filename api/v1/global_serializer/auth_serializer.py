@@ -23,6 +23,7 @@ class UserAddressSerializer(serializers.ModelSerializer):
         model = UserAddress
         fields = [
             "id",
+            "slug",
             "label",
             "latitude",
             "longitude",

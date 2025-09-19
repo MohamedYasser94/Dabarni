@@ -24,13 +24,6 @@ class UserAddressSerializer(serializers.ModelSerializer):
         model = UserAddress
         fields = '__all__' 
 
-class JobMediaSerializer(serializers.ModelSerializer):
-    """
-    Serializer for a Job's media to be displayed in the response.
-    """
-    class Meta:
-        model = JobMedia
-        fields = ['id','image', 'video', 'video_cover', 'file', 'type']
 
 class JobProgressSerializer(serializers.ModelSerializer):
     """
@@ -118,25 +111,6 @@ class ProviderOfferSerializer(serializers.ModelSerializer):
         # Corrected line: Include all declared fields in the 'fields' list
         fields = ['id', 'providerId', 'providerName', 'providerPhone', 'price', 'status', 'create_at', 'provider_accepted', 'customer_accepted' ]
 
-class JobDetailSerializer(serializers.ModelSerializer):
-    """
-    Serializer to display a Job's details. This serializer is for OUTPUT (GET requests).
-    It provides a rich, nested representation of related objects.
-    """
-    category = JobCategorySerializer(read_only=True)
-    location = UserAddressSerializer(read_only=True)
-    media = JobMediaSerializer(many=True, read_only=True)
-    progresses = JobProgressSerializer(many=True, read_only=True)
-    offers = ProviderOfferSerializer(many=True, read_only=True) 
-
-    class Meta:
-        model = Job
-        fields = [
-            "id","title", "description", "quantity", "price",
-            "category", "location", "media", "scheduled_at",
-            "progresses", "offers", "views", "code", "slug", "create_at"
-        ]
-
 class JobNegotiateSerializer(serializers.ModelSerializer):
     """
     Serializer to display negotiation details.
@@ -145,20 +119,66 @@ class JobNegotiateSerializer(serializers.ModelSerializer):
         model = JobNegotiate
         fields = '__all__'
 
+class JobCategorySerializer(serializers.ModelSerializer):
+    """
+    Serializer to display full JobCategory details.
+    """
+    class Meta:
+        model = JobCategories
+        fields = ['id','title', 'slug', 'image', 'color']
+
+class UserAddressSerializer(serializers.ModelSerializer):
+    """
+    Serializer to display full UserAddress details.
+    """
+    class Meta:
+        model = UserAddress
+        fields = '__all__' 
+
+class JobProgressSerializer(serializers.ModelSerializer):
+    """
+    Serializer to display details of a JobProgress object.
+    """
+    class Meta:
+        model = JobProgress
+        fields = ['id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
+
+class JobMediaSerializer(serializers.ModelSerializer):
+    """
+    Serializer for a Job's media to be displayed in the response.
+    """
+    # Use a custom field to ensure the full URL is returned
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobMedia
+        # Include 'image' in the fields to ensure it's loaded from the model
+        fields = ['id', 'image_url', 'video', 'video_cover', 'file', 'type']
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return None
+
 
 class JobDetailSerializer(serializers.ModelSerializer):
-    # ... (existing fields)
-    offers = ProviderOfferSerializer(many=True, read_only=True)
-    
-    # New Field: Display negotiations related to the job
+    category = JobCategorySerializer(read_only=True)
+    location = UserAddressSerializer(read_only=True)
+    # The updated serializer is used here
+    media = JobMediaSerializer(many=True, read_only=True)
+    progresses = JobProgressSerializer(many=True, read_only=True)
+    offers = ProviderOfferSerializer(many=True, read_only=True) 
     negotiations = JobNegotiateSerializer(many=True, read_only=True, source='negotiates')
+
 
     class Meta:
         model = Job
         fields = [
-            "id","title", "description", "quantity", "price",
-            "category", "location", "media", "scheduled_at",
-            "progresses", "offers", "negotiations", "views", "code", "slug", "create_at"
+            "id","title","description","quantity","price",
+            "category","location","media","scheduled_at",
+            "progresses","offers","negotiations","views",
+            "code","slug","create_at"
         ]
 
 

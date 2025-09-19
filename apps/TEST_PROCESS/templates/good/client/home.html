@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>إنشاء طلب جديد</title>
+  <style>
+    body {
+      font-family: "Tahoma", sans-serif;
+      background: #f9f9f9;
+      margin: 0; padding: 0;
+    }
+    .container {
+      width: 90%; max-width: 700px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-bottom: 20px;
+      text-align: center;
+      color: #333;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin: 10px 0 5px;
+      color: #444;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    input[type="file"] {
+      border: none;
+    }
+    button {
+      width: 100%;
+      background: #3498db;
+      border: none;
+      color: white;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .msg {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>إنشاء طلب جديد</h2>
+  <form id="jobForm">
+    <label>عنوان الطلب</label>
+    <input type="text" id="title" required>
+
+    <label>وصف الطلب</label>
+    <textarea id="description" rows="4"></textarea>
+
+    <label>الكمية</label>
+    <input type="number" id="quantity" required>
+
+    <label>السعر</label>
+    <input type="number" id="price" required>
+
+    <label>التصنيف</label>
+    <select id="category" required></select>
+
+    <label>الموقع</label>
+    <select id="location" required></select>
+
+    <label>صور الطلب</label>
+    <input type="file" id="images" multiple accept="image/*">
+
+    <label>فيديو (اختياري)</label>
+    <input type="file" id="video" accept="video/*">
+
+    <label>موعد التنفيذ (اختياري)</label>
+    <input type="datetime-local" id="scheduled_at">
+
+    <button type="submit">نشر الطلب</button>
+    <div class="msg" id="msg"></div>
+  </form>
+</div>
+
+<script>
+  const categorySelect = document.getElementById("category");
+  const locationSelect = document.getElementById("location");
+  const msg = document.getElementById("msg");
+
+  // ✅ تحميل الكاتيجوريز من API
+  async function loadCategories() {
+    try {
+      const res = await fetch("/api/v1/customer/categories/", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+        }
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "خطأ في جلب التصنيفات");
+
+      categorySelect.innerHTML = "<option value=''>اختر التصنيف</option>";
+      result.data.forEach(cat => {
+        categorySelect.innerHTML += `<option value="${cat.slug}">${cat.title}</option>`;
+      });
+    } catch (err) {
+      console.error(err);
+      categorySelect.innerHTML = "<option value=''>فشل تحميل التصنيفات</option>";
+    }
+  }
+
+  // ✅ تحميل العناوين من API
+  async function loadLocations() {
+    try {
+      const res = await fetch("/api/v1/customer/customer/address/list/", {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+        }
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "خطأ في جلب العناوين");
+
+      locationSelect.innerHTML = "<option value=''>اختر الموقع</option>";
+      result.data.forEach(loc => {
+        console.log("Location:", loc.slug, loc.address);
+        locationSelect.innerHTML += `<option value="${loc.slug}">${loc.address}</option>`;
+      });
+    } catch (err) {
+      console.error(err);
+      locationSelect.innerHTML = "<option value=''>فشل تحميل العناوين</option>";
+    }
+  }
+
+  // ✅ عند إرسال الفورم
+  document.getElementById("jobForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("title", document.getElementById("title").value);
+    formData.append("description", document.getElementById("description").value);
+    formData.append("quantity", document.getElementById("quantity").value);
+    formData.append("price", document.getElementById("price").value);
+    formData.append("category", categorySelect.value);
+    formData.append("location", locationSelect.value);
+
+    const scheduledAt = document.getElementById("scheduled_at").value;
+    if (scheduledAt) formData.append("scheduled_at", scheduledAt);
+
+    // ✅ الصور
+    const images = document.getElementById("images").files;
+    for (let i = 0; i < images.length; i++) {
+      formData.append("images", images[i]);
+    }
+
+    // ✅ الفيديو
+    const video = document.getElementById("video").files[0];
+    if (video) {
+      formData.append("video", video);
+    }
+
+    try {
+      const res = await fetch("/api/v1/customer/jobs/create/", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("access_token")
+          // ❌ ماتضيفش Content-Type هنا
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        msg.textContent = data.message || "حدث خطأ أثناء إنشاء الطلب";
+        msg.style.color = "red";
+        console.error(data);
+        return;
+      }
+
+      msg.textContent = "تم نشر الطلب بنجاح ✅";
+      msg.style.color = "green";
+      console.log("Job Created:", data);
+      setTimeout(() => {
+        window.location.href = "/test/client/my-jobs/";
+      }, 2000);
+
+    } catch (err) {
+      msg.textContent = "خطأ في الشبكة، حاول مرة أخرى";
+      msg.style.color = "red";
+      console.error("Network error:", err);
+    }
+  });
+
+  loadCategories();
+  loadLocations();
+</script>
+
+</body>
+</html>
