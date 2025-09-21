@@ -2,7 +2,7 @@ from django.urls import path
 
 
 from apps.front.views import views, blocks 
-from api.v1.customer.views import profile ,jop , category, review
+from api.v1.customer.views import profile ,jop , category, review, customer_wallet
 
 app_name = 'customer_api'
 
@@ -40,6 +40,13 @@ urlpatterns = [
 
       #--------------------- Job Negotiate ----------------------------
       path('offers/<int:offer_id>/negotiate/', jop.NegotiateOffer, name='customer-negotiate-offer'),
+
+
+      #---------------------- Customer Wallet ---------------------------
+     path('wallet/create/', customer_wallet.create_wallet, name='create_wallet'),
+    path('wallet/deposit/', customer_wallet.deposit_money, name='deposit_money'),
+    path('wallet/withdraw/', customer_wallet.withdraw_money, name='withdraw_money'),
+    path('wallet/balance/', customer_wallet.get_balance, name='get_balance'),
 
      
 

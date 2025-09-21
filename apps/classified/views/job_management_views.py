@@ -36,7 +36,7 @@ def AdminJobList(request):
         'jobs': jobs,
         'current_page': _('All Jobs')
     }
-    return render(request, f'{BACKEND_TEMPLATES}/classified/job/jobs_list.html', context)
+    return render(request, f'{BACKEND_TEMPLATES}/classified/job/job_list.html', context)
 
 
 # --- الطلبات النشطة (Active Jobs) ---
@@ -143,3 +143,31 @@ def AdminManageNegotiations(request):
         'current_page': _('Manage Negotiations')
     }
     return render(request, f'{BACKEND_TEMPLATES}/classified/job/negotiations_list.html', context)
+
+
+@authenticated_staff
+@staff_only
+def AdminJobDetails(request, job_id):
+    print(job_id)
+    job = (
+        Job.objects
+        .filter(pk=job_id)
+        .select_related('customer', 'category')
+        .prefetch_related(
+            Prefetch('progresses', queryset=JobProgress.objects.select_related('provider').all().order_by('-create_at')),
+            Prefetch('offers', queryset=JobOffer.objects.select_related('provider__user').all().order_by('-create_at')),
+            Prefetch('negotiates', queryset=JobNegotiate.objects.all().order_by('-create_at'))
+        )
+        .first()
+    )
+    print(job)
+    if not job:
+        return render(request, '404.html', status=404)
+
+    context = {
+        'job': job,
+        'current_page': _('Job Details'),
+        'prev_Page': _('All Jobs'),
+        'prev_Page_link': reverse_lazy('classified:AdminJobList'),
+    }
+    return render(request, f'{BACKEND_TEMPLATES}/classified/job/job_details.html', context)

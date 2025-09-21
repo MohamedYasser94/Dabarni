@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تفاصيل الطلب</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f9fafb; font-family: "Tajawal", sans-serif; }
+    .card-custom { max-width: 650px; margin: 20px auto; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: #fff; padding: 20px; }
+    .step-active { color: #f7b731; font-weight: bold; }
+    .extra-badge { background: #f7b731; color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 5px; }
+    .info-label { font-weight: bold; color: #555; margin-left: 5px; }
+  </style>
+</head>
+<body>
+
+<div class="card-custom">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{% url 'jobtest:client-job-detail-page' job_id %}" class="text-muted">&larr;</a>
+    <h2 class="h5 mb-0">تفاصيل الطلب</h2>
+    <div class="d-flex gap-2">
+      <button id="walletBtn" class="btn btn-sm btn-outline-primary">💰 المحفظة</button>
+      <button class="btn btn-link p-0">{% comment %} أيقونة شات {% endcomment %}</button>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="d-flex justify-content-between text-center mb-3">
+    <div class="flex-fill text-secondary">  الطلب</div>
+    <div class="flex-fill text-secondary">تفاوض</div>
+    <div class="flex-fill step-active" id="executionStep">التنفيذ</div>
+    <div class="flex-fill text-secondary" id="paymentStep">الدفع</div>
+  </div>
+
+  <!-- Price Info -->
+  <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded mb-3">
+    <div class="d-flex align-items-center">
+      <span class="fs-5 fw-bold me-2" id="orderAmount">{{ progress.total_cost }}</span>
+      <span class="extra-badge">المبلغ الكلي</span>
+    </div>
+    <div class="text-muted small">
+      {{ progress.start_at|date:"H:i A" }} - {{ customer.get_full_name }}
+    </div>
+  </div>
+
+  <!-- Job Details -->
+  <div class="bg-light p-3 rounded mb-3">
+    <h3 class="h6 fw-bold mb-3">معلومات الطلب</h3>
+
+    <p><span class="info-label">الرقم المرجعي:</span> {{ offer.code|default:progress.id }}</p>
+    <p><strong>نوع الكاتيجورى:</strong> {{ category }}</p>
+    <p><span class="info-label">الموقع:</span> {{ job.location }}</p>
+    <p><span class="info-label">نوع السكن:</span> {{ job.location.property_type }}</p>
+    <p><span class="info-label">الوصف:</span> {{ job.description }}</p>
+
+    <hr>
+<!-- داخل div بطاقة الطلب أو أعلى الأزرار -->
+      <div id="jobStatus" class="mb-3">
+          <span class="badge" id="statusBadge"></span>
+      </div>
+
+    <div class="d-flex align-items-center gap-3 mt-3">
+      <div>
+        <div class="fw-semibold">{{ provider.user.get_full_name }}</div>
+        <div class="text-muted small">{{ provider.speciality|default:"مزود خدمة" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Buttons -->
+  <div id="footerButtons" class="d-flex gap-2 mt-3"></div>
+
+</div>
+
+<!-- Modal لعرض تفاصيل المحفظة -->
+<div class="modal fade" id="walletModal" tabindex="-1" aria-labelledby="walletModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="walletModalLabel">تفاصيل المحفظة</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+      </div>
+      <div class="modal-body">
+        <div id="walletDetails" class="text-center">جاري التحميل...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+
+  const statusBadge = document.getElementById("statusBadge");
+const status = "{{ progress.progress_status }}"; // أو job.progresses[0].progress_status
+statusBadge.textContent = status;
+
+// تغيير لون البادج حسب الحالة
+switch(status) {
+    case "Pending":
+        statusBadge.style.backgroundColor = "#f1c40f";
+        statusBadge.style.color = "#fff";
+        break;
+    case "InProgress":
+        statusBadge.style.backgroundColor = "#3498db";
+        statusBadge.style.color = "#fff";
+        break;
+    case "Completed":
+        statusBadge.style.backgroundColor = "#2ecc71";
+        statusBadge.style.color = "#fff";
+        break;
+    case "Cancelled":
+        statusBadge.style.backgroundColor = "#e74c3c";
+        statusBadge.style.color = "#fff";
+        break;
+    default:
+        statusBadge.style.backgroundColor = "#95a5a6";
+        statusBadge.style.color = "#fff";
+}
+document.addEventListener("DOMContentLoaded", async function () {
+    const footerButtons = document.getElementById("footerButtons");
+    const accessLevel = localStorage.getItem("access_level");
+    const token = localStorage.getItem("access_token");
+    const totalCost = parseFloat(document.getElementById("orderAmount").textContent);
+    const jobId = "{{ job.id }}"; // تأكد أن job.id موجود في السياق
+    const jobStatus = "{{ progress.progress_status }}"; // الحالة الحالية للطلب
+                   
+    function createButton(text, className, onClick) {
+        const btn = document.createElement("button");
+        btn.className = className + " flex-fill";
+        btn.textContent = text;
+        btn.onclick = onClick;
+        return btn;
+    }
+
+    // إذا الحالة Completed → أخفي كل الأزرار وأظهر زر تقييم
+    if(jobStatus === "Completed") {
+        footerButtons.innerHTML = "";
+        if(accessLevel === "Provider") {
+            const rateBtn = createButton("تقييم العميل", "btn btn-warning mt-2", () => {
+                window.location.href = `/test/provider/rateClient/${jobId}/`;
+            });
+            footerButtons.appendChild(rateBtn);
+        } else if(accessLevel === "Client") {
+            const rateBtn = createButton("تقييم المزود", "btn btn-warning mt-2", () => {
+                window.location.href = `/test/client/rateProvider/${jobId}/`;
+            });
+            footerButtons.appendChild(rateBtn);
+        }
+        return;
+    }
+
+    // Provider view
+    if(accessLevel === "Provider") {
+        footerButtons.innerHTML = "";
+        const finishBtn = createButton("انتهاء العمل", "btn btn-success", async () => {
+            if (!confirm("هل أنت متأكد من انتهاء العمل؟")) return;
+            finishBtn.disabled = true;
+            finishBtn.textContent = "جاري إنهاء العمل...";
+            try {
+                const res = await fetch(`/api/v1/provider/jobs/${jobId}/finish/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    }
+                });
+                const data = await res.json();
+
+                if (res.ok && data.status) {
+                    document.getElementById("executionStep").classList.remove("step-active");
+                    document.getElementById("executionStep").classList.add("text-secondary");
+                    const paymentStep = document.getElementById("paymentStep");
+                    paymentStep.classList.add("step-active");
+                    paymentStep.style.color = "#f7b731";
+
+                    finishBtn.style.display = "none";
+                    cancelBtn.style.display = "none";
+
+                    const rateBtn = createButton("تقييم العميل", "btn btn-warning mt-2", () => {
+                        window.location.href = `/test/provider/rateClient/${jobId}/`;
+                    });
+                    footerButtons.appendChild(rateBtn);
+
+                    alert(data.message);
+
+                    // إضافة المبلغ للمحفظة
+                    const walletRes = await fetch("/api/v1/customer/wallet/deposit/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + token
+                        },
+                        body: JSON.stringify({ amount: totalCost })
+                    });
+                    const walletData = await walletRes.json();
+                    if(walletRes.ok && walletData.status){
+                        alert(`تم إضافة ${totalCost} رصيد جديد. الرصيد الحالي: ${walletData.data.actual_balance} ر.س`);
+                    } else {
+                        alert("حدث خطأ أثناء إضافة الرصيد على المحفظة");
+                    }
+
+                } else {
+                    alert(data.message || "حدث خطأ أثناء إنهاء العمل.");
+                    finishBtn.disabled = false;
+                    finishBtn.textContent = "انتهاء العمل";
+                }
+            } catch (err) {
+                console.error(err);
+                alert("حدث خطأ أثناء العملية");
+                finishBtn.disabled = false;
+                finishBtn.textContent = "انتهاء العمل";
+            }
+        });
+
+        const cancelBtn = createButton("إلغاء الطلب", "btn btn-danger", async () => {
+            if(!confirm("هل أنت متأكد من إلغاء الطلب؟")) return;
+            // استدعاء API الإلغاء هنا
+            alert("تم الإلغاء (تطبيق فعلي للـ API)");
+        });
+
+        footerButtons.appendChild(finishBtn);
+        footerButtons.appendChild(cancelBtn);
+    }
+
+    // Client view
+    if(accessLevel === "Client") {
+        footerButtons.innerHTML = "";
+        const cancelBtn = createButton("إلغاء الطلب", "btn btn-danger", async () => {
+            const reason = prompt("ما هو سبب الإلغاء؟");
+            if (!reason) return;
+            if (!confirm("هل أنت متأكد من إلغاء الطلب؟")) return;
+            // استدعاء API الإلغاء هنا
+            alert("تم الإلغاء (تطبيق فعلي للـ API)");
+        });
+        const helpBtn = createButton("طلب مساعدة", "btn btn-primary", () => {
+            window.location.href = `/test/client/help/`;
+        });
+        footerButtons.appendChild(cancelBtn);
+        footerButtons.appendChild(helpBtn);
+    }
+
+    // Wallet button logic (مشترك)
+    document.getElementById("walletBtn").addEventListener("click", async () => {
+        const modal = new bootstrap.Modal(document.getElementById("walletModal"));
+        const walletDetails = document.getElementById("walletDetails");
+        walletDetails.innerHTML = "جاري التحميل...";
+
+        try {
+            const res = await fetch("/api/v1/customer/wallet/balance/", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            const data = await res.json();
+            if (data.status) {
+                const w = data.data;
+                walletDetails.innerHTML = `
+                    <ul class="list-group text-start">
+                      <li class="list-group-item"><strong>💰 الرصيد:</strong> ${w.amount} ${w.currency || 'ر.س'}</li>
+                      <li class="list-group-item"><strong>🔑 الكود:</strong> ${w.code}</li>
+                      <li class="list-group-item"><strong>📅 أنشئت في:</strong> ${new Date(w.create_at).toLocaleString()}</li>
+                      <li class="list-group-item"><strong>♻️ آخر تحديث:</strong> ${new Date(w.update_at).toLocaleString()}</li>
+                    </ul>
+                `;
+            } else {
+                walletDetails.textContent = "لم يتم العثور على محفظة ❌";
+            }
+        } catch (err) {
+            walletDetails.textContent = "خطأ أثناء جلب بيانات المحفظة ❌";
+        }
+
+        modal.show();
+    });
+});
+</script>
+
+
+</body>
+</html>

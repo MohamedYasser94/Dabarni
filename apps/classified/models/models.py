@@ -67,7 +67,7 @@ class JobCategories(MPTTModel):
 
 class Job(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jobs')
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255,blank=True,null=True)
     description = models.TextField()
     quantity = models.IntegerField()
     category = models.ForeignKey(JobCategories, on_delete=models.CASCADE, related_name='jobs')
@@ -260,7 +260,16 @@ class JobOffer(models.Model):
     update_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.request.user.username} - {self.title}"
+        # عرض آمن لاستخدامه في templates / admin
+        job_title = getattr(self.job, 'title', None) or getattr(self.job, 'code', f"Job-{getattr(self, 'job_id', '')}")
+        provider_name = None
+        if getattr(self.provider, 'company', None):
+            provider_name = self.provider.company
+        elif getattr(self.provider, 'user', None):
+            provider_name = (self.provider.user.get_full_name() or getattr(self.provider.user, 'username', None))
+        provider_name = provider_name or "مزود غير معروف"
+        price = f"{self.price}" if self.price is not None else "بدون سعر"
+        return f"{job_title} — {provider_name} — عرض #{self.id} — {price}"
 
     def save(self, *args, **kwargs):
         if not self.code and not self.slug:
@@ -284,7 +293,23 @@ class JobNegotiate(models.Model):
     update_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.request.user.username} - {self.price}"
+        job_title = getattr(self.job, 'title', None) or getattr(self.job, 'code', f"Job-{getattr(self, 'job_id', '')}")
+        provider_name = (self.provider.company
+                         if getattr(self.provider, 'company', None)
+                         else (self.provider.user.get_full_name() if getattr(self.provider, 'user', None) else None))
+        provider_name = provider_name or "مزود"
+        customer_name = None
+        if getattr(self.customer, 'get_full_name', None):
+            customer_name = self.customer.get_full_name() or getattr(self.customer, 'username', None)
+        customer_name = customer_name or "عميل"
+        # نعرض السعرين إن وجدوا
+        prices = []
+        if self.provider_price is not None:
+            prices.append(f"عرض المزود: {self.provider_price}")
+        if self.customer_price is not None:
+            prices.append(f"عرض العميل: {self.customer_price}")
+        price_part = " - ".join(prices) if prices else "بدون أسعار"
+        return f"مفاوضة: {job_title} — {provider_name} ↔ {customer_name} — {price_part}"
 
     def save(self, *args, **kwargs):
         if not self.code and not self.slug:
@@ -331,7 +356,9 @@ class JobProgress(models.Model):
     update_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.request.user.username} - {self.title}"
+        job_title = getattr(self.job, 'title', None) or getattr(self.job, 'code', f"Job-{getattr(self, 'job_id', '')}")
+        status = getattr(self, 'status', None) or getattr(self, 'progress_status', None) or ''
+        return f"تقدّم: {job_title} — #{self.id} {('- ' + status) if status else ''}"
 
     def save(self, *args, **kwargs):
         if not self.code and not self.slug:

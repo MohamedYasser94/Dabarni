@@ -59,135 +59,156 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const pathSegments = window.location.pathname.split('/').filter(Boolean);
-            const jobId = pathSegments[pathSegments.length - 1];
-            const token = localStorage.getItem('access_token');
+document.addEventListener('DOMContentLoaded', () => {
+  const pathSegments = window.location.pathname.split('/').filter(Boolean);
+  const jobId = pathSegments[pathSegments.length - 1];
+  const token = localStorage.getItem('access_token');
 
-            const offersContainer = document.getElementById('offersContainer');
-            const msg = document.getElementById('msg');
-            const refreshBtn = document.getElementById('refreshBtn');
-            const backBtn = document.getElementById('backBtn');
+  const offersContainer = document.getElementById('offersContainer');
+  const msg = document.getElementById('msg');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const backBtn = document.getElementById('backBtn');
 
-            backBtn.addEventListener('click', () => {
-                window.location.href = `/customer/jobs/${jobId}/`;
-            });
+  backBtn.addEventListener('click', () => {
+    window.location.href = `/customer/jobs/${jobId}/`;
+  });
+  refreshBtn.addEventListener('click', () => fetchOffers());
 
-            refreshBtn.addEventListener('click', () => fetchOffers());
+  async function fetchOffers() {
+    offersContainer.innerHTML = '';
+    msg.textContent = 'جاري جلب العروض...';
+    try {
+      const res = await fetch(`/api/v1/customer/jobs/${jobId}/offers/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Accept': 'application/json'
+        }
+      });
 
-            async function fetchOffers() {
-                offersContainer.innerHTML = '';
-                msg.textContent = 'جاري جلب العروض...';
-                try {
-                    const res = await fetch(`/api/v1/customer/jobs/${jobId}/offers/`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': 'Bearer ' + token,
-                            'Accept': 'application/json'
-                        }
-                    });
+      const payload = await res.json();
+      if (!payload.isSuccess) throw new Error(payload.message || 'فشل جلب العروض');
 
-                    const payload = await res.json();
-                    if (!payload.isSuccess) throw new Error(payload.message || 'فشل جلب العروض');
+      const offers = payload.data || [];
+      if (offers.length === 0) {
+        msg.textContent = 'لا توجد عروض حالياً على هذا الطلب.';
+        offersContainer.innerHTML = `<div class="empty">لا توجد عروض لعرضها الآن.</div>`;
+        return;
+      }
 
-                    const offers = payload.data || [];
-                    if (offers.length === 0) {
-                        msg.textContent = 'لا توجد عروض حالياً على هذا الطلب.';
-                        offersContainer.innerHTML = `<div class="empty">لا توجد عروض لعرضها الآن.</div>`;
-                        return;
-                    }
+      msg.textContent = `تم جلب ${offers.length} عرض${offers.length > 1 ? '' : ''}.`;
 
-                    msg.textContent = `تم جلب ${offers.length} عرض${offers.length > 1 ? '' : ''}.`; // Removed the 's' on 'offers'
+      offers.forEach(offer => {
+        console.log('offer', offer); // <<< مهم لتتأكد من شكل البيانات أثناء Debug
+        const card = document.createElement('div');
+        card.className = 'offer-card';
 
-                    offers.forEach(offer => {
-                        const card = document.createElement('div');
-                        card.className = 'offer-card';
+        const avatarUrl = offer.provider?.user?.image || '/static/img/avatar-placeholder.png';
+        const avatarHtml = `<div class="avatar"><img src="${avatarUrl}" alt="avatar" onerror="this.src='/static/img/avatar-placeholder.png'"></div>`;
 
-                        const avatarUrl = offer.provider?.user?.image || '/static/img/avatar-placeholder.png';
-                        const avatarHtml = `<div class="avatar"><img src="${avatarUrl}" alt="avatar" onerror="this.src='/static/img/avatar-placeholder.png'"></div>`;
+        const providerName = offer.providerName || 'مزود غير معروف';
+        const createdAt = offer.create_at ? (new Date(offer.create_at)).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) : 'غير محدد';
+        const price = (offer.price !== undefined && offer.price !== null) ? `${offer.price} ر.س` : 'غير محدد';
 
-                        const providerName = offer.providerName || 'مزود غير معروف';
-                        const createdAt = offer.create_at ? (new Date(offer.create_at)).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) : 'غير محدد';
-                        const price = (offer.price !== undefined && offer.price !== null) ? `${offer.price} ر.س` : 'غير محدد';
-                        const statusClass = offer.status ? offer.status.replace(/\s/g, '') : 'Pending';
+        // Normalize status safely (case-insensitive)
+        const rawStatus = (offer.status || '').toString();
+        const statusNormalized = rawStatus.trim().toLowerCase();
+        const statusClass = rawStatus.replace(/\s/g, '') || 'Pending';
 
-                        card.innerHTML = `
-                            ${avatarHtml}
-                            <div class="offer-body">
-                                <div class="provider-name">${providerName}</div>
-                                <div class="meta-row">
-                                    <div class="offer-meta"><span class="price">${price}</span></div>
-                                    <div class="offer-meta small">تاريخ الإرسال: ${createdAt}</div>
-                                    <div class="offer-meta"><span class="status ${statusClass}">${offer.status || 'قيد الانتظار'}</span></div>
-                                </div>
-                                <div class="actions">
-                                    <button class="btn" onclick="acceptOffer(${offer.id})">قبول العرض</button>
-                                    <button class="btn secondary" onclick="negotiateOffer(${offer.id})">تفاوض</button>
-                                </div>
-                            </div>
-                        `;
-                        offersContainer.appendChild(card);
-                    });
+        // get progress id (support both progressId and progress_id from API)
+        const progressId = offer.progressId ?? offer.progress_id ?? null;
 
-                } catch (err) {
-                    console.error('Error fetching offers:', err);
-                    msg.textContent = 'فشل جلب العروض. تحقق من الاتصال أو تسجيل الدخول.';
-                    offersContainer.innerHTML = `<div class="empty">حدث خطأ أثناء جلب العروض.</div>`;
-                }
-            }
+        // Build actionsHtml depending on status
+        let actionsHtml = '';
+        if (statusNormalized === 'accepted' || statusNormalized === 'accept' || statusNormalized === 'تم القبول') {
+          // show accepted label + link to progress (if we have progress id)
+          const progressUrl = progressId ? `/test/client/progress/${progressId}/` : `/test/client/offers/${offer.id}/progress/`;
+          actionsHtml = `
+            <span class="status Accepted">تم القبول</span>
+            <a href="${progressUrl}" class="btn secondary" style="margin-right:8px">عرض التقدم</a>
+          `;
+        } else if (statusNormalized === 'rejected' || statusNormalized === 'رفض' || statusNormalized === 'rejected') {
+          actionsHtml = `<span class="status Rejected">تم الرفض</span>`;
+        } else {
+          // default: pending / negotiating
+          actionsHtml = `
+            <button class="btn" onclick="acceptOffer(${offer.id})">قبول العرض</button>
+            <button class="btn secondary" onclick="negotiateOffer(${offer.id})">تفاوض</button>
 
-            // Function to handle accepting an offer
-            async function acceptOffer(offerId) {
-                if (confirm('هل أنت متأكد من قبول هذا العرض؟')) {
-                    try {
-                        const res = await fetch(`/api/v1/customer/offers/${offerId}/accept/`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': 'Bearer ' + token,
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                        const payload = await res.json();
-                        alert(payload.message);
-                        if (payload.isSuccess) {
-                            window.location.reload();
-                        }
-                    } catch (err) {
-                        alert('فشل قبول العرض.');
-                        console.error('Error accepting offer:', err);
-                    }
-                }
-            }
-            window.acceptOffer = acceptOffer; // Make it globally accessible
+          `;
+        }
 
-            // Function to handle negotiating an offer
-            async function negotiateOffer(offerId) {
-                const newPrice = prompt('أدخل السعر الجديد للتفاوض:');
-                if (newPrice) {
-                    try {
-                        const res = await fetch(`/api/v1/customer/offers/${offerId}/negotiate/`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': 'Bearer ' + token,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ customer_price: newPrice })
-                        });
-                        const payload = await res.json();
-                        alert(payload.message);
-                        if (payload.isSuccess) {
-                            window.location.reload();
-                        }
-                    } catch (err) {
-                        alert('فشل إرسال عرض التفاوض.');
-                        console.error('Error negotiating offer:', err);
-                    }
-                }
-            }
-            window.negotiateOffer = negotiateOffer; // Make it globally accessible
+        // Use actionsHtml in the DOM (previously you had hard-coded buttons here)
+        card.innerHTML = `
+          ${avatarHtml}
+          <div class="offer-body">
+            <div class="provider-name">${providerName}</div>
+            <div class="meta-row">
+              <div class="offer-meta"><span class="price">${price}</span></div>
+              <div class="offer-meta small">تاريخ الإرسال: ${createdAt}</div>
+              <div class="offer-meta"><span class="status ${statusClass}">${offer.status || 'قيد الانتظار'}</span></div>
+            </div>
+            <div class="actions">
+              ${actionsHtml}
+            </div>
+          </div>
+        `;
+        offersContainer.appendChild(card);
+      });
 
-            fetchOffers();
+    } catch (err) {
+      console.error('Error fetching offers:', err);
+      msg.textContent = 'فشل جلب العروض. تحقق من الاتصال أو تسجيل الدخول.';
+      offersContainer.innerHTML = `<div class="empty">حدث خطأ أثناء جلب العروض.</div>`;
+    }
+  }
+
+
+  async function negotiateOffer(offerId) {
+    const newPrice = prompt('أدخل السعر الجديد للتفاوض:');
+    if (!newPrice) return; // لو المستخدم ضغط إلغاء
+
+    try {
+        const res = await fetch(`/api/v1/customer/offers/${offerId}/negotiate/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ customer_price: newPrice })
         });
-    </script>
+
+        const payload = await res.json();
+
+        if (payload.isSuccess) {
+            alert('تم إرسال عرض التفاوض بنجاح.');
+            // إعادة تحميل الصفحة لتحديث الحالة أو إعادة جلب العروض
+            fetchOffers(); 
+        } else {
+            alert(payload.message || 'فشل إرسال عرض التفاوض.');
+        }
+    } catch (err) {
+        console.error('Error negotiating offer:', err);
+        alert('حدث خطأ أثناء إرسال التفاوض.');
+    }
+}
+window.negotiateOffer = negotiateOffer; // للتأكد أن الزر يقدر يناديها
+
+
+
+  // Functions (same as before)
+  function acceptOffer(offerId) {
+    // redirect to confirm page (not auto-accept)
+    window.location.href = `/test/client/offers/${offerId}/payment-summary/`;
+  }
+  window.acceptOffer = acceptOffer;
+
+
+
+  fetchOffers();
+});
+</script>
+
 </body>
 </html>

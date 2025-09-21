@@ -29,6 +29,7 @@ urlpatterns = [
     path('jobs/negotiate-offer/<int:negotiation_id>/', provider_home.respondToNegotiation, name='provider-negotiate-offer'),
     path('negotiations/<int:negotiation_id>/respond/', provider_home.providerNegotiateResponse, name='provider-negotiate-response'),
     path('jobs/<int:job_id>/accept/', provider_home.AcceptJob, name='providerAcceptJob'),
+     path('jobs/<int:job_id>/finish/', provider_home.FinishJob, name='providerFinishtJob'),
     path("profile/", ProviderProfile, name="ProviderProfile"),
     path("profile/update/", ProviderUpdateProfile, name="ProviderUpdateProfile"),
     path("profile/reviews/", provider_home.ProviderJobReviews, name="ProviderJobReviews"),

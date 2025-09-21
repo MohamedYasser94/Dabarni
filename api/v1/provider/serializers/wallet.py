@@ -1,11 +1,10 @@
 import logging
-
 from rest_framework import serializers
 
 from apps.wallet.models.Payment import PaymentGateway, Payment, BankAccount, Banks
 from apps.wallet.models.billing import Invoice, Billing
 from apps.wallet.models.models import WalletMoney
-from apps.wallet.models.transaction import MoneyTransaction
+from apps.wallet.models.transaction import MoneyTransaction, PayoutRequest
 
 logger = logging.getLogger(__name__)
 
@@ -13,44 +12,61 @@ logger = logging.getLogger(__name__)
 class ProviderInvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
-        fields = '__all__'
+        fields = ["id", "billing", "amount", "status", "created_at", "updated_at"]
 
 
 class ProviderBillingListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
-        fields = '__all__'
+        fields = ["id", "provider", "total_amount", "status", "created_at"]
 
 
 class ProviderWalletMoneySerializer(serializers.ModelSerializer):
     class Meta:
         model = WalletMoney
-        fields = '__all__'
+        fields = ["id", "user", "actual_balance", "created_at", "updated_at"]
 
 
-class PaymentGatewaySerializer(serializers.Serializer):
+class PaymentGatewaySerializer(serializers.ModelSerializer):
     class Meta:
         model = PaymentGateway
-        fields = '__all__'
+        fields = ["id", "name", "logo", "is_active"]
 
 
 class ProviderPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
-        fields = '__all__'
+        fields = ["id", "amount", "currency", "status", "gateway", "created_at"]
 
-class BankSerializer(serializers.Serializer):
+
+class BankSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banks
-        fields = '__all__'
+        fields = ["id", "name", "swift_code", "country"]
 
-class BankAccountSerializer(serializers.Serializer):
+
+class BankAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankAccount
-        fields = '__all__'
+        fields = [
+            "id",
+            "user",
+            "bank_name",
+            "account_number",
+            "iban",
+            "swift_code",
+            "default_account",
+            "created_at",
+        ]
 
 
 class ProviderMoneyTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MoneyTransaction
-        fields = '__all__'
+        fields = ["id", "wallet", "amount", "transaction_type", "status", "created_at"]
+        
+class PayoutRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PayoutRequest
+        fields = ["id", "provider", "amount", "status", "created_at", "processed_at"]
+        read_only_fields = ["id", "provider", "status", "created_at", "processed_at"]

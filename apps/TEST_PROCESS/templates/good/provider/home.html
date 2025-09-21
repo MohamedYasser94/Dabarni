@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>الوظائف المتاحة</title>
+  <title>لوحة مقدم الخدمة</title>
   <style>
     body {
       font-family: "Tahoma", sans-serif;
@@ -11,7 +11,7 @@
       color: #333;
     }
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 40px auto;
       padding: 20px;
     }
@@ -20,6 +20,29 @@
       color: #3498db;
       margin-bottom: 25px;
     }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #ddd;
+      margin-bottom: 20px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #555;
+      transition: 0.3s;
+    }
+    .tab.active {
+      color: #3498db;
+      border-bottom: 3px solid #3498db;
+      background: #ecf6fc;
+    }
+
+    /* Job Cards */
     .job-card {
       background: #fff;
       border-radius: 12px;
@@ -69,6 +92,7 @@
     .btn:hover {
       background: #2980b9;
     }
+
     .msg {
       text-align: center;
       font-weight: bold;
@@ -78,12 +102,55 @@
 </head>
 <body>
   <div class="container">
-    <h2>الوظائف المتاحة لك</h2>
-    <div id="jobsList" class="jobs"></div>
-    <div id="msg" class="msg"></div>
+    <h2>لوحة مقدم الخدمة</h2>
+
+    <!-- Main Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('available')">الوظائف المتاحة</div>
+      <div class="tab" onclick="switchTab('myorders')">طلباتي</div>
+    </div>
+
+    <!-- Available Jobs -->
+    <div id="availableTab" class="tab-content">
+      <div id="jobsList"></div>
+      <div id="msgAvailable" class="msg"></div>
+    </div>
+
+    <!-- My Orders -->
+    <div id="myordersTab" class="tab-content" style="display:none;">
+      <!-- Sub-tabs حسب الحالة -->
+      <div class="tabs sub-tabs">
+        <div class="tab active" onclick="switchOrderStatus('InProgress')">جاري التنفيذ</div>
+        <div class="tab" onclick="switchOrderStatus('Completed')">تم الانتهاء</div>
+        <div class="tab" onclick="switchOrderStatus('Cancelled')">ملغاة</div>
+      </div>
+
+      <div id="inProgressOrders"></div>
+      <div id="completedOrders" style="display:none;"></div>
+      <div id="cancelledOrders" style="display:none;"></div>
+      <div id="msgOrders" class="msg"></div>
+    </div>
   </div>
 
 <script>
+let currentOrderStatus = "InProgress";
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = "none");
+
+  if (tab === "available") {
+    document.querySelector('.tab:nth-child(1)').classList.add('active');
+    document.getElementById("availableTab").style.display = "block";
+    loadAvailableJobs();
+  } else {
+    document.querySelector('.tab:nth-child(2)').classList.add('active');
+    document.getElementById("myordersTab").style.display = "block";
+    // عند فتح التاب نحمّل كل الطلبات مرة واحدة
+    loadAllOrders();
+  }
+}
+
 async function loadAvailableJobs() {
   try {
     const res = await fetch("/api/v1/provider/jobs/available/", {
@@ -91,37 +158,124 @@ async function loadAvailableJobs() {
     });
 
     const result = await res.json();
-    if (!res.ok) throw new Error(result.message || "فشل تحميل الوظائف");
-
     const jobsList = document.getElementById("jobsList");
-    jobsList.innerHTML = "";
+    const msg = document.getElementById("msgAvailable");
+    jobsList.innerHTML = ""; 
+    msg.textContent = "";
 
-    if (result.data.length === 0) {
-      document.getElementById("msg").textContent = "لا توجد وظائف متاحة حالياً ❌";
+    if (!res.ok || !result.data || result.data.length === 0) {
+      msg.textContent = "لا توجد وظائف متاحة حالياً ❌";
       return;
     }
 
-    result.data.forEach(job => {
+    result.data.filter(job => {
+    // الحالة تعتمد على آخر progress لو موجود، أو Default "Pending"
+    const lastProgress = job.progresses.length ? job.progresses[job.progresses.length - 1] : null;
+    const status = lastProgress ? lastProgress.progress_status : "Pending";
+    return status === "Pending";  // عرض الوظائف فقط اللي Pending
+  }).forEach(job => {
       const card = document.createElement("div");
       card.className = "job-card";
 
+      // الحالة الحالية تعتمد على آخر progress لو موجود
+      const lastProgress = job.progresses.length ? job.progresses[job.progresses.length - 1] : null;
+      const status = lastProgress ? lastProgress.progress_status : "Pending";
+
+      // الموقع
+      const location = job.location ? `${job.location.city || ''} - ${job.location.street || ''}` : "غير محدد";
+
       card.innerHTML = `
-        <div class="job-title">${job.title}</div>
+        <div class="job-title">${job.category.title}</div>
         <div class="job-info"><b>الوصف:</b> ${job.description || "لا يوجد"}</div>
-        <div class="job-info"><b>السعر:</b> ${job.price} ج.م</div>
-        <div class="job-info"><b>المسافة:</b> ${job.distance ? job.distance.toFixed(2) + " كم" : "غير محدد"}</div>
-        <div class="job-info"><b>الحالة:</b> <span class="status ${job.status}">${job.status}</span></div>
+        <div class="job-info"><b>السعر:</b> ${job.price} ر.س</div>
+        <div class="job-info"><b>الفئة:</b> ${job.category ? job.category.title : "غير محدد"}</div>
+        <div class="job-info"><b>المكان:</b> ${job.location.address}</div>
+        <div class="job-info"><b>الحالة:</b> <span class="status ${status}">${status}</span></div>
         <a href="/test/provider/jobs/${job.id}/" class="btn">عرض التفاصيل</a>
       `;
       jobsList.appendChild(card);
     });
+
   } catch (err) {
-    document.getElementById("msg").textContent = "فشل تحميل الوظائف ❌";
+    msg.textContent = "فشل تحميل الوظائف ❌";
     console.error(err);
   }
 }
 
+
+// --- Sub-tabs للطلبات ---
+function switchOrderStatus(status) {
+  currentOrderStatus = status;
+
+  // تحديث الستايل للتابات الفرعية
+  document.querySelectorAll('#myordersTab .sub-tabs .tab').forEach(t => t.classList.remove('active'));
+  const tabs = document.querySelectorAll('#myordersTab .sub-tabs .tab');
+  if (status === "InProgress") tabs[0].classList.add('active');
+  else if (status === "Completed") tabs[1].classList.add('active');
+  else if (status === "Cancelled") tabs[2].classList.add('active');
+
+  // اخفاء كل القوائم
+  document.getElementById("inProgressOrders").style.display = "none";
+  document.getElementById("completedOrders").style.display = "none";
+  document.getElementById("cancelledOrders").style.display = "none";
+
+  // اظهار القائمة المطلوبة
+  if (status === "InProgress") document.getElementById("inProgressOrders").style.display = "block";
+  else if (status === "Completed") document.getElementById("completedOrders").style.display = "block";
+  else if (status === "Cancelled") document.getElementById("cancelledOrders").style.display = "block";
+}
+
+// --- تحميل الطلبات لكل حالة ---
+async function loadOrdersByStatus(status, containerId) {
+  try {
+    const res = await fetch(`/api/v1/provider/orders/${status}/`, {
+      headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") }
+    });
+    const result = await res.json();
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+
+    if (!res.ok || !result.data) {
+      container.innerHTML = `<p>لا توجد طلبات حالياً ❌</p>`;
+      return;
+    }
+
+    const { jobProgress, jobOffer } = result.data;
+    const orders = [...jobProgress, ...jobOffer];
+
+    if (orders.length === 0) {
+      container.innerHTML = `<p>لا توجد طلبات حالياً ❌</p>`;
+      return;
+    }
+
+    orders.forEach(order => {
+      const card = document.createElement("div");
+      card.className = "job-card";
+      card.innerHTML = `
+        <div class="job-title">طلب رقم #${order.id}</div>
+        <div class="job-info"><b>الوصف:</b> ${order.job?.description || "لا يوجد"}</div>
+        <div class="job-info"><b>السعر:</b> ${order.total_cost || order.price || "غير محدد"} ج.م</div>
+        <div class="job-info"><b>الحالة:</b> <span class="status ${order.progress_status || order.progress_status}">${order.progress_status || order.progress_status}</span></div>
+        <a href="/test/client/progress/${order.id}/" class="btn">عرض التنفيذ</a>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    document.getElementById(containerId).innerHTML = `<p>فشل تحميل الطلبات ❌</p>`;
+    console.error(err);
+  }
+}
+
+// --- تحميل كل الحالات مرة واحدة ---
+function loadAllOrders() {
+  loadOrdersByStatus("InProgress", "inProgressOrders");
+  loadOrdersByStatus("Completed", "completedOrders");
+  loadOrdersByStatus("Cancelled", "cancelledOrders");
+}
+
+// تحميل الوظائف المتاحة افتراضي
 loadAvailableJobs();
 </script>
+
 </body>
 </html>

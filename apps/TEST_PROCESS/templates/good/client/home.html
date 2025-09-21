@@ -4,93 +4,292 @@
   <meta charset="UTF-8">
   <title>إنشاء طلب جديد</title>
   <style>
+    /* 🎨 ألوان عامة */
+    :root {
+      --primary: #6c5ce7;
+      --primary-dark: #341f97;
+      --accent: #00cec9;
+      --bg: #f0f2f5;
+      --text: #2d3436;
+      --card-bg: #ffffff;
+      --border: #e0e0e0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e2f;
+        --text: #f5f6fa;
+        --card-bg: #2c2c54;
+        --border: #3d3d3d;
+      }
+    }
+
     body {
-      font-family: "Tahoma", sans-serif;
-      background: #f9f9f9;
-      margin: 0; padding: 0;
+      margin: 0;
+      font-family: "Cairo", sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
+
     .container {
-      width: 90%; max-width: 700px;
-      margin: 30px auto;
-      background: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 850px;
+      margin: 40px auto;
+      background: var(--card-bg);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      position: relative;
+      overflow: hidden;
     }
+
+    /* 🌈 خلفية زخرفية */
+    .container::before {
+      content: "";
+      position: absolute;
+      top: -50px; left: -50px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle at center, var(--primary), transparent);
+      opacity: 0.25;
+      border-radius: 50%;
+      z-index: 0;
+    }
+
+    .container::after {
+      content: "";
+      position: absolute;
+      bottom: -50px; right: -50px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle at center, var(--accent), transparent);
+      opacity: 0.25;
+      border-radius: 50%;
+      z-index: 0;
+    }
+
     h2 {
-      margin-bottom: 20px;
       text-align: center;
-      color: #333;
+      font-size: 26px;
+      margin-bottom: 35px;
+      color: var(--primary);
+      position: relative;
+      z-index: 1;
     }
+
+    h2 i {
+      margin-left: 8px;
+      color: var(--accent);
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+      position: relative;
+      z-index: 1;
+    }
+
     label {
-      font-weight: bold;
+      font-weight: 600;
       display: block;
-      margin: 10px 0 5px;
-      color: #444;
+      margin-bottom: 8px;
+      font-size: 15px;
+      color: var(--primary-dark);
     }
+
     input, select, textarea {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      font-size: 14px;
+      padding: 14px 16px 14px 45px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 15px;
+      background: rgba(255,255,255,0.9);
+      color: var(--text);
+      transition: all 0.3s ease;
     }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,206,201,0.25);
+      outline: none;
+    }
+
     input[type="file"] {
-      border: none;
+      padding-left: 16px;
     }
+
+    .form-group i {
+      position: absolute;
+      left: 14px;
+      top: 42px;
+      color: var(--accent);
+      font-size: 17px;
+      pointer-events: none;
+    }
+
+    .btn-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      text-decoration: none;
+      font-weight: bold;
+      color: var(--primary-dark);
+      background: rgba(108, 92, 231, 0.1);
+      padding: 10px 18px;
+      border-radius: 12px;
+      transition: 0.3s;
+    }
+
+    .btn-link:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+
     button {
       width: 100%;
-      background: #3498db;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
       border: none;
       color: white;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 8px;
+      padding: 15px;
+      font-size: 17px;
+      border-radius: 14px;
       cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
     }
+
     button:hover {
-      background: #2980b9;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.15);
     }
+
     .msg {
-      margin-top: 15px;
+      margin-top: 18px;
       text-align: center;
       font-weight: bold;
+      font-size: 15px;
+    }
+
+    /* 📱 Responsive */
+    @media (max-width: 650px) {
+      .container {
+        padding: 25px;
+      }
+      h2 { font-size: 22px; }
+      button { font-size: 15px; padding: 12px; }
     }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 <div class="container">
-  <h2>إنشاء طلب جديد</h2>
+  <a href="/test/client/my-jobs/" class="btn-link">
+    <i class="fa-solid fa-list"></i> الذهاب إلى قائمة الطلبات
+  </a>
+
+  <h2><i class="fa-solid fa-plus-circle"></i> إنشاء طلب جديد</h2>
+
   <form id="jobForm">
-    <label>عنوان الطلب</label>
-    <input type="text" id="title" required>
+    {% comment %} <div class="form-group">
+      <label>عنوان الطلب</label>
+      <input type="text" id="title" placeholder="مثال: تصميم شعار" required>
+      <i class="fa-solid fa-heading"></i>
+    </div> {% endcomment %}
+        <div class="form-group">
+      <label>التصنيف</label>
+      <select id="category" required></select>
+      <i class="fa-solid fa-list"></i>
+    </div>
 
-    <label>وصف الطلب</label>
-    <textarea id="description" rows="4"></textarea>
+    <div class="form-group">
+      <label>وصف الطلب</label>
+      <textarea id="description" rows="4" placeholder="اكتب تفاصيل الطلب هنا..."></textarea>
+      <i class="fa-solid fa-align-right"></i>
+    </div>
 
-    <label>الكمية</label>
-    <input type="number" id="quantity" required>
+    <div class="form-group">
+      <label>الكمية</label>
+      <input type="number" id="quantity" placeholder="أدخل الكمية" required>
+      <i class="fa-solid fa-sort-numeric-up"></i>
+    </div>
 
-    <label>السعر</label>
-    <input type="number" id="price" required>
+    <div class="form-group">
+      <label>السعر</label>
+      <input type="number" id="price" placeholder="أدخل السعر" required>
+      <i class="fa-solid fa-dollar-sign"></i>
+    </div>
 
-    <label>التصنيف</label>
-    <select id="category" required></select>
 
-    <label>الموقع</label>
-    <select id="location" required></select>
 
-    <label>صور الطلب</label>
-    <input type="file" id="images" multiple accept="image/*">
+    <div class="form-group">
+      <label>الموقع</label>
+      <select id="location" required></select>
+      <i class="fa-solid fa-map-marker-alt"></i>
+    </div>
 
-    <label>فيديو (اختياري)</label>
-    <input type="file" id="video" accept="video/*">
 
-    <label>موعد التنفيذ (اختياري)</label>
-    <input type="datetime-local" id="scheduled_at">
+    <div id="manualAddressContainer" style="display:none; margin-top:20px; border:1px solid var(--border); padding:15px; border-radius:12px;">
+  <h3 style="font-size:18px; margin-bottom:15px; color:var(--primary-dark);">إضافة عنوان جديد</h3>
 
-    <button type="submit">نشر الطلب</button>
+  <div class="form-group">
+    <label>الوصف / الاسم</label>
+    <input type="text" id="addr_label" placeholder="مثال: الرياض شارع المرجان">
+  </div>
+
+  <div class="form-group">
+    <label>العنوان التفصيلي</label>
+    <input type="text" id="addr_address" placeholder="مثال: الرياض - شارع المرجان - الدور الثالث">
+  </div>
+
+  <div class="form-group">
+    <label>اسم المبنى</label>
+    <input type="text" id="addr_building_name" placeholder="مثال: برج المرجان">
+  </div>
+
+  <div class="form-group">
+    <label>الطابق</label>
+    <input type="text" id="addr_floor" placeholder="مثال: 3">
+  </div>
+
+  <div class="form-group">
+    <label>رقم الشقة</label>
+    <input type="text" id="addr_apartment" placeholder="مثال: 12">
+  </div>
+
+  <div class="form-group">
+    <label>النوع</label>
+    <select id="addr_property_type">
+      <option value="apartment">شقة</option>
+      <option value="villa">فيلا</option>
+      <option value="office">مكتب</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>ملاحظات</label>
+    <textarea id="addr_note" placeholder="أي ملاحظات إضافية..."></textarea>
+  </div>
+
+  <button type="button" onclick="saveManualAddress()">إضافة العنوان</button>
+</div>
+
+
+    <div class="form-group">
+      <label>صور الطلب</label>
+      <input type="file" id="images" multiple accept="image/*">
+      <i class="fa-solid fa-image"></i>
+    </div>
+
+    <div class="form-group">
+      <label>فيديو (اختياري)</label>
+      <input type="file" id="video" accept="video/*">
+      <i class="fa-solid fa-video"></i>
+    </div>
+
+    <div class="form-group">
+      <label>موعد التنفيذ (اختياري)</label>
+      <input type="datetime-local" id="scheduled_at">
+      <i class="fa-solid fa-calendar"></i>
+    </div>
+
+    <button type="submit"><i class="fa-solid fa-paper-plane"></i> نشر الطلب</button>
     <div class="msg" id="msg"></div>
   </form>
 </div>
@@ -100,113 +299,125 @@
   const locationSelect = document.getElementById("location");
   const msg = document.getElementById("msg");
 
-  // ✅ تحميل الكاتيجوريز من API
   async function loadCategories() {
     try {
       const res = await fetch("/api/v1/customer/categories/", {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("access_token")}`
-        }
+        headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}` }
       });
-
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || "خطأ في جلب التصنيفات");
-
       categorySelect.innerHTML = "<option value=''>اختر التصنيف</option>";
       result.data.forEach(cat => {
         categorySelect.innerHTML += `<option value="${cat.slug}">${cat.title}</option>`;
       });
-    } catch (err) {
-      console.error(err);
+    } catch {
       categorySelect.innerHTML = "<option value=''>فشل تحميل التصنيفات</option>";
     }
   }
 
-  // ✅ تحميل العناوين من API
-  async function loadLocations() {
-    try {
-      const res = await fetch("/api/v1/customer/customer/address/list/", {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("access_token")}`
-        }
-      });
+async function loadLocations() {
+  try {
+    const res = await fetch("/api/v1/customer/customer/address/list/", {
+      headers: { "Authorization": `Bearer ${localStorage.getItem("access_token")}` }
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || "خطأ في جلب العناوين");
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "خطأ في جلب العناوين");
+    locationSelect.innerHTML = "<option value=''>اختر الموقع</option>";
 
-      locationSelect.innerHTML = "<option value=''>اختر الموقع</option>";
+    if (result.data.length === 0) {
+      // لو مفيش عناوين → اعرض الفورم اليدوي
+      document.getElementById("manualAddressContainer").style.display = "block";
+    } else {
+      // فيه عناوين → حمّلها عادي
       result.data.forEach(loc => {
-        console.log("Location:", loc.slug, loc.address);
         locationSelect.innerHTML += `<option value="${loc.slug}">${loc.address}</option>`;
       });
-    } catch (err) {
-      console.error(err);
-      locationSelect.innerHTML = "<option value=''>فشل تحميل العناوين</option>";
     }
+  } catch {
+    locationSelect.innerHTML = "<option value=''>فشل تحميل العناوين</option>";
   }
+}
+async function saveManualAddress() {
+  const body = {
+    label: document.getElementById("addr_label").value,
+    latitude: "",
+    longitude: "",
+    address: document.getElementById("addr_address").value,
+    building_name: document.getElementById("addr_building_name").value,
+    floor: document.getElementById("addr_floor").value,
+    apartment_number: document.getElementById("addr_apartment").value,
+    property_type: document.getElementById("addr_property_type").value,
+    note: document.getElementById("addr_note").value
+  };
 
-  // ✅ عند إرسال الفورم
+  try {
+    const res = await fetch("/api/v1/customer/customer/address/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("access_token")
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "فشل حفظ العنوان");
+      return;
+    }
+
+    // ✅ بعد الحفظ اعمل Reload للصفحة
+    window.location.reload();
+
+  } catch {
+    alert("⚠️ خطأ في الشبكة أثناء حفظ العنوان");
+  }
+}
+
+
+
   document.getElementById("jobForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-
     const formData = new FormData();
-    formData.append("title", document.getElementById("title").value);
+   // formData.append("title", document.getElementById("title").value);
     formData.append("description", document.getElementById("description").value);
     formData.append("quantity", document.getElementById("quantity").value);
     formData.append("price", document.getElementById("price").value);
     formData.append("category", categorySelect.value);
     formData.append("location", locationSelect.value);
-
     const scheduledAt = document.getElementById("scheduled_at").value;
     if (scheduledAt) formData.append("scheduled_at", scheduledAt);
-
-    // ✅ الصور
     const images = document.getElementById("images").files;
     for (let i = 0; i < images.length; i++) {
       formData.append("images", images[i]);
     }
-
-    // ✅ الفيديو
     const video = document.getElementById("video").files[0];
-    if (video) {
-      formData.append("video", video);
-    }
+    if (video) formData.append("video", video);
 
     try {
       const res = await fetch("/api/v1/customer/jobs/create/", {
         method: "POST",
-        headers: {
-          "Authorization": "Bearer " + localStorage.getItem("access_token")
-          // ❌ ماتضيفش Content-Type هنا
-        },
+        headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") },
         body: formData
       });
-
       const data = await res.json();
       if (!res.ok) {
         msg.textContent = data.message || "حدث خطأ أثناء إنشاء الطلب";
         msg.style.color = "red";
-        console.error(data);
         return;
       }
-
-      msg.textContent = "تم نشر الطلب بنجاح ✅";
+      msg.textContent = "✅ تم نشر الطلب بنجاح";
       msg.style.color = "green";
-      console.log("Job Created:", data);
-      setTimeout(() => {
-        window.location.href = "/test/client/my-jobs/";
-      }, 2000);
-
-    } catch (err) {
-      msg.textContent = "خطأ في الشبكة، حاول مرة أخرى";
+      setTimeout(() => window.location.href = "/test/client/my-jobs/", 2000);
+    } catch {
+      msg.textContent = "⚠️ خطأ في الشبكة، حاول مرة أخرى";
       msg.style.color = "red";
-      console.error("Network error:", err);
     }
   });
 
   loadCategories();
   loadLocations();
 </script>
-
 </body>
 </html>

@@ -2,18 +2,17 @@ from rest_framework import serializers
 from apps.classified.models.models import Job, JobMedia
 
 class JobMediaSerializer(serializers.ModelSerializer):
-    """
-    Serializer for a Job's media to be displayed in the response.
-    """
-    # Use this SerializerMethodField to return the correct URL for the image
-    image_url = serializers.SerializerMethodField(read_only=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = JobMedia
-        fields = ['id', 'image_url', 'video', 'video_cover', 'file', 'type']
+        fields = ["id", "image", "video", "image_url"]
 
     def get_image_url(self, obj):
-        request = self.context.get('request')
-        if obj.image:
+        request = self.context.get("request", None)
+        if obj.image and request:
             return request.build_absolute_uri(obj.image.url)
+        elif obj.image:
+            return obj.image.url
         return None
+
