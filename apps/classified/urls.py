@@ -13,12 +13,14 @@ urlpatterns = [
     path('category/delete/<slug:slug>/', views.AdminJobCategoryDelete, name='AdminJobCategoryDelete'),
 
     #----------------------------------------------------------
-    path('jobs/all/', job_management_views.AdminJobList, name='AdminJobList'),
+    path("jobs/all/", job_management_views.AdminJobList, name="AdminJobList"),
     path('jobs/active/', job_management_views.AdminActiveJobs, name='AdminActiveJobs'),
     path('jobs/completed/', job_management_views.AdminCompletedJobs, name='AdminCompletedJobs'),
     path('jobs/canceled/', job_management_views.AdminCanceledJobs, name='AdminCanceledJobs'),
+    path("jobs/<int:job_id>/", job_management_views.AdminJobDetails, name="AdminJobDetails"),
     path('offers/', job_management_views.AdminManageOffers, name='AdminManageOffers'),
     path('negotiations/', job_management_views.AdminManageNegotiations, name='AdminManageNegotiations'),
+
 
 
 ]

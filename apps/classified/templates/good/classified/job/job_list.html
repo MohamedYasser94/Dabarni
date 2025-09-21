@@ -51,7 +51,7 @@
                                         </td>
                                         <td>{{ job.offers.count|default:"0" }}</td>
                                         <td class="text-end">
-                                            <a href="#" class="btn btn-sm btn-light-primary">{% translate 'View Details' %}</a>
+                                           <a href="{% url 'classified:AdminJobDetails' job_id=job.id %}" class="btn btn-sm btn-light-primary">{% translate 'View Details' %}</a>
                                         </td>
                                     </tr>
                                 {% empty %}

@@ -1,0 +1,98 @@
+<!-- templates/reviews/rate_provider.html -->
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقييم المزود</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: right;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        h2 { color: #1a2a4b; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input[type="text"], textarea, select {
+            width: 100%; padding: 10px; margin-top: 5px;
+            border: 1px solid #ccc; border-radius: 6px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px 20px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        button:hover { background-color: #218838; }
+        .alert-success {
+            margin-top: 20px;
+            padding: 12px;
+            background-color: #2ecc71;
+            color: #fff;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>تقييم المزود</h2>
+        <form id="rate-provider-form">
+            <label for="rating">التقييم (1-5 نجوم)</label>
+            <select name="rating" id="rating" required>
+                <option value="">اختر التقييم</option>
+                <option value="1">1 ⭐</option>
+                <option value="2">2 ⭐⭐</option>
+                <option value="3">3 ⭐⭐⭐</option>
+                <option value="4">4 ⭐⭐⭐⭐</option>
+                <option value="5">5 ⭐⭐⭐⭐⭐</option>
+            </select>
+
+            <label for="comment">ملاحظات</label>
+            <textarea name="comment" id="comment" rows="4" placeholder="اكتب تعليقك هنا"></textarea>
+
+            <button type="submit">إرسال التقييم</button>
+        </form>
+
+        <div class="alert-success" id="success-msg">تم إرسال تقييمك بنجاح ✅</div>
+    </div>
+
+<script>
+document.getElementById('rate-provider-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // منع إعادة تحميل الصفحة
+
+    const rating = document.getElementById('rating').value;
+    if (!rating) {
+        alert("من فضلك اختر التقييم.");
+        return;
+    }
+
+    // إظهار رسالة النجاح
+    const successMsg = document.getElementById('success-msg');
+    successMsg.style.display = 'block';
+
+    // إعادة تعيين الفورم
+    this.reset();
+    setTimeout(() => {
+        window.location.href = "/test/client/home/";  // ضع هنا رابط الصفحة الرئيسية
+    }, 2000);
+});
+</script>
+</body>
+</html>

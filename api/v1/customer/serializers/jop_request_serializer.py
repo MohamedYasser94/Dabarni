@@ -77,7 +77,12 @@ class JobCreateSerializer(serializers.ModelSerializer):
         
         customer_user = self.context.get('request').user
 
+        if not validated_data.get('title'):
+            validated_data['title'] = "No Title"
+
         job = Job.objects.create(customer=customer_user, **validated_data)
+
+        
         
         # Create a JobProgress instance with the initial budget and start_at date
         JobProgress.objects.create(
@@ -97,19 +102,37 @@ class JobCreateSerializer(serializers.ModelSerializer):
         return job
 class ProviderOfferSerializer(serializers.ModelSerializer):
     """
-    Serializer to display all details of a job offer, including provider's info.
+    Serializer to display all details of a job offer, including provider's info + progressId.
     """
-    # Use 'source' to correctly retrieve fields from related models
     providerId = serializers.IntegerField(source='provider.id', read_only=True)
     providerName = serializers.CharField(source='provider.user.get_full_name', read_only=True)
     providerPhone = serializers.CharField(source='provider.user.phone', read_only=True)
     provider_accepted = serializers.BooleanField(read_only=True)
     customer_accepted = serializers.BooleanField(read_only=True)
+    progressId = serializers.SerializerMethodField()  
 
     class Meta:
         model = JobOffer
-        # Corrected line: Include all declared fields in the 'fields' list
-        fields = ['id', 'providerId', 'providerName', 'providerPhone', 'price', 'status', 'create_at', 'provider_accepted', 'customer_accepted' ]
+        fields = [
+            'id',
+            'providerId',
+            'providerName',
+            'providerPhone',
+            'price',
+            'status',
+            'create_at',
+            'provider_accepted',
+            'customer_accepted',
+            'progressId',  
+        ]
+
+    def get_progressId(self, obj):
+        if hasattr(obj, 'progresses') and obj.progresses.exists():
+            return obj.progresses.first().id
+        return None
+
+
+
 
 class JobNegotiateSerializer(serializers.ModelSerializer):
     """
@@ -165,6 +188,7 @@ class JobMediaSerializer(serializers.ModelSerializer):
 class JobDetailSerializer(serializers.ModelSerializer):
     category = JobCategorySerializer(read_only=True)
     location = UserAddressSerializer(read_only=True)
+    title = serializers.CharField(allow_blank=True, default="بدون عنوان")
     # The updated serializer is used here
     media = JobMediaSerializer(many=True, read_only=True)
     progresses = JobProgressSerializer(many=True, read_only=True)

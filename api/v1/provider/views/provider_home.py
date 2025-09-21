@@ -11,14 +11,14 @@ from api.v1.provider.serializers.review_serializer import ProviderProfileWithRev
 from api.v1.provider.serializers.classified import *
 from apps.classified.models.models import *
 from rest_framework.decorators import api_view, permission_classes
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema ,OpenApiResponse
 from django.db.models import Count, Q
 from apps.classified.models.models import Job
 from api.v1.response import success_response, error_response
 from api.v1.customer.serializers.profile_serializer import UserProfileSerializer
 from django.db.models.expressions import RawSQL
 from django.db import transaction
-
+from django.utils import timezone
 @extend_schema(
     tags=["Provider Profile"],
     responses={200: ProviderProfileDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
@@ -226,6 +226,7 @@ def RetrieveAvailableJobs(request):
             progresses__progress_status='Pending'
         ).select_related('location')
 
+        print(jobsQueryset)
         # 3. Calculate distance for each job and filter in Python
         availableJobs = []
         for job in jobsQueryset:
@@ -248,7 +249,8 @@ def RetrieveAvailableJobs(request):
 
         # Sort the list of jobs by distance
         availableJobs.sort(key=lambda x: x.distance)
-
+       # print(availableJobs)
+        
         # 4. Serialize the filtered jobs
         serializer = JobDetailSerializer(availableJobs, many=True, context={'request': request})
         
@@ -295,54 +297,142 @@ def GetJobDetails(request, job_id):
             errors={'detail': str(e)}
         )
 
-@extend_schema(
-    tags=["Provider Jobs"],
-    responses={200: JobDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
-)
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def AcceptJob(request, job_id):
     """
-    API endpoint for a provider to immediately accept a job at the client's price.
+    Provider accepts the job at client's price:
+    - creates a JobOffer (or marks existing offer accepted)
+    - sets provider_accepted=True and accepted_at
+    - creates a JobProgress row (InProgress / Accepted)
     """
     try:
         provider = get_object_or_404(JobProvider, user=request.user)
         job = get_object_or_404(Job, pk=job_id)
-        
-        # Check if an offer already exists from this provider for this job
-        existingOffer = JobOffer.objects.filter(job=job, provider=provider).first()
 
-        if existingOffer:
-            return error_response(
-                message="لقد قمت بتقديم عرض على هذا الطلب بالفعل. يمكنك تعديل عرضك.",
-                status_code=status.HTTP_400_BAD_REQUEST,
+        # If provider already has an offer -> mark it accepted
+        existing_offer = JobOffer.objects.filter(job=job, provider=provider).first()
+
+        if existing_offer and existing_offer.provider_accepted:
+            return Response({"isSuccess": False, "message": "لقد قمت بقبول هذا الطلب سابقًا."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if existing_offer:
+            existing_offer.provider_accepted = True
+            existing_offer.accepted_at = timezone.now()
+            existing_offer.status = 'InProgress'  # أو قيمة مناسبة
+            existing_offer.save()
+            offer = existing_offer
+        else:
+            offer = JobOffer.objects.create(
+                job=job,
+                provider=provider,
+                price=job.price,
+                status='InProgress',
             )
-            
-        # Create a new offer with the job's original price
-        offer = JobOffer.objects.create(
-            job=job,
-            provider=provider,
-            price=job.price,
-            provider_accepted=True,
-            status='InProgress',
-        )
 
-        return success_response(
-            message="تم قبول الطلب بنجاح. سيتم إخطار العميل.",
-            data=JobOfferSerializer(offer).data,
-            status_code=status.HTTP_201_CREATED
-        )
+        # create JobProgress (reflect acceptance)
+        job_progress, created = JobProgress.objects.get_or_create(
+        job=job,
+        provider=provider,
+        defaults={
+            'offer': offer,
+            'customer': job.customer,
+            'progress_status': 'InProgress',
+            'status': 'InProgress',
+            'total_cost': offer.price,
+            'start_at': timezone.now()
+        }
+    )
+
+        if not created:
+            job_progress.offer = offer
+            job_progress.progress_status = 'InProgress'
+            job_progress.status = 'InProgress'
+            job_progress.total_cost = offer.price
+            job_progress.start_at = timezone.now()
+            job_progress.save()
+
+
+
+        data = JobOfferSerializer(offer, context={'request': request}).data
+
+        # Optional: create notification for customer (see note below)
+        # notify_customer_job_accepted(job.customer, job, offer)
+
+        return Response({"isSuccess": True, "message": "تم قبول الطلب بنجاح", "data": data},
+                        status=status.HTTP_201_CREATED)
     except JobProvider.DoesNotExist:
-        return error_response(
-            message="ملف مقدم الخدمة غير موجود. يرجى إكمال ملفك الشخصي.",
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
+        return Response({"isSuccess": False, "message": "ملف مقدم الخدمة غير موجود."},
+                        status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return error_response(
-            message="حدث خطأ أثناء قبول الطلب.",
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            errors={'detail': str(e)}
+        import traceback
+        traceback.print_exc()
+        return Response({"isSuccess": False, "message": "حدث خطأ.", "errors": str(e)},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+@extend_schema(
+    description="Provider finishes a job and marks its progress as Completed.",
+    responses={
+        200: OpenApiResponse(
+            response={
+                "status": True,
+                "message": "تم إنهاء العمل بنجاح.",
+                "progress_status": "Completed",
+                "completed_at": "2025-09-21T15:30:00Z"
+            }
+        ),
+        400: OpenApiResponse(
+            response={"status": False, "message": "تم إنهاء العمل سابقًا."}
+        ),
+        404: OpenApiResponse(
+            response={"status": False, "message": "لا يوجد تقدم مرتبط بهذا الطلب."}
+        ),
+        500: OpenApiResponse(
+            response={"status": False, "message": "حدث خطأ أثناء إنهاء العمل.", "errors": "..."}
         )
+    },
+    tags=["Job Progress"]
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def FinishJob(request, job_id):
+    """
+    Provider finishes the job:
+    - Marks JobProgress as Completed
+    """
+    try:
+        provider = get_object_or_404(JobProvider, user=request.user)
+        job = get_object_or_404(Job, pk=job_id)
+
+        progress = JobProgress.objects.filter(job=job, provider=provider).first()
+        if not progress:
+            return Response({"status": False, "message": "لا يوجد تقدم مرتبط بهذا الطلب."}, status=status.HTTP_404_NOT_FOUND)
+
+        if progress.progress_status == "Completed":
+            return Response({"status": False, "message": "تم إنهاء العمل سابقًا."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            progress.progress_status = "Completed"
+            progress.completed_at = timezone.now()
+            progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تم إنهاء العمل بنجاح.",
+            "progress_status": progress.progress_status,
+            "completed_at": progress.completed_at
+        }, status=status.HTTP_200_OK)
+
+    except JobProvider.DoesNotExist:
+        return Response({"status": False, "message": "ملف مقدم الخدمة غير موجود."}, status=status.HTTP_404_NOT_FOUND)
+    except Job.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response({"status": False, "message": "حدث خطأ أثناء إنهاء العمل.", "errors": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 @extend_schema(
     tags=["Provider Jobs"],
@@ -370,32 +460,11 @@ def SendNewOffer(request):
                 existingOffer = JobOffer.objects.filter(job=job, provider=provider).first()
 
                 if existingOffer:
-                    # Update the existing offer
-                    existingOffer.price = price
-                    existingOffer.status = 'Negotiating'
-                    existingOffer.save()
-                    offer = existingOffer
-                    message = "تم تحديث عرضك بنجاح."
-                    status_code = status.HTTP_200_OK
-
-                    # Also update the negotiation record
-                    negotiation, created = JobNegotiate.objects.update_or_create(
-    job=job,
-    offer=offer, 
-    defaults={
-        'provider': provider,
-        'customer': job.customer,
-        'provider_price': price,
-        'provider_accepted': True
-    }
-)
-
-
-
-                    job_progress = JobProgress.objects.filter(job=job).first()
-                    if job_progress:
-                        job_progress.provider_price = price
-                        job_progress.save()
+                    return error_response(
+                        message="لقد قمت بالفعل بتقديم عرض على هذا الطلب. غير مسموح بتقديم أكثر من عرض واحد.",
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        errors={'detail': 'Duplicate offer not allowed.'}
+                    )
 
                 else:
                     # Create a new offer
@@ -446,6 +515,7 @@ def SendNewOffer(request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+
 @extend_schema(
     tags=["Provider Negotiations"],
     request={'action': 'string'},

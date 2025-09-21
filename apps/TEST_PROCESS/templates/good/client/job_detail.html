@@ -177,137 +177,153 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const pathSegments = window.location.pathname.split('/').filter(Boolean);
-            const jobId = pathSegments[pathSegments.length - 1];
-            const token = localStorage.getItem("access_token");
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    const jobId = pathSegments[pathSegments.length - 1];
+    const token = localStorage.getItem("access_token");
+    let jobDetailData = null; // لتخزين بيانات الطلب بعد جلبها
 
-            async function fetchJobDetails() {
-                try {
-                    const response = await fetch(`/api/v1/customer/jobs/${jobId}/`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    const data = await response.json();
-                    
-                    if (data.isSuccess) {
-                        renderJobDetails(data.data);
-                        // <-- استدعاء attachEventListeners بعد عرض التفاصيل (هنا التعديل الأساسي)
-                        attachEventListeners(jobId, token);
-                    } else {
-                        document.getElementById('jobDetail').innerHTML = `<div class="error">${data.message}</div>`;
-                    }
-                } catch (error) {
-                    document.getElementById('jobDetail').innerHTML = `<div class="error">فشل تحميل تفاصيل الطلب: ${error.message}</div>`;
+    async function fetchJobDetails() {
+        try {
+            const response = await fetch(`/api/v1/customer/jobs/${jobId}/`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            if (data.isSuccess) {
+                jobDetailData = data.data; // حفظ البيانات
+                renderJobDetails(jobDetailData);
+                attachEventListeners(jobId, token); // استدعاء الأحداث بعد عرض التفاصيل
+            } else {
+                document.getElementById('jobDetail').innerHTML = `<div class="error">${data.message}</div>`;
+            }
+        } catch (error) {
+            document.getElementById('jobDetail').innerHTML = `<div class="error">فشل تحميل تفاصيل الطلب: ${error.message}</div>`;
+        }
+    }
+
+    function renderJobDetails(job) {
+        const status = (job.progresses[0]?.progress_status || 'غير محدد');
+        const jobDetailsHtml = `
+            <h1 class="job-title">${job.title || 'بدون عنوان'}</h1>
+            <div class="meta">تاريخ الإنشاء: ${safeFormatDate(job.create_at)}</div>
+            <hr>
+            <div class="grid-row">
+                <div class="col">
+                    <span class="label">الحالة</span>
+                    <div class="value"><span class="badge ${status}">${status}</span></div>
+                </div>
+                <div class="col">
+                    <span class="label">فئة الخدمة</span>
+                    <div class="value">${job.category?.title || 'غير محدد'}</div>
+                </div>
+                <div class="col">
+                    <span class="label">ميزانية الطلب</span>
+                    <div class="value">${job.price} ر.س</div>
+                </div>
+                <div class="col">
+                    <span class="label">عدد القطع</span>
+                    <div class="value">${job.quantity}</div>
+                </div>
+                <div class="col">
+                    <span class="label">الوقت والتاريخ</span>
+                    <div class="value">${safeFormatDate(job.scheduled_at)}</div>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <h3 class="section-title">وصف الخدمة</h3>
+                <p>${job.description || 'لا يوجد وصف'}</p>
+            </div>
+
+            <div class="images mt-5">
+                <h3 class="section-title">الصور المرفقة</h3>
+                <div class="images-gallery">
+                    ${(job.media || []).map(m => m.image_url ? `<img src="${m.image_url}" alt="صورة الطلب" onclick="openLightbox('${m.image_url}')">` : '').join('')}
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <h3 class="section-title">تفاصيل الموقع والسكن</h3>
+                <div class="grid-row">
+                    <div class="col">
+                        <span class="label">الموقع</span>
+                        <span class="value">${job.location?.address || 'غير محدد'}</span>
+                    </div>
+                    <div class="col">
+                        <span class="label">اسم البناية</span>
+                        <span class="value">${job.location?.building_name || 'غير محدد'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('jobDetail').innerHTML = jobDetailsHtml;
+    }
+
+    function attachEventListeners(jobId, token) {
+        const viewOffersButton = document.getElementById('view-offers-button');
+        const cancelButton = document.getElementById('cancel-job-button');
+
+        const status = (jobDetailData.progresses[0]?.progress_status || '').toLowerCase();
+
+        // لو الحالة Completed
+        if (status === 'completed') {
+            if (viewOffersButton) viewOffersButton.style.display = 'none';
+            if (cancelButton) cancelButton.style.display = 'none';
+
+            // اظهار زر تقييم مقدم الخدمة
+            const rateBtn = document.createElement('button');
+            rateBtn.className = "action-button view-offers-button";
+            rateBtn.textContent = "تقييم مقدم الخدمة";
+            rateBtn.onclick = () => {
+                window.location.href = `/rate-provider/${jobId}/`;
+            };
+            const actionButtonsContainer = document.querySelector('.action-buttons');
+            actionButtonsContainer.appendChild(rateBtn);
+
+            return; // مش محتاجين اضافة الأزرار الأصلية
+        }
+
+        // أزرار طبيعية لو الحالة مش Completed
+        if (viewOffersButton) {
+            viewOffersButton.addEventListener('click', () => {
+                window.location.href = `/test/client/offers/${jobId}/`;
+            });
+        }
+
+        if (cancelButton) {
+            cancelButton.addEventListener('click', () => {
+                const reason = prompt("ما هو سبب إلغاء الطلب؟");
+                if (reason && confirm('هل أنت متأكد من إلغاء الطلب؟')) {
+                    // TODO: Implement cancel logic with API call
+                    alert('وظيفة إلغاء الطلب لم يتم تطبيقها بعد.');
                 }
-            }
+            });
+        }
+    }
 
-            function renderJobDetails(job) {
-                const status = (job.progresses[0]?.progress_status || 'غير محدد');
-                const jobDetailsHtml = `
-                    <h1 class="job-title">${job.title || 'بدون عنوان'}</h1>
-                    <div class="meta">تاريخ الإنشاء: ${safeFormatDate(job.create_at)}</div>
-                    <hr>
-                    
-                    <div class="grid-row">
-                        <div class="col">
-                            <span class="label">الحالة</span>
-                            <div class="value"><span class="badge ${status}">${status}</span></div>
-                        </div>
-                        <div class="col">
-                            <span class="label">فئة الخدمة</span>
-                            <div class="value">${job.category?.title || 'غير محدد'}</div>
-                        </div>
-                        <div class="col">
-                            <span class="label">ميزانية الطلب</span>
-                            <div class="value">${job.price} ر.س</div>
-                        </div>
-                        <div class="col">
-                            <span class="label">عدد القطع</span>
-                            <div class="value">${job.quantity}</div>
-                        </div>
-                        <div class="col">
-                            <span class="label">الوقت والتاريخ</span>
-                            <div class="value">${safeFormatDate(job.scheduled_at)}</div>
-                        </div>
-                    </div>
+    function safeFormatDate(dateStr) {
+        if (!dateStr) return "غير متوفر";
+        const d = new Date(dateStr);
+        return isNaN(d.getTime()) ? dateStr : d.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+    }
 
-                    <div class="mt-5">
-                        <h3 class="section-title">وصف الخدمة</h3>
-                        <p>${job.description || 'لا يوجد وصف'}</p>
-                    </div>
+    window.openLightbox = function(url) {
+        const lb = document.createElement('div');
+        lb.className = 'lightbox';
+        lb.onclick = () => document.body.removeChild(lb);
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'صورة مكبرة';
+        lb.appendChild(img);
+        document.body.appendChild(lb);
+    }
 
-                    <div class="images mt-5">
-                        <h3 class="section-title">الصور المرفقة</h3>
-                        <div class="images-gallery">
-                            ${(job.media || []).map(m => m.image_url ? `<img src="${m.image_url}" alt="صورة الطلب" onclick="openLightbox('${m.image_url}')">` : '').join('')}
-                        </div>
-                    </div>
+    fetchJobDetails();
+});
+</script>
 
-                    <div class="mt-5">
-                        <h3 class="section-title">تفاصيل الموقع والسكن</h3>
-                        <div class="grid-row">
-                            <div class="col">
-                                <span class="label">الموقع</span>
-                                <span class="value">${job.location?.address || 'غير محدد'}</span>
-                            </div>
-                            <div class="col">
-                                <span class="label">اسم البناية</span>
-                                <span class="value">${job.location?.building_name || 'غير محدد'}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('jobDetail').innerHTML = jobDetailsHtml;
-            }
-
-            function attachEventListeners(jobId, token) {
-                const viewOffersButton = document.getElementById('view-offers-button');
-                const cancelButton = document.getElementById('cancel-job-button');
-
-                console.log("attachEventListeners attached");
-
-                if (viewOffersButton) {
-                    viewOffersButton.addEventListener('click', () => {
-                        window.location.href = `/test/client/offers/${jobId}/`; // Redirect to a new offers page
-                    });
-                }
-                
-                if (cancelButton) {
-                    cancelButton.addEventListener('click', () => {
-                        const reason = prompt("ما هو سبب إلغاء الطلب؟");
-                        if (reason) {
-                            if (confirm('هل أنت متأكد من إلغاء الطلب؟')) {
-                                // TODO: Implement cancel logic with API call
-                                alert('وظيفة إلغاء الطلب لم يتم تطبيقها بعد.');
-                            }
-                        }
-                    });
-                }
-            }
-            
-            function safeFormatDate(dateStr) {
-                if (!dateStr) return "غير متوفر";
-                const d = new Date(dateStr);
-                return isNaN(d.getTime()) ? dateStr : d.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
-            }
-            
-            function openLightbox(url) {
-                const lb = document.createElement('div');
-                lb.className = 'lightbox';
-                lb.onclick = () => document.body.removeChild(lb);
-                const img = document.createElement('img');
-                img.src = url;
-                img.alt = 'صورة مكبرة';
-                lb.appendChild(img);
-                document.body.appendChild(lb);
-            }
-
-            fetchJobDetails();
-        });
-    </script>
 </body>
 </html>

@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>تأكيد الدفع بالمحفظة</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { font-family: "Tahoma", sans-serif; background:#f4f6f9; color:#222; margin:0; padding:20px; }
+    .wrap { max-width:640px; margin:30px auto; background:#fff; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.06); padding:20px; }
+    .row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee; }
+    .row:last-child { border-bottom:none; }
+    .label { font-weight:600; color:#555; }
+    .value { font-weight:700; color:#111; }
+    .total { font-size:18px; color:#2c7a2c; }
+    .btn-pay { display:block; width:100%; padding:12px; margin-top:18px; background:#1a73e8; color:#fff; text-align:center; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; border:none; }
+    .btn-pay[disabled]{ opacity:0.6; cursor:not-allowed; }
+    .wallet-box { background:#fafafa; padding:12px; border-radius:8px; margin-top:8px; }
+    .muted { color:#666; font-size:14px; }
+    .alert-small { padding:8px; border-radius:6px; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="h5 text-center mb-3">تأكيد الدفع بالمحفظة</h1>
+
+    {% if messages %}
+      {% for m in messages %}
+        <div class="alert alert-{{ m.tags|default:'info' }}">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="row">
+      <div class="label">المزود</div>
+      <div class="value">{{ provider_name }}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">الرقم المرجعي</div>
+      <div class="value">{{ reference_id }}#</div>
+    </div>
+
+    <div class="row">
+      <div class="label">المبلغ المطلوب</div>
+      <div class="value">{{ price|floatformat:2 }} ر.س</div>
+    </div>
+
+    <div class="row">
+      <div class="label">الضريبة</div>
+      <div class="value">{{ tax|floatformat:2 }} ر.س</div>
+    </div>
+
+    <div class="row">
+      <div class="label total">المجموع الكلي</div>
+      <div class="value total">{{ total|floatformat:2 }} ر.س</div>
+    </div>
+
+   <h5 class="mt-3">محفظتك</h5> 
+    <div id="walletBox" class="wallet-box">
+      <div id="walletState" class="muted">اضغط على زر "تحديث" لإضافة مبلغ ورؤية الرصيد</div>
+      <div class="d-flex gap-2 mt-2">
+        <button id="refreshWalletBtn" class="btn btn-outline-secondary btn-sm">تحديث</button>
+      </div>
+    </div>
+
+    <div>
+      <button id="payNowBtn" class="btn-pay">ادفع الآن</button>
+      <div id="payMessage" style="margin-top:8px;"></div>
+    </div>
+
+    <div style="margin-top:12px">
+      <a href="{% url 'jobtest:client-help-page' %}" class="muted">هل تحتاج مساعدة؟</a>
+    </div>
+  </div>
+
+  <!-- Popup Modal للإيداع -->
+  <div class="modal fade" id="depositModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">إيداع في المحفظة</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label for="depositAmount" class="form-label">المبلغ</label>
+          <input type="number" id="depositAmount" class="form-control" placeholder="ادخل المبلغ">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button type="button" id="confirmDepositBtn" class="btn btn-primary">إيداع</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+(function(){
+  const OFFER_ID = {{ offer_id|default:0 }};
+  const JOB_ID = {{ job_id|default:0 }};
+  const TOTAL = parseFloat("{{ total|floatformat:2 }}");
+
+  const BALANCE_URL = "/api/v1/customer/wallet/balance/";
+  const WITHDRAW_URL = "/api/v1/customer/wallet/withdraw/";
+  const DEPOSIT_URL = "/api/v1/customer/wallet/deposit/";
+  const ACCEPT_URL_TEMPLATE = "{% url 'customer_api:customer-accept-offer' 0 %}";
+  const PROGRESS_URL_TEMPLATE = "{% url 'jobtest:job_progress' 0 %}";
+
+  const refreshWalletBtn = document.getElementById("refreshWalletBtn");
+  const walletState = document.getElementById("walletState");
+  const payBtn = document.getElementById("payNowBtn");
+  const payMsg = document.getElementById("payMessage");
+
+  const depositModalEl = document.getElementById("depositModal");
+  const depositAmountInput = document.getElementById("depositAmount");
+  const confirmDepositBtn = document.getElementById("confirmDepositBtn");
+
+  // Flag لمعرفة إذا تم الدفع مسبقاً
+  let paymentDone = false;
+
+  function authHeaders() {
+    const token = localStorage.getItem("access_token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
+    return headers;
+  }
+
+  async function fetchBalanceAndShow() {
+    walletState.textContent = "جاري جلب بيانات المحفظة...";
+    try {
+      const res = await fetch(BALANCE_URL, { headers: authHeaders() });
+      const json = await res.json();
+      if (res.ok && json.status) {
+        const w = json.data;
+        walletState.innerHTML = `
+          <div><strong>الكود:</strong> ${w.code || "-"}</div>
+          <div><strong>الرصيد:</strong> ${w.amount || "0.00"} </div>
+          <div class="muted" style="margin-top:6px">آخر تحديث: ${w.update_at ? new Date(w.update_at).toLocaleString() : "—" }</div>
+        `;
+      } else {
+        walletState.textContent = "لم يتم العثور على محفظة. الرجاء إنشاء محفظة أولاً.";
+      }
+    } catch (err) {
+      console.error(err);
+      walletState.textContent = "حدث خطأ أثناء جلب المحفظة. تحقق من الاتصال.";
+    }
+  }
+
+  // فتح البوب أب للإيداع عند الضغط على تحديث
+  refreshWalletBtn.addEventListener("click", () => {
+    const modal = new bootstrap.Modal(depositModalEl);
+    modal.show();
+  });
+
+  // زر الإيداع داخل البوب أب
+  confirmDepositBtn.addEventListener("click", async () => {
+    const amount = parseFloat(depositAmountInput.value);
+    if (isNaN(amount) || amount <= 0) {
+      alert("من فضلك أدخل مبلغ صحيح");
+      return;
+    }
+
+    const modalInstance = bootstrap.Modal.getInstance(depositModalEl);
+    modalInstance.hide();
+
+    walletState.textContent = "جاري تنفيذ الإيداع...";
+    try {
+      const res = await fetch(DEPOSIT_URL, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ amount })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.status) {
+        walletState.innerHTML = `<div class="alert-small alert-danger">فشل الإيداع: ${json.message || "خطأ غير معروف"}</div>`;
+      } else {
+        fetchBalanceAndShow();
+      }
+    } catch (err) {
+      console.error(err);
+      walletState.textContent = "خطأ أثناء الإيداع.";
+    }
+
+    depositAmountInput.value = "";
+  });
+
+  async function payNowHandler() {
+    if (paymentDone) {
+      alert("تم الدفع بالفعل. لا يمكن الدفع مرة أخرى.");
+      return;
+    }
+
+    payMsg.textContent = "";
+    if (!confirm("هل أنت متأكد من الدفع الآن؟")) return;
+
+    payBtn.disabled = true;
+    const originalText = payBtn.textContent;
+    payBtn.textContent = "جاري تنفيذ الدفع...";
+
+    try {
+      // 1) قبول العرض أولاً
+      const acceptUrl = ACCEPT_URL_TEMPLATE.replace('/0/', '/' + OFFER_ID + '/');
+      const aRes = await fetch(acceptUrl, { method: "POST", headers: authHeaders() });
+      const aJson = await aRes.json();
+      const success = (aRes.ok && (aJson.isSuccess || aJson.status || aJson.success)) || false;
+      if (!aRes.ok || !success) {
+        payMsg.innerHTML = `<div class="alert alert-danger">${aJson.message || aJson.detail || "فشل قبول العرض."}</div>`;
+        payBtn.disabled = false; payBtn.textContent = originalText; 
+        return;
+      }
+
+      // 2) بعد نجاح قبول العرض، تنفيذ سحب الرصيد
+      const withdrawPayload = { amount: TOTAL };
+      const wRes = await fetch(WITHDRAW_URL, { method: "POST", headers: authHeaders(), body: JSON.stringify(withdrawPayload) });
+      const wJson = await wRes.json();
+      if (!wRes.ok || !wJson.status) {
+        payMsg.innerHTML = `<div class="alert alert-danger">تم قبول العرض، لكن فشل خصم الرصيد: ${wJson.message || wJson.detail || "خطأ غير معروف"}</div>`;
+        payBtn.disabled = false; payBtn.textContent = originalText; 
+        return;
+      }
+
+      // تعيين Flag الدفع لإيقاف أي محاولة دفع لاحقًا
+      paymentDone = true;
+
+      // 3) إعادة التوجيه إلى صفحة progress
+      const progressId = (aJson && aJson.data && aJson.data.progress_id) || null;
+      if (progressId) {
+        window.location.href = PROGRESS_URL_TEMPLATE.replace('/0/', '/' + progressId + '/');
+      } else {
+        window.location.href = "{% url 'jobtest:client-job-detail-page' job_id %}";
+      }
+
+    } catch (err) {
+      console.error(err);
+      payMsg.innerHTML = `<div class="alert alert-danger">حدث خطأ أثناء عملية الدفع. الرجاء المحاولة لاحقاً.</div>`;
+      payBtn.disabled = false; payBtn.textContent = originalText;
+    }
+  }
+
+  payBtn.addEventListener("click", payNowHandler);
+
+  // تحميل الرصيد تلقائياً عند فتح الصفحة
+  fetchBalanceAndShow();
+})();
+</script>
+
+
+</body>
+</html>

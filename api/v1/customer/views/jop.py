@@ -1,6 +1,7 @@
 # D:\Python Projects\Dabarni_fork\Dabarni\api\v1\customer\views\jop_request_views.py
 
 from django.utils import timezone
+from flask import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -33,9 +34,9 @@ def create_job(request):
     serializer = JobCreateSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         try:
-            # We no longer pass the user explicitly here, as the serializer handles it
             job_instance = serializer.save()
-            response_data = JobDetailSerializer(job_instance).data
+            # هنا أضفنا الـ context
+            response_data = JobDetailSerializer(job_instance, context={'request': request}).data
             return success_response(
                 message="تم نشر الطلب بنجاح",
                 data=response_data,
@@ -52,6 +53,7 @@ def create_job(request):
         status_code=status.HTTP_400_BAD_REQUEST,
         errors=serializer.errors
     )
+
 
 @extend_schema(
     tags=["Customer Jobs"],
@@ -108,7 +110,6 @@ def retrieve_job(request, job_id):
     tags=["Customer Jobs"],
     responses={200: JobDetailSerializer(many=True), 500: 'Error Response'},
 )
-
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -327,6 +328,7 @@ def getOffersByJob(request, job_id):
         )
 
 
+
 @extend_schema(
     tags=["Customer Jobs"],
     responses={200: JobDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
@@ -335,72 +337,79 @@ def getOffersByJob(request, job_id):
 @permission_classes([IsAuthenticated])
 def CustomerAcceptOffer(request, offer_id):
     """
-    API endpoint for a customer to accept a specific job offer.
+    Accept an offer (API).
+    This endpoint will:
+      - mark the offer as Accepted
+      - create/update the JobProgress and set it to InProgress
+      - mark other offers as Rejected
+    Returns: job data + progress_id
     """
     try:
         with transaction.atomic():
-            # Get the offer, ensuring it belongs to the authenticated customer's job
             offer = get_object_or_404(JobOffer.objects.select_related('job__customer', 'provider'), pk=offer_id)
+            job = offer.job
 
-            # Check if the offer's job is owned by the current user
-            if offer.job.customer != request.user:
-                return error_response(
-                    message="ليس لديك صلاحية لقبول هذا العرض.",
-                    status_code=status.HTTP_403_FORBIDDEN,
-                )
-            if offer.customer_accepted:
-                return error_response(
-                    message="لقد تم قبول هذا العرض بالفعل.",
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                )
+            # تأكيد صلاحية العميل
+            if job.customer != request.user:
+                return error_response(message="ليس لديك صلاحية لقبول هذا العرض.", status_code=status.HTTP_403_FORBIDDEN)
 
-            # 1. Update the accepted offer
-            offer.customer_accepted = True
+            # راجع الـ negotiation إن وجد
+            negotiation = JobNegotiate.objects.filter(job=job, provider=offer.provider).first()
+            if negotiation and negotiation.customer_accepted:
+                return error_response(message="لقد تم قبول تفاوض/عرض سابقاً.", status_code=status.HTTP_400_BAD_REQUEST)
+
+            # Update offer
             offer.status = 'Accepted'
             offer.save()
-            
-            # 2. Update the main Job record
-            job = offer.job
-            job.status = 'Assigned'
-            job.save()
 
-            # 3. Update the JobProgress record to link the accepted offer
-            job_progress, created = JobProgress.objects.get_or_create(job=job)
+            # Update / create JobProgress
+            job_progress, created = JobProgress.objects.get_or_create(
+                job=job,
+                provider=offer.provider,
+                defaults={
+                    'offer': offer,
+                    'customer': job.customer,
+                    'progress_status': 'InProgress',
+                    'status': 'InProgress',
+                    'total_cost': offer.price,
+                    'start_at': timezone.now(),
+                    'payment_status': 'Pending'
+                }
+            )
+
             job_progress.offer = offer
-            job_progress.provider = offer.provider
-            job_progress.progress_status = 'Assigned'
+            job_progress.progress_status = 'InProgress'
+            job_progress.status = 'InProgress'
             job_progress.total_cost = offer.price
+            job_progress.start_at = timezone.now()
             job_progress.save()
 
-            job_negotiations = JobNegotiate.objects.filter(job=job, provider=offer.provider)
-            for negotiation in job_negotiations:
-                negotiation.status = 'Accepted'
+
+            # Update negotiation if present
+            if negotiation:
                 negotiation.customer_accepted = True
-                negotiation.offer = offer
-                negotiation.job_progress = job_progress
                 negotiation.provider_accepted = True
-                negotiation.customer_price = offer.price  # Ensure customer_price matches the accepted offer price
-                negotiation.provider_price = offer.price  # Ensure provider_price matches the accepted offer price
+                negotiation.offer = offer
+                negotiation.customer_price = offer.price
+                negotiation.provider_price = offer.price
                 negotiation.save()
-            # 4. Reject all other offers for this job
+
+            # Reject other offers
             JobOffer.objects.filter(job=job).exclude(pk=offer_id).update(status='Rejected')
 
-        return success_response(
-            message="تم قبول العرض بنجاح. لقد تم تعيين مقدم الخدمة.",
-            data=JobDetailSerializer(job).data,
-            status_code=status.HTTP_200_OK
-        )
+        # prepare response data (include progress_id so frontend can redirect)
+        job_data = JobDetailSerializer(job, context={"request": request}).data
+        response_data = {
+            "job": job_data,
+            "progress_id": job_progress.id
+        }
+        return success_response(message="تم قبول العرض بنجاح. لقد تم تعيين مقدم الخدمة.", data=response_data, status_code=status.HTTP_200_OK)
+
     except JobOffer.DoesNotExist:
-        return error_response(
-            message="العرض غير موجود.",
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
+        return error_response(message="العرض غير موجود.", status_code=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return error_response(
-            message="حدث خطأ أثناء قبول العرض.",
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            errors={'detail': str(e)}
-        )
+        return error_response(message="حدث خطأ أثناء قبول العرض.", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, errors={'detail': str(e)})
+
 
 @extend_schema(
     tags=["Customer Offers"],
