@@ -328,7 +328,6 @@ def getOffersByJob(request, job_id):
         )
 
 
-
 @extend_schema(
     tags=["Customer Jobs"],
     responses={200: JobDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
@@ -346,44 +345,60 @@ def CustomerAcceptOffer(request, offer_id):
     """
     try:
         with transaction.atomic():
-            offer = get_object_or_404(JobOffer.objects.select_related('job__customer', 'provider'), pk=offer_id)
+            offer = get_object_or_404(
+                JobOffer.objects.select_related('job__customer', 'provider'),
+                pk=offer_id
+            )
             job = offer.job
 
             # تأكيد صلاحية العميل
             if job.customer != request.user:
-                return error_response(message="ليس لديك صلاحية لقبول هذا العرض.", status_code=status.HTTP_403_FORBIDDEN)
+                return error_response(
+                    message="ليس لديك صلاحية لقبول هذا العرض.",
+                    status_code=status.HTTP_403_FORBIDDEN
+                )
 
             # راجع الـ negotiation إن وجد
             negotiation = JobNegotiate.objects.filter(job=job, provider=offer.provider).first()
             if negotiation and negotiation.customer_accepted:
-                return error_response(message="لقد تم قبول تفاوض/عرض سابقاً.", status_code=status.HTTP_400_BAD_REQUEST)
+                return error_response(
+                    message="لقد تم قبول تفاوض/عرض سابقاً.",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
 
             # Update offer
             offer.status = 'Accepted'
             offer.save()
 
-            # Update / create JobProgress
-            job_progress, created = JobProgress.objects.get_or_create(
+            # ابحث عن JobProgress للـ job + customer
+            job_progress = JobProgress.objects.filter(
                 job=job,
-                provider=offer.provider,
-                defaults={
-                    'offer': offer,
-                    'customer': job.customer,
-                    'progress_status': 'InProgress',
-                    'status': 'InProgress',
-                    'total_cost': offer.price,
-                    'start_at': timezone.now(),
-                    'payment_status': 'Pending'
-                }
-            )
+                customer=job.customer
+            ).first()
 
-            job_progress.offer = offer
-            job_progress.progress_status = 'InProgress'
-            job_progress.status = 'InProgress'
-            job_progress.total_cost = offer.price
-            job_progress.start_at = timezone.now()
-            job_progress.save()
-
+            if job_progress:
+                # لو موجود → نعدله
+                job_progress.offer = offer
+                job_progress.provider = offer.provider
+                job_progress.progress_status = 'Pending'
+                job_progress.status = 'Pending'
+                job_progress.total_cost = offer.price
+                job_progress.start_at = None
+                job_progress.payment_status = 'Pending'
+                job_progress.save()
+            else:
+                # لو مش موجود → نكريت جديد
+                job_progress = JobProgress.objects.create(
+                    job=job,
+                    offer=offer,
+                    provider=offer.provider,
+                    customer=job.customer,
+                    progress_status='Pending',
+                    status='Pending',
+                    total_cost=offer.price,
+                    start_at=None,
+                    payment_status='Pending'
+                )
 
             # Update negotiation if present
             if negotiation:
@@ -403,73 +418,97 @@ def CustomerAcceptOffer(request, offer_id):
             "job": job_data,
             "progress_id": job_progress.id
         }
-        return success_response(message="تم قبول العرض بنجاح. لقد تم تعيين مقدم الخدمة.", data=response_data, status_code=status.HTTP_200_OK)
+        return success_response(
+            message="تم قبول العرض بنجاح. لقد تم تعيين مقدم الخدمة.",
+            data=response_data,
+            status_code=status.HTTP_200_OK
+        )
 
     except JobOffer.DoesNotExist:
-        return error_response(message="العرض غير موجود.", status_code=status.HTTP_404_NOT_FOUND)
+        return error_response(
+            message="العرض غير موجود.",
+            status_code=status.HTTP_404_NOT_FOUND
+        )
     except Exception as e:
-        return error_response(message="حدث خطأ أثناء قبول العرض.", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, errors={'detail': str(e)})
+        return error_response(
+            message="حدث خطأ أثناء قبول العرض.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
 
 
 @extend_schema(
     tags=["Customer Offers"],
     request=JobNegotiateCreateSerializer,
-    responses={200: JobNegotiateCreateSerializer, 404: 'Not Found Response', 500: 'Error Response'}
+    responses={200: JobNegotiateCreateSerializer, 400: 'Bad Request', 403: 'Forbidden', 404: 'Not Found', 500: 'Error'}
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def NegotiateOffer(request, offer_id):
     """
     API endpoint for a customer to negotiate on a provider's offer.
+    If a negotiation record exists it will be UPDATED with the new customer price.
+    If not exists it will be CREATED.
     """
     try:
-        # Get the offer, ensuring it belongs to the authenticated customer's job
-        offer = get_object_or_404(JobOffer.objects.select_related('job__customer'), pk=offer_id)
+        offer = get_object_or_404(JobOffer.objects.select_related('job__customer', 'provider'), pk=offer_id)
 
+        # only job owner (customer) can negotiate
         if offer.job.customer != request.user:
             return error_response(
                 message="ليس لديك صلاحية للتفاوض على هذا العرض.",
                 status_code=status.HTTP_403_FORBIDDEN,
             )
-        
-        # Check if the offer is in a state that allows negotiation
-        if offer.status in ['Accepted', 'Rejected']:
+
+        # can't negotiate on accepted/rejected offers
+        if str(offer.status).lower() in ['accepted', 'rejected']:
             return error_response(
                 message="لا يمكن التفاوض على هذا العرض. لقد تم قبوله أو رفضه بالفعل.",
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = JobNegotiateCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            customerPrice = serializer.validated_data.get('customer_price')
-
-            # Check if a negotiation record already exists for this offer
-            negotiation_record, created = JobNegotiate.objects.get_or_create(
-                job=offer.job,
-                offer=offer,
-                provider=offer.provider,
-                customer=request.user
-            )
-
-            # Update the negotiation record with the new customer price
-            negotiation_record.customer_price = customerPrice
-            negotiation_record.save()
-            
-            # Update the offer status to indicate negotiation is in progress
-            offer.status = JobOfferStatus.NEGOTIATING
-            offer.save()
-            
-            return success_response(
-                message="تم إرسال عرض التفاوض بنجاح.",
-                data=JobNegotiateCreateSerializer(negotiation_record).data,
-                status_code=status.HTTP_200_OK
-            )
-        else:
+        if not serializer.is_valid():
             return error_response(
                 message="فشل إرسال عرض التفاوض.",
                 status_code=status.HTTP_400_BAD_REQUEST,
                 errors=serializer.errors
             )
+
+        customer_price = serializer.validated_data.get('customer_price')
+
+        # حاول الحصول على السجل أو إنشاؤه — لكن لا ترفض لو موجود: قم بالتحديث بدلاً من ذلك
+        negotiation_record, created = JobNegotiate.objects.get_or_create(
+            job=offer.job,
+            offer=offer,
+            provider=offer.provider,
+            customer=request.user,
+            defaults={
+                'customer_price': customer_price,
+                # ممكن تملأ حقول افتراضية أخرى هنا لو تحتاج
+            }
+        )
+
+        if not created:
+            # حدث التفاوض الموجود: حدّث السعر وارجع حالة القبول للمزود لـ False لأن السعر تغيّر
+            negotiation_record.customer_price = customer_price
+            negotiation_record.provider_accepted = False
+            negotiation_record.customer_accepted = False
+            negotiation_record.save()
+            message = "تم تحديث عرض التفاوض بنجاح."
+        else:
+            message = "تم إرسال عرض التفاوض بنجاح."
+
+        # تأكد أن حالة الـ offer تشير إلى التفاوض
+        offer.status = JobOfferStatus.NEGOTIATING
+        offer.save()
+
+        return success_response(
+            message=message,
+            data=JobNegotiateCreateSerializer(negotiation_record).data,
+            status_code=status.HTTP_200_OK
+        )
+
     except JobOffer.DoesNotExist:
         return error_response(
             message="العرض غير موجود.",
@@ -480,4 +519,24 @@ def NegotiateOffer(request, offer_id):
             message="حدث خطأ أثناء التفاوض.",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
+        )
+    
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_job_progress(request, progress_id):
+    try:
+        progress = JobProgress.objects.get(id=progress_id, start_at__isnull=False)
+
+        return success_response(
+            message="حالة الطلب",
+            data={
+                "status": progress.progress_status,
+                "start_at": progress.start_at,
+                "total_cost": progress.total_cost,
+            }
+        )
+    except JobProgress.DoesNotExist:
+        return error_response(
+            message="لم يتم العثور على التقدم الذي بدأ بعد.",
+            status_code=status.HTTP_404_NOT_FOUND
         )

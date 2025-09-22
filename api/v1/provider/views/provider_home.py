@@ -358,7 +358,7 @@ def AcceptJob(request, job_id):
         if existing_offer:
             existing_offer.provider_accepted = True
             existing_offer.accepted_at = timezone.now()
-            existing_offer.status = 'InProgress'  # أو قيمة مناسبة
+            existing_offer.status = 'InProgress'
             existing_offer.save()
             offer = existing_offer
         else:
@@ -376,19 +376,19 @@ def AcceptJob(request, job_id):
         defaults={
             'offer': offer,
             'customer': job.customer,
-            'progress_status': 'InProgress',
-            'status': 'InProgress',
+            'progress_status': 'Pending',
+            'status': 'Pending',
             'total_cost': offer.price,
-            'start_at': timezone.now()
+            'start_at': None
         }
     )
 
         if not created:
             job_progress.offer = offer
-            job_progress.progress_status = 'InProgress'
-            job_progress.status = 'InProgress'
+            job_progress.progress_status = 'Pending'
+            job_progress.status = 'Pending'
             job_progress.total_cost = offer.price
-            job_progress.start_at = timezone.now()
+            job_progress.start_at = None  
             job_progress.save()
 
 
@@ -504,7 +504,6 @@ def SendNewOffer(request):
                     )
 
                 else:
-                    # Create a new offer
                     offer = JobOffer.objects.create(
                         job=job,
                         provider=provider,
@@ -512,22 +511,20 @@ def SendNewOffer(request):
                         status='Pending'
                     )
                     
-                    # Create a new negotiation record
                     JobNegotiate.objects.create(
                         job=job,
                         offer=offer,
                         provider=provider,
                         customer=job.customer,
                         provider_price=price,
-                        provider_accepted=True # Provider's price is automatically accepted by them
+                        provider_accepted=False 
                     )
-
-                    
+                  
                     message = "تم تقديم عرضك بنجاح."
                     status_code = status.HTTP_201_CREATED
 
                 # Ensure the Job's progress status is set to Pending for the customer to see
-                JobProgress.objects.filter(job=job).update(progress_status='Pending')
+               # JobProgress.objects.filter(job=job).update(progress_status='Pending')
                 
                 return success_response(
                     message=message,
@@ -708,6 +705,90 @@ def providerNegotiateResponse(request, negotiation_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+@extend_schema(
+    tags=["Provider Jobs"],
+    summary="طلب مبلغ إضافي",
+    description="المزود يرسل طلب مبلغ إضافي للعميل على عمل جاري",
+    responses={200: dict, 400: dict, 403: dict, 404: dict}
+)   
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def request_extra_amount(request, progress_id):
+    """
+    المزود يطلب مبلغ إضافي على عمل جاري
+    """
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        # التأكد أن المستخدم هو المزود
+        if not progress.provider or progress.provider.user != request.user:
+            return Response({"status": False, "message": "غير مخول لإرسال طلب مبلغ إضافي"}, status=403)
+
+        # البيانات المرسلة
+        extra_cost = request.data.get('extra_cost')
+        extra_request = request.data.get('extra_request', '')
+
+        if not extra_cost:
+            return Response({"status": False, "message": "الرجاء إدخال المبلغ"}, status=400)
+
+        # تحديث الـ progress
+        progress.extra_cost = extra_cost
+        progress.extra_request = extra_request
+        progress.extra_request_time = timezone.now()
+        progress.extra_cost_approved = False
+        progress.save()
+
+        return Response({
+            "status": True,
+            "message": f"تم إرسال طلب مبلغ إضافي {extra_cost} بنجاح",
+            "data": {
+                "extra_cost": progress.extra_cost,
+                "extra_request": progress.extra_request,
+                "extra_request_time": progress.extra_request_time
+            }
+        })
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+    
+@extend_schema(
+    tags=["Provider Jobs"],
+    summary="بدء العمل",
+    description="المزود يبدأ العمل على JobProgress",
+    responses={200: dict, 400: dict, 403: dict, 404: dict}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def start_work(request, progress_id):
+    """
+    المزود يبدأ العمل على JobProgress
+    """
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        # فقط المزود المخصص يمكنه بدء العمل
+        if progress.provider.user != request.user:
+            return Response({"status": False, "message": "غير مخول للبدء"}, status=403)
+
+        if progress.start_at:
+            return Response({"status": False, "message": "تم بدء العمل مسبقًا"}, status=400)
+
+        progress.start_at = timezone.now()
+        progress.progress_status = "InProgress"
+        progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تم بدء العمل بنجاح",
+            "data": {
+                "start_at": progress.start_at,
+                "progress_status": progress.progress_status
+            }
+        })
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+
 #============================================= last edits ============================================= 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

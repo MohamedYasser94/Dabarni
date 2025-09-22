@@ -120,23 +120,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Build actionsHtml depending on status
         let actionsHtml = '';
-        if (statusNormalized === 'accepted' || statusNormalized === 'accept' || statusNormalized === 'تم القبول') {
-          // show accepted label + link to progress (if we have progress id)
-          const progressUrl = progressId ? `/test/client/progress/${progressId}/` : `/test/client/offers/${offer.id}/progress/`;
-          actionsHtml = `
-            <span class="status Accepted">تم القبول</span>
-            <a href="${progressUrl}" class="btn secondary" style="margin-right:8px">عرض التقدم</a>
-          `;
-        } else if (statusNormalized === 'rejected' || statusNormalized === 'رفض' || statusNormalized === 'rejected') {
-          actionsHtml = `<span class="status Rejected">تم الرفض</span>`;
-        } else {
-          // default: pending / negotiating
-          actionsHtml = `
-            <button class="btn" onclick="acceptOffer(${offer.id})">قبول العرض</button>
-            <button class="btn secondary" onclick="negotiateOffer(${offer.id})">تفاوض</button>
+const hasCustomerNegotiation = offer.status==="Negotiating"?true:false;
+                            
+          console.log(hasCustomerNegotiation)
 
-          `;
-        }
+
+if (statusNormalized === 'accepted' || statusNormalized === 'accept' || statusNormalized === 'تم القبول') {
+  const progressUrl = progressId ? `/test/client/progress/${progressId}/` : `/test/client/offers/${offer.id}/progress/`;
+  actionsHtml = `
+    <span class="status Accepted">تم القبول</span>
+    <a href="${progressUrl}" class="btn secondary" style="margin-right:8px">عرض التقدم</a>
+  `;
+} else if (statusNormalized === 'rejected' || statusNormalized === 'رفض' || statusNormalized === 'rejected') {
+  actionsHtml = `<span class="status Rejected">تم الرفض</span>`;
+} else {
+  // إذا العميل قدم تفاوض جديد، اخفي زر التفاوض
+  if (hasCustomerNegotiation) {
+    actionsHtml = `<button class="btn" onclick="acceptOffer(${offer.id})">قبول العرض</button>`;
+  } else {
+    actionsHtml = `
+      <button class="btn" onclick="acceptOffer(${offer.id})">قبول العرض</button>
+      <button class="btn secondary" onclick="negotiateOffer(${offer.id})">تفاوض</button>
+    `;
+  }
+}
+
 
         // Use actionsHtml in the DOM (previously you had hard-coded buttons here)
         card.innerHTML = `

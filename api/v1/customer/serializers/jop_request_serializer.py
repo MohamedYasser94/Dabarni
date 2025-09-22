@@ -90,7 +90,7 @@ class JobCreateSerializer(serializers.ModelSerializer):
             customer=customer_user,
             progress_status='Pending',
             total_cost=job.price,
-            start_at=timezone.now()
+            start_at=None
         )
         
         for image_file in images_data:

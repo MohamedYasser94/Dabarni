@@ -128,22 +128,17 @@ def renderCustomerJobOffersPage(request, job_id):
     print("TETS")
     return render(request, 'good/client/job_offers.html', context)
 
-
 def renderCustomerPaymentSummary(request, offer_id):
-    # تأكد إن المستخدم مسجل دخول
     if not request.user.is_authenticated:
-        return redirect('login')  # أو ارجع 403 حسب رغبتك
+        return redirect('login')
 
-    # جلب العرض والتأكد إنه يخص ال customer (عبر job.customer)
     qs = JobOffer.objects.select_related("job__customer", "provider__user")
-
     if not request.user.is_superuser:
         qs = qs.filter(job__customer=request.user)
 
     offer = get_object_or_404(qs, pk=offer_id)
 
-
-    # السعر (احتمال يكون None) — استخدم Decimal
+    # السعر الأساسي
     price = offer.price if offer.price is not None else Decimal('0.00')
     if not isinstance(price, Decimal):
         try:
@@ -151,25 +146,39 @@ def renderCustomerPaymentSummary(request, offer_id):
         except (InvalidOperation, TypeError):
             price = Decimal('0.00')
 
+    # الضريبة ثابتة مؤقتاً
     tax = Decimal('2.00')
-    total = price + tax
 
-    # الوقت المعروض: أولوية scheduled_at (job) ثم offer.create_at ثم الآن
+    # المبلغ الإضافي (اختياري)
+    extra_param = request.GET.get("extra")
+    if extra_param:
+        try:
+            extra_amount = Decimal(extra_param)
+        except InvalidOperation:
+            extra_amount = Decimal("0.00")
+    else:
+        extra_amount = offer.progress.extra_cost or Decimal("0.00")
+
+    total = offer.price + extra_amount
+
+    if extra_amount is None:
+        extra_amount = Decimal("0.00")
+
+    # المجموع
+    total = price + tax + extra_amount
+
+    # وقت الدفع
     payment_time = getattr(offer.job, 'scheduled_at', None) or offer.create_at or timezone.now()
     payment_time_local = timezone.localtime(payment_time)
 
-    # اسم العميل
-    # provider object (مش QuerySet)
     provider = get_object_or_404(JobProvider, id=offer.provider.id)
 
-    # جلب اسم الـ provider من user المرتبط
     if provider.user.get_full_name():
         provider_name = provider.user.get_full_name()
     else:
         provider_name = provider.user.username or (
             f"{provider.user.first_name} {provider.user.last_name}".strip()
         ) or "غير معروف"
-
 
     context = {
         "offer": offer,
@@ -178,10 +187,12 @@ def renderCustomerPaymentSummary(request, offer_id):
         "reference_id": offer.code or f"REF-{offer.id}",
         "amount": price,
         "tax": tax,
+        "extra_amount": extra_amount,   
         "total": total,
     }
 
     return render(request, "good/client/payment_summary.html", context)
+
 
 #----------------------------------------
 def renderConfirmPayment(request, offer_id):
