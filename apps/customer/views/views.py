@@ -49,6 +49,9 @@ def AdminCustomerUpdate(request, slug):
                 customer.last_name = request.POST.get('last_name', '').strip() or None
                 customer.email = request.POST.get('email', '').strip() or None
                 customer.phone = request.POST.get('phone', '').strip() or None
+                customer.image = request.FILES.get('image') or customer.image
+
+
 
                 # Account status from select
                 is_active_val = (request.POST.get('is_active') or '').strip()

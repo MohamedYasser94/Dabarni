@@ -50,6 +50,18 @@
                                         <label class="required fs-6 fw-semibold mb-2">{% translate "Phone" %}</label>
                                         <input type="text" class="form-control form-control-solid" name="phone" value="{{ customer.phone|default:'' }}">
                                     </div>
+                                <div class="row mb-6">
+                                        <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Profile Image' %}</label>
+                                        <div class="col-lg-8 fv-row">
+                                            {% if customer.image %}
+                                                <a href="{{ customer.image.url }}" target="_blank" rel="noopener">
+                                                    <img src="{{ customer.image_thumb_url|default:customer.image.url }}" alt="{% translate 'Profile Image' %}" class="img-thumbnail mb-2" style="max-width: 120px; max-height: 120px;">
+                                                </a>
+                                            {% endif %}
+                                            <input type="file" class="form-control form-control-solid" name="image" accept="image/*" />
+                                            <div class="form-text">{% translate 'Upload a profile image (JPG, PNG, WEBP)...' %}</div>
+                                        </div>
+                                    </div>
 
                                     <div class="col-md-6 fv-row">
                                         <label class="fs-6 fw-semibold mb-2">{% translate "Date of Birth" %}</label>
