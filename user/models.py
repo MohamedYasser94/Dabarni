@@ -1,21 +1,26 @@
 import datetime
 import uuid
+from io import BytesIO
 
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, User, AbstractUser, Permission, Group, \
     PermissionsMixin
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.validators import validate_integer
 from django.db import models
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+from PIL import Image
 from rest_framework_simplejwt.tokens import RefreshToken
-from core.models.localization import  Language
+
+from core.models.localization import Language
 from helper.modelHelper import Active_Status, User_Position, Email_Validator, Access_Level, User_Status, Country_List, \
-    Governorates_List, SAUDI_CITIES_BY_GOVERNORATE
+    Governorates_List, SAUDI_CITIES_BY_GOVERNORATE, Public_Status
 
 from helper.viewHelper import get_file_path
 
@@ -116,6 +121,56 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = UserManager()
 
+    # --- Image thumbnail helpers ---
+    def _build_thumb_name(self, image_name: str, width: int, height: int) -> str:
+        import os
+        dir_name, base = os.path.split(image_name)
+        name, ext = os.path.splitext(base)
+        thumb_dir = os.path.join(dir_name, 'thumbs') if dir_name else 'thumbs'
+        return os.path.join(thumb_dir, f"{name}_{width}x{height}{ext}")
+
+    def _ensure_thumbnail(self, width: int = 120, height: int = 120) -> str | None:
+        if not self.image or not getattr(self.image, 'name', None):
+            return None
+        thumb_name = self._build_thumb_name(self.image.name, width, height)
+        try:
+            if default_storage.exists(thumb_name):
+                return thumb_name
+            with default_storage.open(self.image.name, 'rb') as f:
+                img = Image.open(f)
+                img.load()
+                if img.mode in ("RGBA", "P"):
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[3] if img.mode == "RGBA" else None)
+                    img = background
+                else:
+                    img = img.convert("RGB")
+                img.thumbnail((width, height), Image.LANCZOS)
+                buffer = BytesIO()
+                img.save(buffer, format='JPEG', quality=85, optimize=True)
+                buffer.seek(0)
+                default_storage.save(thumb_name, ContentFile(buffer.read()))
+                return thumb_name
+        except Exception:
+            return None
+
+    def get_image_thumbnail_url(self, size: str = '120x120') -> str | None:
+        try:
+            width, height = [int(x) for x in size.lower().split('x')]
+        except Exception:
+            width, height = 120, 120
+        thumb_name = self._ensure_thumbnail(width, height)
+        if thumb_name and default_storage.exists(thumb_name):
+            return default_storage.url(thumb_name)
+        try:
+            return self.image.url if self.image else None
+        except Exception:
+            return None
+
+    @property
+    def image_thumb_url(self) -> str | None:
+        return self.get_image_thumbnail_url('120x120')
+
     def __str__(self):
         if self.first_name or self.last_name:
             return f'{self.first_name} {self.last_name} (Email: {self.email})'
@@ -212,7 +267,7 @@ class UserProfile(models.Model):
     dob = models.DateField(null=True, blank=True)
     nationality = models.CharField(max_length=50, null=True, blank=True)
     residence = models.CharField(max_length=50, null=True, blank=True)
-    is_citizen = models.BooleanField(default=False, help_text="Is the user a citizen?")
+    is_citizen = models.CharField(max_length=10, choices=Public_Status, default='No', null=True, blank=True)
     # This is the single source of truth for the user's ID number now.
     id_number = models.CharField(max_length=50, null=True, blank=True)
 

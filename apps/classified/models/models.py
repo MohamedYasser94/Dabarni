@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Avg, Count
@@ -12,6 +11,10 @@ from slugify import slugify
 from helper.modelHelper import *
 from helper.viewHelper import get_file_path
 from user.models import UserAddress
+from io import BytesIO
+from PIL import Image
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 # Create your models here.
 
@@ -174,8 +177,155 @@ class JobProvider(models.Model):
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
 
-    # --- REMOVED FIELDS (Now in User or UserProfile) ---
-    # id_number, id_image_front, id_image_back, residence_image, number, etc.
+
+
+    def __str__(self):
+        # Display the company name or the user's name.
+        return self.company or self.user.get_full_name()
+
+    @property
+    def total_spent(self):
+        # This property to calculate costs is good.
+        return sum(job.cost or 0 for job in self.jobs.all())
+
+    @property
+    def profile_completion_percentage(self):
+        """
+        Calculates the profile completion percentage based on a weighted system.
+        """
+        total_percentage = 0
+
+        # --- Category 1: Personal Data (Weight: 25%) ---
+        # These fields are on the related User and UserProfile models
+        try:
+            profile = self.user.profile
+            personal_data_fields = [
+                self.user.first_name, self.user.last_name, self.user.email, self.user.phone,
+                profile.dob, profile.nationality, profile.residence
+            ]
+            personal_weight = 25 / len(personal_data_fields)
+            completed_personal = sum(1 for field in personal_data_fields if field)
+            total_percentage += completed_personal * personal_weight
+        except self.user.profile.__class__.DoesNotExist:
+            pass  # No profile, no points for this section
+
+        # --- Category 2: Job Details (Weight: 25%) ---
+        job_details_fields = [self.category, self.experience_years, self.company, self.business_phone, self.address]
+        job_weight = 25 / len(job_details_fields)
+        completed_job = sum(1 for field in job_details_fields if field)
+        total_percentage += completed_job * job_weight
+
+        # --- Category 3: Bio (Weight: 25%) ---
+        if self.bio and self.bio.strip():
+            total_percentage += 25
+
+        # --- Category 4: Documents (Weight: 25%) ---
+        # Documents are on both UserProfile and JobProvider
+        completed_docs = 0
+        document_fields = [
+            self.commercial_image, self.vat_image, self.license_image, self.commercial_image2
+        ]
+
+        # Check JobProvider documents
+        completed_docs += sum(1 for field in document_fields if field)
+
+        # Check UserProfile documents
+        try:
+            profile = self.user.profile
+            profile_docs = [profile.id_image_front, profile.id_image_back, profile.residence_image]
+            completed_docs += sum(1 for field in profile_docs if field)
+            total_docs = len(document_fields) + len(profile_docs)
+        except self.user.profile.__class__.DoesNotExist:
+            total_docs = len(document_fields)  # Only count provider docs if no profile exists
+
+        if total_docs > 0:
+            doc_weight = 25 / total_docs
+            total_percentage += completed_docs * doc_weight
+
+        return int(total_percentage)
+
+    def _build_thumb_name(self, image_name: str, width: int, height: int) -> str:
+        # image_name is relative to MEDIA_ROOT (e.g., images/abcd.jpg)
+        import os
+        dir_name, base = os.path.split(image_name)
+        name, ext = os.path.splitext(base)
+        thumb_dir = os.path.join(dir_name, 'thumbs') if dir_name else 'thumbs'
+        return os.path.join(thumb_dir, f"{name}_{width}x{height}{ext}")
+
+    def _ensure_thumbnail(self, field_name: str, width: int = 120, height: int = 120) -> str | None:
+        """
+        Ensures a thumbnail exists for the given ImageField and returns its storage name (relative to MEDIA_ROOT).
+        If the original doesn't exist or isn't set, returns None.
+        """
+        img_field = getattr(self, field_name, None)
+        if not img_field:
+            return None
+        if not getattr(img_field, 'name', None):
+            return None
+
+        thumb_name = self._build_thumb_name(img_field.name, width, height)
+        try:
+            if default_storage.exists(thumb_name):
+                return thumb_name
+
+            # Open original image from storage
+            with default_storage.open(img_field.name, 'rb') as f:
+                img = Image.open(f)
+                img.load()  # make sure image is loaded before file closes
+
+                # Convert to RGB if needed (to avoid issues saving JPEG with alpha)
+                if img.mode in ("RGBA", "P"):
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[3] if img.mode == "RGBA" else None)
+                    img = background
+                else:
+                    img = img.convert("RGB")
+
+                # Create thumbnail preserving aspect ratio
+                img.thumbnail((width, height), Image.LANCZOS)
+
+                # Save to bytes
+                buffer = BytesIO()
+                img.save(buffer, format='JPEG', quality=85, optimize=True)
+                buffer.seek(0)
+
+                # Persist thumbnail
+                default_storage.save(thumb_name, ContentFile(buffer.read()))
+                return thumb_name
+        except Exception:
+            # If anything goes wrong, gracefully fall back to original
+            return None
+
+    def get_thumbnail_url(self, field_name: str, size: str = '120x120') -> str | None:
+        try:
+            width, height = [int(x) for x in size.lower().split('x')]
+        except Exception:
+            width, height = 120, 120
+        thumb_name = self._ensure_thumbnail(field_name, width, height)
+        img_field = getattr(self, field_name, None)
+        if thumb_name and default_storage.exists(thumb_name):
+            return default_storage.url(thumb_name)
+        # Fallback to original URL if thumbnail isn't available
+        try:
+            return img_field.url if img_field else None
+        except Exception:
+            return None
+
+    @property
+    def commercial_image_thumb_url(self) -> str | None:
+        return self.get_thumbnail_url('commercial_image', '120x120')
+
+    @property
+    def commercial_image2_thumb_url(self) -> str | None:
+        return self.get_thumbnail_url('commercial_image2', '120x120')
+
+    @property
+    def vat_image_thumb_url(self) -> str | None:
+        return self.get_thumbnail_url('vat_image', '120x120')
+
+    @property
+    def license_image_thumb_url(self) -> str | None:
+        return self.get_thumbnail_url('license_image', '120x120')
 
     def __str__(self):
         # Display the company name or the user's name.
@@ -410,8 +560,3 @@ class JobReviewMedia(models.Model):
             self.code = code
             self.slug = slugify(code)
         super(JobReviewMedia, self).save(*args, **kwargs)
-
-
-
-
-

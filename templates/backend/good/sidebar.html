@@ -54,20 +54,20 @@
         {% block customer %}{% include 'good/customer/partials/sidebar-partials.html' %}{% endblock customer %}
         {% block provider %}{% include 'good/provider/partials/sidebar-partials.html' %}{% endblock provider %}
         {% block employee %}{% include 'good/employee/partials/sidebar-partials.html' %}{% endblock employee %}
-        {% block wallet %}{% include 'good/wallet/partials/sidebar-partials.html' %}{% endblock wallet %}
+
 
          
 
             {% if user_access == 'SuperAdmin' %}
 
-
-
-                {% block front %}{% include 'good/front/partials/sidebar-partials.html' %}{% endblock front %}
-
-                {% block translate %}{% include 'good/rosetta/partials/sidebar-partials.html' %}{% endblock translate %}
-
-                {% block account %}{% include 'good/account/partials/sidebar-partials.html' %}{% endblock account %}
-                {% block system %}{% include 'good/core/partials/sidebar-partials.html' %}{% endblock system %}
+{# {% block wallet %}{% include 'good/wallet/partials/sidebar-partials.html' %}{% endblock wallet %}#}
+{##}
+{#                {% block front %}{% include 'good/front/partials/sidebar-partials.html' %}{% endblock front %}#}
+{##}
+{#                {% block translate %}{% include 'good/rosetta/partials/sidebar-partials.html' %}{% endblock translate %}#}
+{##}
+{#                {% block account %}{% include 'good/account/partials/sidebar-partials.html' %}{% endblock account %}#}
+{#                {% block system %}{% include 'good/core/partials/sidebar-partials.html' %}{% endblock system %}#}
             {% endif %}
 
 

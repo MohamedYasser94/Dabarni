@@ -9,6 +9,8 @@ from apps.provider.forms.forms import AdminJobProviderForm
 from helper.commonHelper import *
 from helper.decorators import *
 from django.db.models import Prefetch
+from api.v1.constants import JobProgressStatus
+
 User = get_user_model()
 
 
@@ -57,6 +59,7 @@ def AdminProviderUpdate(request, slug):
                 user.last_name = request.POST.get('last_name', user.last_name)
                 user.email = request.POST.get('email', user.email)
                 user.phone = request.POST.get('phone', user.phone)
+                user.image = request.FILES.get('image', user.image)
                 user.is_active = 'Active' if request.POST.get('is_active') == 'on' else 'Inactive'
                 user.save()
 
@@ -166,4 +169,47 @@ def AdminProviderCreate(request):
 
 
 
+@authenticated_staff
+@staff_only
+def AdminProviderJobList(request, slug):
+    provider = get_object_or_404(JobProvider.objects.select_related('user'), slug=slug)
 
+    # Prefetch latest negotiations for this provider per job
+    negotiations_prefetch = Prefetch(
+        'job__negotiations',
+        queryset=JobNegotiate.objects.filter(provider=provider).order_by('-id'),
+        to_attr='negotiations_ordered'
+    )
+
+    base_qs = (
+        JobProgress.objects
+        .filter(provider=provider)
+        .select_related('job__category', 'customer', 'offer')
+        .prefetch_related(negotiations_prefetch)
+        .order_by('-id')
+    )
+
+    pending_progresses = base_qs.filter(progress_status=JobProgressStatus.PENDING)
+    in_progress_progresses = base_qs.filter(progress_status=JobProgressStatus.IN_PROGRESS)
+    completed_progresses = base_qs.filter(progress_status=JobProgressStatus.COMPLETED)
+    cancelled_progresses = base_qs.filter(progress_status=JobProgressStatus.CANCELLED)
+
+    provider_offers = (
+        JobOffer.objects
+        .filter(provider=provider)
+        .select_related('job__category', 'job__customer')
+        .order_by('-id')
+    )
+
+    context = {
+        'provider': provider,
+        'pending_progresses': pending_progresses,
+        'in_progress_progresses': in_progress_progresses,
+        'completed_progresses': completed_progresses,
+        'cancelled_progresses': cancelled_progresses,
+        'provider_offers': provider_offers,
+        'current_page': _('Provider Jobs'),
+        'prev_Page': _('Providers'),
+        'prev_Page_link': reverse_lazy('provider:AdminProviderList'),
+    }
+    return render(request, f'{BACKEND_TEMPLATES}/provider/job/admin.html', context)

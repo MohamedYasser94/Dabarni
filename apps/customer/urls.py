@@ -8,7 +8,10 @@ app_name = 'customer'
 urlpatterns = [
         path('customer/', views.AdminCustomerList, name='AdminCustomerList'),
         path('customer/edit/<slug:slug>/', views.AdminCustomerUpdate, name='AdminCustomerUpdate'),
-        path('customer/delete/<slug:slug>/', views.AdminCustomerDelete, name='AdminCustomerDelete')
+        path('customer/delete/<slug:slug>/', views.AdminCustomerDelete, name='AdminCustomerDelete'),
+
+        ################# Customer Jobs #################
+        path('customer/jobs/<slug:slug>/', views.AdminCustomerJobList, name='AdminCustomerJobList'),
 
 
 

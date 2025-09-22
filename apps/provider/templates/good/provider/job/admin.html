@@ -1,0 +1,77 @@
+{% extends BACKEND_BASE %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+  <div class="d-flex flex-column flex-column-fluid">
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+      <div id="kt_app_content_container" class="app-container container-fluid">
+        <div class="card">
+          <div class="card-header border-0">
+            <div class="card-title m-0">
+              <h3 class="fw-bolder m-0">{% translate 'Provider Jobs' %} — {% if provider.company %}{{ provider.company }}{% else %}{{ provider.user.get_full_name|default:provider.user.email }}{% endif %}</h3>
+            </div>
+            <div class="card-toolbar">
+              <a href="{% url 'provider:AdminProviderList' %}" class="btn btn-sm btn-light-primary">
+                <i class="fas fa-arrow-left me-1"></i> {% translate 'Back to Providers' %}
+              </a>
+            </div>
+          </div>
+          <div class="card-body pt-0">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs nav-line-tabs mb-5 fs-6">
+              <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#tab_pending">{% translate 'Pending' %} ({{ pending_progresses|length }})</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab_in_progress">{% translate 'In Progress' %} ({{ in_progress_progresses|length }})</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab_completed">{% translate 'Completed' %} ({{ completed_progresses|length }})</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab_cancelled">{% translate 'Cancelled' %} ({{ cancelled_progresses|length }})</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab_offers">{% translate 'Offers' %} ({{ provider_offers|length }})</a>
+              </li>
+            </ul>
+
+            <div class="tab-content" id="provider_jobs_tabs">
+              <!-- Pending -->
+              <div class="tab-pane fade show active" id="tab_pending" role="tabpanel">
+                {% include 'good/provider/job/partials/_jobs_table.html' with rows=pending_progresses show_completed_at=False %}
+              </div>
+
+              <!-- In Progress -->
+              <div class="tab-pane fade" id="tab_in_progress" role="tabpanel">
+                {% include 'good/provider/job/partials/_jobs_table.html' with rows=in_progress_progresses show_completed_at=False %}
+              </div>
+
+              <!-- Completed -->
+              <div class="tab-pane fade" id="tab_completed" role="tabpanel">
+                {% include 'good/provider/job/partials/_jobs_table.html' with rows=completed_progresses show_completed_at=True %}
+              </div>
+
+              <!-- Cancelled -->
+              <div class="tab-pane fade" id="tab_cancelled" role="tabpanel">
+                {% include 'good/provider/job/partials/_jobs_table.html' with rows=cancelled_progresses show_completed_at=False %}
+              </div>
+
+              <!-- Offers -->
+              <div class="tab-pane fade" id="tab_offers" role="tabpanel">
+                {% include 'good/provider/job/partials/_offers_table.html' with rows=provider_offers %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block foot %} {% include BACKEND_FOOTER %} {% endblock %}
+{% block js %} {% include BACKEND_JS %} {% endblock %}

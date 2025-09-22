@@ -1,0 +1,40 @@
+{% load i18n %}
+<div class="table-responsive">
+  <table class="table align-middle table-row-dashed fs-6 gy-4">
+    <thead>
+      <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+        <th>{% translate 'Code' %}</th>
+        <th>{% translate 'Category' %}</th>
+        <th>{% translate 'Customer' %}</th>
+        <th class="text-end">{% translate 'Offer Price' %}</th>
+        <th>{% translate 'Status' %}</th>
+        <th>{% translate 'Created At' %}</th>
+        <th>{% translate 'Updated At' %}</th>
+      </tr>
+    </thead>
+    <tbody class="text-gray-600 fw-semibold">
+      {% for offer in rows %}
+        <tr>
+          <td>{{ offer.job.code|default:'-' }}</td>
+          <td>{{ offer.job.category.title|default:'-' }}</td>
+          <td>
+            {% if offer.job.customer %}
+              {{ offer.job.customer.get_full_name|default:offer.job.customer.email }}
+            {% else %}-{% endif %}
+          </td>
+          <td class="text-end">{% if offer.price %}{{ offer.price }}{% else %}-{% endif %}</td>
+          <td>{{ offer.status|default:'-' }}</td>
+          <td>{{ offer.create_at|date:'Y-m-d H:i'|default:'-' }}</td>
+          <td>{{ offer.update_at|date:'Y-m-d H:i'|default:'-' }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-10">
+            {% translate 'No offers to display.' %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+

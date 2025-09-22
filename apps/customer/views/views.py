@@ -1,15 +1,17 @@
 from django.contrib import messages
-from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
 from datetime import datetime
 
+from django.db.models import Prefetch
+
+from apps.classified.models.models import Job, JobProgress, JobOffer, JobNegotiate
 from helper.commonHelper import *
 from helper.decorators import *
 from user.models import UserAddress, UserProfile
+from api.v1.constants import JobProgressStatus
 
 # Assumption: Your models are in one of these locations. Adjust as needed.
 
@@ -47,15 +49,21 @@ def AdminCustomerUpdate(request, slug):
                 customer.last_name = request.POST.get('last_name', '').strip() or None
                 customer.email = request.POST.get('email', '').strip() or None
                 customer.phone = request.POST.get('phone', '').strip() or None
-                customer.is_active = 'Active' if 'is_active' in request.POST else 'Inactive'
+
+                # Account status from select
+                is_active_val = (request.POST.get('is_active') or '').strip()
+                customer.is_active = 'Active' if is_active_val == 'Active' else 'Inactive'
                 customer.save()
 
                 if not profile:
                     profile = UserProfile.objects.create(user=customer)
 
-                profile.is_citizen = 'is_citizen' in request.POST
+                # Is citizen from select (truthy values -> True)
+                is_citizen_val = (request.POST.get('is_citizen') or '').strip().lower()
+                profile.is_citizen = is_citizen_val in ('1', 'true', 'yes', 'on', 'active')
 
-                dob_str = request.POST.get('date_of_birth', '').strip()
+                # Read DOB from 'dob' (matches template)
+                dob_str = (request.POST.get('dob') or '').strip()
                 if dob_str:
                     try:
                         profile.dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
@@ -101,3 +109,40 @@ def AdminCustomerDelete(request, slug):
     customer.save()
     messages.success(request, "Customer Deleted Successfully", extra_tags='Customer')
     return HttpResponseRedirect(reverse_lazy('customer:AdminCustomerList'))
+
+
+########################## Customer Jobs Admin ################################
+@authenticated_staff
+@staff_only
+def AdminCustomerJobList(request,slug):
+    user = get_object_or_404(User, slug=slug)
+
+    # Base prefetch: latest negotiations for this customer per job, ordered desc
+    negotiations_prefetch = Prefetch(
+        'job__negotiates',
+        queryset=JobNegotiate.objects.filter(customer=user).order_by('-id'),
+        to_attr='negotiations_ordered'
+    )
+
+    base_qs = (
+        JobProgress.objects
+        .filter(customer=user)
+        .select_related('job__category', 'provider__user', 'offer')
+        .prefetch_related(negotiations_prefetch)
+        .order_by('-id')
+    )
+
+    pending_progresses = base_qs.filter(progress_status=JobProgressStatus.PENDING)
+    in_progress_progresses = base_qs.filter(progress_status=JobProgressStatus.IN_PROGRESS)
+    completed_progresses = base_qs.filter(progress_status=JobProgressStatus.COMPLETED)
+    cancelled_progresses = base_qs.filter(progress_status=JobProgressStatus.CANCELLED)
+
+    context = {
+        'customer': user,
+        'pending_progresses': pending_progresses,
+        'in_progress_progresses': in_progress_progresses,
+        'completed_progresses': completed_progresses,
+        'cancelled_progresses': cancelled_progresses,
+        'current_page': 'وظائف العملاء'
+    }
+    return render(request, f'{BACKEND_TEMPLATES}/customer/job/admin.html', context)
