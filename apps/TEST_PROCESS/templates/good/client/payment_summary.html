@@ -39,6 +39,19 @@
       <div class="label">المبلغ المطلوب</div>
       <div class="value" id="amount">{{ amount|floatformat:2 }} ر.س</div>
     </div>
+
+    <!-- ✅ صف المبلغ الإضافي -->
+<div class="row">
+  <div class="label">مبلغ إضافي</div>
+  <div class="value" id="extra-amount">
+    {% if extra_amount and extra_amount > 0 %}
+      {{ extra_amount|floatformat:2 }} ر.س
+    {% else %}
+      0.00 ر.س
+    {% endif %}
+  </div>
+</div>
+
     <div class="row">
       <div class="label">ضريبة مضافة</div>
       <div class="value">{{ tax|floatformat:2 }} ر.س</div>

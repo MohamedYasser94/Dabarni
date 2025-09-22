@@ -48,6 +48,10 @@ urlpatterns = [
     path('wallet/withdraw/', customer_wallet.withdraw_money, name='withdraw_money'),
     path('wallet/balance/', customer_wallet.get_balance, name='get_balance'),
 
+    #------------------- Progress ----------------
+  path('jobs/progress/<int:progress_id>/', jop.get_job_progress, name='get_job_progress'),
+
+
      
 
 ]

@@ -252,6 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (data.isSuccess) {
             window.currentJob = data.data;
+            const clientNegotiation = data.data.negotiations?.find(n => n.customer_price != null);
+                if (clientNegotiation) {
+                    renderActionCard(data.data, 'client-negotiate', clientNegotiation.customer_price);
+                }
+                startPollingJobStatus(jobId);
             renderJobDetails(data.data);
             attachEventListeners(jobId, token);
 
@@ -273,7 +278,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 function startPollingJobStatus(jobId, interval = 5000) {
-    setInterval(async () => {
+    // امنع إنشاء أكثر من interval واحد
+    if (window.jobPollInterval) {
+        clearInterval(window.jobPollInterval);
+        window.jobPollInterval = null;
+    }
+
+    async function poll() {
         const token = localStorage.getItem("access_token");
         try {
             const response = await fetch(`/api/v1/provider/jobs/${jobId}/details/`, {
@@ -281,36 +292,46 @@ function startPollingJobStatus(jobId, interval = 5000) {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
-            if (data.isSuccess) {
-                const job = data.data;
-                
-                // تحقق من التفاوض الجديد
-                const acceptedOffer = job.offers?.find(o => o.status === 'Accepted');
-                const negotiatingOffer = job.offers?.find(o => o.status === 'Negotiating');
-                
-                // إذا العميل أرسل تفاوض جديد ولم نحدث الكارد بعد
-                const stored = localStorage.getItem(`job_action_${jobId}`);
-                let previousActionType = stored ? JSON.parse(stored).actionType : null;
+            if (!data.isSuccess) return;
 
-                if (negotiatingOffer && previousActionType !== 'client-negotiate') {
-                    // جلب السعر من negotiations المرتبطة بالـ offer
-                    let customerPrice = null;
-                    const negotiation = job.negotiations?.find(n => n.offer === negotiatingOffer.id);
-                    if (negotiation) {
-                        customerPrice = negotiation.customer_price;
-                    }
+            const job = data.data;
 
-                    // استخدم السعر الصحيح بدل hard-coded
-                    renderActionCard(job, 'client-negotiate', customerPrice);
-                }
+            // DEBUG: انظر البنية للـ negotiations و الـ offers
+            console.log('[poll] job.offers=', job.offers);
+            console.log('[poll] job.negotiations=', job.negotiations);
 
-                window.currentJob = job;
+            const negotiatingOffer = job.offers?.find(o => o.status === 'Negotiating');
+            const stored = localStorage.getItem(`job_action_${jobId}`);
+            const previousActionType = stored ? JSON.parse(stored).actionType : null;
+
+            if (negotiatingOffer && previousActionType !== 'client-negotiate') {
+                // بحث مرن عن الـ negotiation المرتبطة بالـ offer
+                const negotiation = (job.negotiations || []).find(n => {
+                    if (!n) return false;
+                    // حالة n.offer رقم/سلسلة
+                    if (String(n.offer) === String(negotiatingOffer.id)) return true;
+                    // حالة n.offer ككائن {id: ...}
+                    if (n.offer && typeof n.offer === 'object' && String(n.offer.id) === String(negotiatingOffer.id)) return true;
+                    return false;
+                }) || (job.negotiations || []).find(n => n.customer_price != null); // fallback: أي تفاوض فيه customer_price
+
+                const customerPrice = negotiation?.customer_price ?? null;
+
+                // لا تستدعي الرفع لو القيمة فعلاً undefined؟ هنا بنعرض الكارد حتى لو null لكن نعالج العرض لاحقاً
+                renderActionCard(job, 'client-negotiate', customerPrice);
             }
+
+            window.currentJob = job;
         } catch (error) {
             console.error("Polling error:", error);
         }
-    }, interval);
+    }
+
+    // اطلب مباشرة مرة، ثم فعّل poll كل interval
+    poll();
+    window.jobPollInterval = setInterval(poll, interval);
 }
+
 
 
 
@@ -478,25 +499,50 @@ function startPollingJobStatus(jobId, interval = 5000) {
         }
     }
 
-function renderActionCard(job, actionType, offeredPrice = null) {
+function renderActionCard(job, actionType, offeredPrice) {
     const container = document.getElementById('action-card-container');
     let progressStatus = job.progresses[0]?.progress_status || 'Pending';
     let title = '';
     let statusText = '';
-    let priceInfo = '';
+    let actionButtons = ''; // 👈 جديد
+
+    const priceDisplay = (offeredPrice != null) ? `${offeredPrice} ر.س` : 'غير محدد';
 
     if(actionType === 'accept'){
         title = 'قبول الطلب';
-        statusText = progressStatus === 'AcceptedByCustomer' ? 'تم قبول الطلب من العميل ✅' : 'تم قبول الطلب، في انتظار موافقة العميل';
-        priceInfo = `<div class="col"><span class="label">السعر الأساسي للطلب</span><div class="value">${job.price} ر.س</div></div>`;
+        statusText = progressStatus === 'AcceptedByCustomer' 
+            ? 'تم قبول الطلب من العميل ✅' 
+            : 'تم قبول الطلب، في انتظار موافقة العميل';
     } else if(actionType === 'negotiate'){
         title = 'تفاوض على الطلب';
-        statusText = progressStatus === 'AcceptedByCustomer' ? 'تم قبول عرضك من العميل ✅' : 'فى انتظار موافقة العميل تم إرسال عرض التفاوض';
-        priceInfo = `<div class="col"><span class="label">السعر المقترح للتفاوض</span><div class="value">${offeredPrice} ر.س</div></div>`;
+        statusText = progressStatus === 'AcceptedByCustomer' 
+            ? 'تم قبول عرضك من العميل ✅' 
+            : 'فى انتظار موافقة العميل تم إرسال عرض التفاوض';
     } else if(actionType === 'client-negotiate'){
         title = 'عرض تفاوض جديد من العميل';
-        statusText = `العميل قدم عرض تفاوض جديد بمبلغ ${offeredPrice} ر.س`;
-        priceInfo = `<div class="col"><span class="label">السعر المقترح من العميل</span><div class="value">${offeredPrice} ر.س</div></div>`;
+        statusText = (offeredPrice != null) 
+            ? `العميل قدم عرض تفاوض جديد بمبلغ ${offeredPrice} ر.س` 
+            : 'العميل قدم عرض تفاوض جديد';
+
+        actionButtons = `
+            <div class="action-buttons">
+                <button class="action-button accept-button" onclick="handleClientNegotiation(${job.id}, ${offeredPrice}, true)">
+                    قبول
+                </button>
+                <button class="action-button negotiate-button" onclick="handleClientNegotiation(${job.id}, ${offeredPrice}, false)">
+                    رفض
+                </button>
+            </div>
+        `;
+    }
+
+    let priceInfo = '';
+    if (actionType === 'accept') {
+        priceInfo = `<div class="col"><span class="label">السعر الأساسي للطلب</span><div class="value">${job.price} ر.س</div></div>`;
+    } else if (actionType === 'negotiate') {
+        priceInfo = `<div class="col"><span class="label">السعر المقترح للتفاوض</span><div class="value">${priceDisplay}</div></div>`;
+    } else if (actionType === 'client-negotiate') {
+        priceInfo = `<div class="col"><span class="label">السعر المقترح من العميل</span><div class="value">${priceDisplay}</div></div>`;
     }
 
     const cardHtml = `
@@ -510,6 +556,7 @@ function renderActionCard(job, actionType, offeredPrice = null) {
                 <div class="col" style="flex-basis:100%;"><span class="label">الوصف</span><div class="value">${job.description || 'لا يوجد وصف'}</div></div>
             </div>
             <div style="margin-top:10px; font-weight:bold; color:#28a745;">${statusText}</div>
+            ${actionButtons} <!-- 👈 الأزرار هنا -->
         </div>
     `;
 
@@ -517,9 +564,11 @@ function renderActionCard(job, actionType, offeredPrice = null) {
 
     localStorage.setItem(`job_action_${job.id}`, JSON.stringify({
         actionType,
-        offeredPrice
+        offeredPrice: offeredPrice ?? null
     }));
 }
+
+
 
 
 
@@ -545,6 +594,32 @@ function renderActionCard(job, actionType, offeredPrice = null) {
         lb.appendChild(img);
         document.body.appendChild(lb);
     }
+
+    async function handleClientNegotiation(jobId, price, isAccepted) {
+    const token = localStorage.getItem("access_token");
+    const url = isAccepted 
+        ? `/api/v1/provider/jobs/${jobId}/accept-client-offer/` 
+        : `/api/v1/provider/jobs/${jobId}/reject-client-offer/`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ price })
+        });
+        const data = await response.json();
+        alert(data.message || (isAccepted ? 'تم قبول عرض العميل' : 'تم رفض عرض العميل'));
+
+        if(data.isSuccess){
+            // حدّث الكارد بعد الإجراء
+            renderActionCard(window.currentJob, isAccepted ? 'accept' : 'negotiate', price);
+        }
+    } catch (err) {
+        console.error('Error:', err);
+        alert('حدث خطأ أثناء تنفيذ العملية');
+    }
+}
+
 
     fetchJobDetails();
 });

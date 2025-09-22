@@ -57,6 +57,40 @@
     <p><span class="info-label">الوصف:</span> {{ job.description }}</p>
 
     <hr>
+
+   <!-- مكان الأزرار -->
+<div id="providerActions" class="bg-light p-3 rounded mb-3 d-flex justify-content-around align-items-center" style="display: none;">
+  <button id="extraAmountBtn" class="btn btn-outline-warning d-flex align-items-center gap-2">
+      💰 طلب مبلغ إضافي
+  </button>
+  <button id="startWorkBtn" class="btn btn-outline-success d-flex align-items-center gap-2">
+      ▶️ بدء العمل
+  </button>
+</div>
+
+<!-- مكان كارد المبلغ الإضافي (للـ Client) -->
+<div id="extraRequestCard" style="display: none;">
+  <div class="card border-warning mb-3">
+    <div class="card-body">
+      <h5 class="card-title text-warning">💰 طلب مبلغ إضافي</h5>
+      <p class="card-text">
+        المزود طلب مبلغ إضافي قدره 
+        <strong id="extraAmountValue"></strong> ر.س
+      </p>
+      <p class="card-text text-muted small" id="extraRequestDesc"></p>
+
+      <!-- أزرار قبول/رفض -->
+      <div class="d-flex gap-2 mt-3" id="extraActions">
+        <button id="acceptExtraBtn" class="btn btn-success flex-fill">✅ قبول</button>
+        <button id="rejectExtraBtn" class="btn btn-danger flex-fill">❌ رفض</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
 <!-- داخل div بطاقة الطلب أو أعلى الأزرار -->
       <div id="jobStatus" class="mb-3">
           <span class="badge" id="statusBadge"></span>
@@ -243,7 +277,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         footerButtons.appendChild(helpBtn);
     }
 
-    // Wallet button logic (مشترك)
     document.getElementById("walletBtn").addEventListener("click", async () => {
         const modal = new bootstrap.Modal(document.getElementById("walletModal"));
         const walletDetails = document.getElementById("walletDetails");
@@ -274,8 +307,165 @@ document.addEventListener("DOMContentLoaded", async function () {
         modal.show();
     });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  const providerActions = document.getElementById("providerActions");
+  const extraAmountBtn = document.getElementById("extraAmountBtn");
+  const startWorkBtn = document.getElementById("startWorkBtn");
+
+  const progressId = "{{ progress.id }}";
+  const token = localStorage.getItem("access_token");
+  const rawAccess = localStorage.getItem("access_level");
+
+  const rawExtraCost = "{{ progress.extra_cost|default:'' }}";
+  const rawStartAt   = "{{ progress.start_at|default:'' }}";
+
+  const isProvider = rawAccess === "Provider";
+
+  // ✅ لو مش Provider → اخفي البلوك كله
+  if (!isProvider) {
+    if (providerActions) {
+      providerActions.style.display = "none";
+    }
+    return; // وقف الكود
+  }
+
+  // 💡 لو Provider → أظهر الأزرار
+  providerActions.style.display = "flex";
+
+  if (rawExtraCost && rawExtraCost !== "None" && extraAmountBtn) {
+    extraAmountBtn.disabled = true;
+    extraAmountBtn.textContent = "💰 تم طلب مبلغ إضافي";
+  }
+
+  if (rawStartAt && rawStartAt !== "None" && startWorkBtn) {
+    startWorkBtn.disabled = true;
+    startWorkBtn.textContent = "✅ تم البدء بالفعل";
+  }
+
+  if (extraAmountBtn && !extraAmountBtn.disabled) {
+    extraAmountBtn.addEventListener("click", async () => {
+      const amount = prompt("أدخل المبلغ الإضافي المطلوب:");
+      if (!amount) return;
+      try {
+        const res = await fetch(`/api/v1/provider/jobs/progress/${progressId}/extra-request/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ extra_cost: amount, extra_request: "طلب مبلغ إضافي" })
+        });
+        const payload = await res.json();
+        if (res.ok) {
+          alert(payload.message || "تم إرسال طلب المبلغ الإضافي.");
+          extraAmountBtn.disabled = true;
+          extraAmountBtn.textContent = "💰 تم طلب مبلغ إضافي";
+        } else {
+          alert(payload.message || "فشل إرسال طلب المبلغ الإضافي.");
+        }
+      } catch (err) {
+        console.error("extra-request error:", err);
+        alert("خطأ في الاتصال بالسيرفر.");
+      }
+    });
+  }
+
+  if (startWorkBtn && !startWorkBtn.disabled) {
+    startWorkBtn.addEventListener("click", async () => {
+      if (!confirm("هل أنت متأكد من بدء العمل الآن؟")) return;
+      try {
+        const res = await fetch(`/api/v1/provider/jobs/progress/${progressId}/start/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({})
+        });
+        const payload = await res.json();
+        if (res.ok) {
+          alert(payload.message || "تم بدء العمل.");
+          startWorkBtn.disabled = true;
+          startWorkBtn.textContent = "✅ تم البدء بالفعل";
+        } else {
+          alert(payload.message || "فشل بدء العمل.");
+        }
+      } catch (err) {
+        console.error("start-work error:", err);
+        alert("خطأ في الاتصال بالسيرفر.");
+      }
+    });
+  }
+});
+
+
+
+const progressId = "{{ progress.id }}"; 
+document.addEventListener("DOMContentLoaded", function () {
+    const statusBadge = document.getElementById("statusBadge");
+
+    async function checkProgress() {
+        try {
+            const res = await fetch(`/api/v1/customer/jobs/progress/${progressId}/`, {
+                headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") }
+            });
+            const data = await res.json();
+
+            if (res.ok && data.isSuccess) {
+                if (data.data.status === "InProgress") {
+                    statusBadge.textContent = "بدأ التنفيذ ✅";
+                    statusBadge.style.backgroundColor = "#3498db";
+                    statusBadge.style.color = "#fff";
+                    clearInterval(progressInterval);
+                }
+            }
+        } catch (err) {
+            console.error("Error checking progress:", err);
+        }
+    }
+
+    const progressInterval = setInterval(checkProgress, 5000);
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const extraRequestCard = document.getElementById("extraRequestCard");
+    const extraAmountValue = document.getElementById("extraAmountValue");
+    const extraRequestDesc = document.getElementById("extraRequestDesc");
+    const acceptExtraBtn = document.getElementById("acceptExtraBtn");
+    const rejectExtraBtn = document.getElementById("rejectExtraBtn");
+
+    const offerId = "{{ progress.offer_id }}"; // لازم يكون موجود في الـ context
+    const accessLevel = localStorage.getItem("access_level");
+
+    const rawExtraCost = "{{ progress.extra_cost|default:'' }}";
+    const rawExtraRequest = "{{ progress.extra_request|default:'' }}";
+
+    // لو Client وعنده طلب مبلغ إضافي
+    if (accessLevel === "Client" && rawExtraCost && rawExtraCost !== "None") {
+        extraRequestCard.style.display = "block";
+        extraAmountValue.textContent = rawExtraCost;
+        extraRequestDesc.textContent = rawExtraRequest || "";
+
+        // قبول → يروح على صفحة الدفع مباشرة
+        acceptExtraBtn.addEventListener("click", () => {
+            if (!confirm("هل تريد قبول المبلغ الإضافي؟")) return;
+            // إخفاء الكارد
+            extraRequestCard.style.display = "none";
+            // تحويل المستخدم لصفحة الدفع
+           window.location.href = `/test/client/offers/${offerId}/payment-summary/?extra=${rawExtraCost}`;
+
+        });
+
+        // رفض → رسالة + إخفاء الكارد
+        rejectExtraBtn.addEventListener("click", () => {
+            if (!confirm("هل تريد رفض المبلغ الإضافي؟")) return;
+            alert("تم إلغاء الطلب ❌");
+            // إخفاء الكارد
+            extraRequestCard.style.display = "none";
+        });
+    }
+});
 </script>
-
-
 </body>
 </html>
