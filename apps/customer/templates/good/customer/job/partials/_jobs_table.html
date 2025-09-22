@@ -1,0 +1,53 @@
+{% load i18n %}
+<div class="table-responsive">
+  <table class="table align-middle table-row-dashed fs-6 gy-4">
+    <thead>
+      <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+        <th>{% translate 'Code' %}</th>
+        <th>{% translate 'Category' %}</th>
+        <th class="text-end">{% translate 'Original Price' %}</th>
+        <th class="text-end">{% translate 'Customer Price (Negotiation)' %}</th>
+        <th class="text-end">{% translate 'Provider Price (Negotiation)' %}</th>
+        <th class="text-end">{% translate 'Offer Price' %}</th>
+        <th>{% translate 'Provider' %}</th>
+        <th>{% translate 'Status' %}</th>
+        <th>{% translate 'Updated At' %}</th>
+        {% if show_completed_at %}
+          <th>{% translate 'Completed At' %}</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody class="text-gray-600 fw-semibold">
+      {% for row in rows %}
+        {% with job=row.job %}
+          {% with latest_neg=job.negotiations_ordered.0 %}
+            <tr>
+              <td>{{ job.code|default:'-' }}</td>
+              <td>{{ job.category.title|default:'-' }}</td>
+              <td class="text-end">{% if job.price %}{{ job.price }}{% else %}-{% endif %}</td>
+              <td class="text-end">{% if latest_neg and latest_neg.customer_price %}{{ latest_neg.customer_price }}{% else %}-{% endif %}</td>
+              <td class="text-end">{% if latest_neg and latest_neg.provider_price %}{{ latest_neg.provider_price }}{% else %}-{% endif %}</td>
+              <td class="text-end">{% if row.offer and row.offer.price %}{{ row.offer.price }}{% else %}-{% endif %}</td>
+              <td>
+                {% if row.provider %}
+                  {% if row.provider.company %}{{ row.provider.company }}{% else %}{{ row.provider.user.get_full_name|default:row.provider.user.email }}{% endif %}
+                {% else %}-{% endif %}
+              </td>
+              <td>{{ row.progress_status|default:'-' }}</td>
+              <td>{{ row.update_at|date:'Y-m-d H:i'|default:'-' }}</td>
+              {% if show_completed_at %}
+                <td>{{ row.completed_at|date:'Y-m-d H:i'|default:'-' }}</td>
+              {% endif %}
+            </tr>
+          {% endwith %}
+        {% endwith %}
+      {% empty %}
+        <tr>
+          <td colspan="{% if show_completed_at %}10{% else %}9{% endif %}" class="text-center text-muted py-10">
+            {% translate 'No jobs to display in this tab.' %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

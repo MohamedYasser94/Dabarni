@@ -61,26 +61,22 @@
                                         <input type="text" class="form-control form-control-solid" name="address" value="{{ address.address|default:'' }}">
                                     </div>
 
+                                    <!-- Is Citizen as select -->
                                     <div class="col-md-6 fv-row">
                                         <label class="required fs-6 fw-semibold mb-2">{% translate "Is Citizen" %}</label>
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" name="is_citizen" id="is_citizen"
-                                                   {% if profile and profile.is_citizen %} checked {% endif %}/>
-                                            <label class="form-check-label" for="is_citizen">
-                                                {% translate "Citizen" %}
-                                            </label>
-                                        </div>
+                                        <select class="form-control form-control-solid" name="is_citizen" id="is_citizen">
+                                            <option value="1" {% if profile and profile.is_citizen %}selected{% endif %}>{% translate "Yes" %}</option>
+                                            <option value="0" {% if profile and not profile.is_citizen %}selected{% endif %}>{% translate "No" %}</option>
+                                        </select>
                                     </div>
 
+                                    <!-- Account status as select -->
                                     <div class="col-md-6 fv-row">
                                         <label class="fs-6 fw-semibold mb-2">{% translate "Account Status" %}</label>
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" name="is_active" id="is_active"
-                                                   {% if customer.is_active == 'Active' %} checked {% endif %}/>
-                                            <label class="form-check-label" for="is_active">
-                                                {% translate "Active" %}
-                                            </label>
-                                        </div>
+                                        <select class="form-control form-control-solid" name="is_active" id="is_active">
+                                            <option value="Active" {% if customer.is_active == 'Active' %}selected{% endif %}>{% translate "Active" %}</option>
+                                            <option value="Inactive" {% if customer.is_active != 'Active' %}selected{% endif %}>{% translate "Inactive" %}</option>
+                                        </select>
                                     </div>
                                 </div>
 
@@ -91,23 +87,29 @@
                                     <div class="col-md-6 fv-row">
                                         <label class="fs-6 fw-semibold mb-2">{% translate "ID Front Image" %}</label>
                                         {% if profile and profile.id_image_front %}
-                                            <img src="{{ profile.id_image_front.url }}" alt="{% translate 'ID Front' %}" class="w-100 mb-2">
+                                            <a href="{{ profile.id_image_front.url }}" target="_blank" rel="noopener">
+                                                <img src="{{ profile.id_image_front.url }}" alt="{% translate 'ID Front' %}" class="img-thumbnail mb-2" style="max-width: 120px; max-height: 120px;">
+                                            </a>
                                         {% endif %}
-                                        <input type="file" class="form-control form-control-solid" name="id_image_front">
+                                        <input type="file" class="form-control form-control-solid" name="id_image_front" accept="image/*">
                                     </div>
                                     <div class="col-md-6 fv-row">
                                         <label class="fs-6 fw-semibold mb-2">{% translate "ID Back Image" %}</label>
                                         {% if profile and profile.id_image_back %}
-                                            <img src="{{ profile.id_image_back.url }}" alt="{% translate 'ID Back' %}" class="w-100 mb-2">
+                                            <a href="{{ profile.id_image_back.url }}" target="_blank" rel="noopener">
+                                                <img src="{{ profile.id_image_back.url }}" alt="{% translate 'ID Back' %}" class="img-thumbnail mb-2" style="max-width: 120px; max-height: 120px;">
+                                            </a>
                                         {% endif %}
-                                        <input type="file" class="form-control form-control-solid" name="id_image_back">
+                                        <input type="file" class="form-control form-control-solid" name="id_image_back" accept="image/*">
                                     </div>
                                     <div class="col-md-6 fv-row">
                                         <label class="fs-6 fw-semibold mb-2">{% translate "Residence Image" %}</label>
                                         {% if profile and profile.residence_image %}
-                                            <img src="{{ profile.residence_image.url }}" alt="{% translate 'Residence' %}" class="w-100 mb-2">
+                                            <a href="{{ profile.residence_image.url }}" target="_blank" rel="noopener">
+                                                <img src="{{ profile.residence_image.url }}" alt="{% translate 'Residence' %}" class="img-thumbnail mb-2" style="max-width: 120px; max-height: 120px;">
+                                            </a>
                                         {% endif %}
-                                        <input type="file" class="form-control form-control-solid" name="residence_image">
+                                        <input type="file" class="form-control form-control-solid" name="residence_image" accept="image/*">
                                     </div>
                                 </div>
 

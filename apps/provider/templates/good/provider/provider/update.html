@@ -59,17 +59,21 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Profile Image -->
                                     <div class="row mb-6">
-                                        <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Account Status' %}</label>
-                                        <div class="col-lg-8 d-flex align-items-center">
-                                            <div class="form-check form-check-custom form-check-solid">
-                                                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if provider.user.is_active == 'Active' %} checked {% endif %}/>
-                                                <label class="form-check-label" for="is_active">
-                                                    {% translate "Active" %}
-                                                </label>
-                                            </div>
+                                        <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Profile Image' %}</label>
+                                        <div class="col-lg-8 fv-row">
+                                            {% if provider.user.image %}
+                                                <a href="{{ provider.user.image.url }}" target="_blank" rel="noopener">
+                                                    <img src="{{ provider.user.image_thumb_url|default:provider.user.image.url }}" alt="{% translate 'Profile Image' %}" class="img-thumbnail mb-2" style="max-width: 120px; max-height: 120px;">
+                                                </a>
+                                            {% endif %}
+                                            <input type="file" class="form-control form-control-solid" name="image" accept="image/*" />
+                                            <div class="form-text">{% translate 'Upload a profile image (JPG, PNG, WEBP)...' %}</div>
                                         </div>
                                     </div>
+
                                     <div class="separator my-10"></div>
 
                                     <h4 class="fw-bolder mb-5">{% translate 'Professional Details' %}</h4>
@@ -77,14 +81,11 @@
                                         <label class="col-lg-4 col-form-label fw-semibold fs-6">{% translate 'Company Details' %}</label>
                                         <div class="col-lg-8">
                                             <div class="row">
-                                                <div class="col-lg-6 fv-row">
+                                                <div class="col-lg-12 fv-row">
                                                     <label class="form-label fs-6 fw-bold">{% translate 'Company Name' %}</label>
                                                     <input type="text" name="company" class="form-control form-control-solid" placeholder="{% translate 'Company Name' %}" value="{{ provider.company|default:'' }}" />
                                                 </div>
-                                                <div class="col-lg-6 fv-row">
-                                                    <label class="form-label fs-6 fw-bold">{% translate 'Website' %}</label>
-                                                    <input type="text" name="website" class="form-control form-control-solid" placeholder="{% translate 'Website URL' %}" value="{{ provider.website|default:'' }}" />
-                                                </div>
+
                                             </div>
                                         </div>
                                     </div>
@@ -121,16 +122,20 @@
                                         <div class="col-md-6 fv-row">
                                             <label class="form-label fs-6 fw-bold">{% translate 'Commercial Image' %}</label>
                                             {% if provider.commercial_image %}
-                                                <img src="{{ provider.commercial_image.url }}" alt="{% translate 'Commercial Image' %}" class="img-fluid rounded mb-2 w-100">
+                                                <a href="{{ provider.commercial_image.url }}" target="_blank" rel="noopener">
+                                                    <img src="{{ provider.commercial_image_thumb_url|default:provider.commercial_image.url }}" alt="{% translate 'Commercial Image' %}" class="img-thumbnail mb-2" style="max-width: 120px; max-height: 120px;">
+                                                </a>
                                             {% endif %}
-                                            <input type="file" class="form-control form-control-solid" name="commercial_image"/>
+                                            <input type="file" class="form-control form-control-solid" name="commercial_image" accept="image/*"/>
                                         </div>
                                         <div class="col-md-6 fv-row">
                                             <label class="form-label fs-6 fw-bold">{% translate 'VAT Image' %}</label>
                                             {% if provider.vat_image %}
-                                                <img src="{{ provider.vat_image.url }}" alt="{% translate 'VAT Image' %}" class="img-fluid rounded mb-2 w-100">
+                                                <a href="{{ provider.vat_image.url }}" target="_blank" rel="noopener">
+                                                    <img src="{{ provider.vat_image_thumb_url|default:provider.vat_image.url }}" alt="{% translate 'VAT Image' %}" class="img-thumbnail mb-2" style="max-width: 120px; max-height: 120px;">
+                                                </a>
                                             {% endif %}
-                                            <input type="file" class="form-control form-control-solid" name="vat_image"/>
+                                            <input type="file" class="form-control form-control-solid" name="vat_image" accept="image/*"/>
                                         </div>
                                     </div>
                                     
@@ -138,9 +143,20 @@
                                         <div class="col-md-6 fv-row">
                                             <label class="form-label fs-6 fw-bold">{% translate 'License Image' %}</label>
                                             {% if provider.license_image %}
-                                                <img src="{{ provider.license_image.url }}" alt="{% translate 'License Image' %}" class="img-fluid rounded mb-2 w-100">
+                                                <a href="{{ provider.license_image.url }}" target="_blank" rel="noopener">
+                                                    <img src="{{ provider.license_image_thumb_url|default:provider.license_image.url }}" alt="{% translate 'License Image' %}" class="img-thumbnail mb-2" style="max-width: 120px; max-height: 120px;">
+                                                </a>
                                             {% endif %}
-                                            <input type="file" class="form-control form-control-solid" name="license_image"/>
+                                            <input type="file" class="form-control form-control-solid" name="license_image" accept="image/*"/>
+                                        </div>
+                                        <div class="col-md-6 fv-row">
+                                            <label class="form-label fs-6 fw-bold">{% translate 'Commercial Image 2' %}</label>
+                                            {% if provider.commercial_image2 %}
+                                                <a href="{{ provider.commercial_image2.url }}" target="_blank" rel="noopener">
+                                                    <img src="{{ provider.commercial_image2_thumb_url|default:provider.commercial_image2.url }}" alt="{% translate 'Commercial Image 2' %}" class="img-thumbnail mb-2" style="max-width: 120px; max-height: 120px;">
+                                                </a>
+                                            {% endif %}
+                                            <input type="file" class="form-control form-control-solid" name="commercial_image2" accept="image/*"/>
                                         </div>
                                         <div class="col-md-6 fv-row">
                                             <label class="form-label fs-6 fw-bold">{% translate 'Bank Account' %}</label>

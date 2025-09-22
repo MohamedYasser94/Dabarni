@@ -1,6 +1,5 @@
 import math
 from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -12,13 +11,14 @@ from api.v1.provider.serializers.classified import *
 from apps.classified.models.models import *
 from rest_framework.decorators import api_view, permission_classes
 from drf_spectacular.utils import extend_schema ,OpenApiResponse
-from django.db.models import Count, Q
 from apps.classified.models.models import Job
 from api.v1.response import success_response, error_response
-from api.v1.customer.serializers.profile_serializer import UserProfileSerializer
-from django.db.models.expressions import RawSQL
 from django.db import transaction
 from django.utils import timezone
+
+from user.models import UserProfile
+
+
 @extend_schema(
     tags=["Provider Profile"],
     responses={200: ProviderProfileDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
@@ -203,57 +203,93 @@ def ProviderMyOrders(request, progress_status):
 @permission_classes([IsAuthenticated])
 def RetrieveAvailableJobs(request):
     """
-    API endpoint to list jobs available for a provider, filtered by their category
-    and geographical location using Python-based calculation.
+    API endpoint to list jobs available for a provider, filtered by their category.
+    If coordinates are available (provider's saved location or lat/long query params),
+    results are distance-filtered within a given radius (default 50km). Otherwise,
+    falls back to category-only results without returning 400.
+    Optional query params:
+      - lat: float
+      - long: float
+      - radius_km: float (default 50.0)
     """
     try:
-        # 1. Get the authenticated provider's profile and their location
+        print("Fetching available jobs for provider:", request.user.id)
         provider = get_object_or_404(JobProvider, user=request.user)
 
-        if not provider.latitude or not provider.longitude:
-            return error_response(
-                message="يرجى إكمال ملفك الشخصي وإضافة موقعك لتتمكن من رؤية الوظائف المتاحة.",
-                status_code=status.HTTP_400_BAD_REQUEST
+        # Optional query params override provider location
+        qparams = getattr(request, 'query_params', None) or request.GET
+        lat_param = qparams.get('lat')
+        long_param = qparams.get('long')
+        radius_param = qparams.get('radius_km')
+
+        radius_km = 50.0
+        try:
+            if radius_param is not None:
+                radius_km = float(radius_param)
+        except Exception:
+            radius_km = 50.0
+
+        # Determine coordinates source
+        coord_source = None
+        providerLat = providerLong = None
+        if lat_param and long_param:
+            try:
+                providerLat = float(lat_param)
+                providerLong = float(long_param)
+                coord_source = 'query'
+            except Exception:
+                providerLat = providerLong = None
+        if providerLat is None or providerLong is None:
+            # fallback to provider saved coords
+            try:
+                if provider.latitude and provider.longitude:
+                    providerLat = float(provider.latitude)
+                    providerLong = float(provider.longitude)
+                    coord_source = 'provider'
+            except Exception:
+                providerLat = providerLong = None
+
+        # Base queryset filtered by category and pending progress
+        jobsQueryset = (
+            Job.objects
+            .filter(category=provider.category, progresses__progress_status='Pending')
+            .select_related('location')
+            .distinct()
+        )
+
+        # If no coordinates available, return category-only results
+        if providerLat is None or providerLong is None:
+            serializer = JobDetailSerializer(jobsQueryset, many=True, context={'request': request})
+            return success_response(
+                message="تم جلب قائمة الوظائف المتاحة حسب الفئة. (بدون تحديد موقع)",
+                data=serializer.data,
+                status_code=status.HTTP_200_OK
             )
 
-        providerLat = float(provider.latitude)
-        providerLong = float(provider.longitude)
-        searchRadiusKm = 50.0  # 50 kilometers radius
-
-        # 2. Get jobs filtered by category and prefetch the related UserAddress data
-        jobsQueryset = Job.objects.filter(
-            category=provider.category,
-            progresses__progress_status='Pending'
-        ).select_related('location')
-
-        print(jobsQueryset)
-        # 3. Calculate distance for each job and filter in Python
+        # Distance filtering using Haversine formula in Python
         availableJobs = []
         for job in jobsQueryset:
             if job.location and job.location.latitude and job.location.longitude:
-                jobLat = float(job.location.latitude)
-                jobLong = float(job.location.longitude)
-                
-                # Haversine formula calculation in Python
-                R = 6371 # Earth radius in km
+                try:
+                    jobLat = float(job.location.latitude)
+                    jobLong = float(job.location.longitude)
+                except Exception:
+                    continue
+
+                R = 6371  # Earth radius in km
                 dLat = math.radians(jobLat - providerLat)
                 dLon = math.radians(jobLong - providerLong)
-                a = math.sin(dLat/2) * math.sin(dLat/2) + math.cos(math.radians(providerLat)) * math.cos(math.radians(jobLat)) * math.sin(dLon/2) * math.sin(dLon/2)
+                a = math.sin(dLat/2) ** 2 + math.cos(math.radians(providerLat)) * math.cos(math.radians(jobLat)) * math.sin(dLon/2) ** 2
                 c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
                 distance = R * c
 
-                if distance <= searchRadiusKm:
-                    # Add a distance attribute to the job object for sorting later
+                if distance <= radius_km:
                     job.distance = distance
                     availableJobs.append(job)
 
-        # Sort the list of jobs by distance
-        availableJobs.sort(key=lambda x: x.distance)
-       # print(availableJobs)
-        
-        # 4. Serialize the filtered jobs
+        availableJobs.sort(key=lambda x: getattr(x, 'distance', float('inf')))
         serializer = JobDetailSerializer(availableJobs, many=True, context={'request': request})
-        
+
         return success_response(
             message="تم جلب قائمة الوظائف المتاحة لك بنجاح.",
             data=serializer.data,
@@ -265,6 +301,7 @@ def RetrieveAvailableJobs(request):
             status_code=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
+        print('Error fetching available jobs:', str(e))
         return error_response(
             message=f"حدث خطأ أثناء جلب قائمة الوظائف: {str(e)}",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

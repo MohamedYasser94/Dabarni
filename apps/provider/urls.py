@@ -14,6 +14,9 @@ urlpatterns = [
     path('provider/delete/<slug:slug>/', views.AdminProviderDelete, name='AdminProviderDelete'),
     path('provider/create/', views.AdminProviderCreate, name='AdminProviderCreate'),
 
+    ################# JobProvider Jobs #################
+    path('provider/jobs/<slug:slug>/', views.AdminProviderJobList, name='AdminProviderJobList'),
+
 
 
 ]
