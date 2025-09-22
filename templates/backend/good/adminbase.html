@@ -3,9 +3,12 @@
 
 <!--begin::Body-->
 {% if user.is_authenticated %}
-    <body data-kt-name="good" id="kt_app_body" data-kt-app-layout="mini-sidebar" data-kt-app-sidebar-enabled="true"
-          data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-push-header="true"
-          data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" class="app-default">
+{#    <body data-kt-name="good" id="kt_app_body" data-kt-app-layout="mini-sidebar" data-kt-app-sidebar-enabled="true"#}
+{#          data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-push-header="true"#}
+{#          data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" class="app-default">#}
+
+    	<body id="kt_app_body" data-kt-app-layout="light-sidebar" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-push-header="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" class="app-default">
+
     <!--begin::Theme mode setup on page load-->
 
     <script>var defaultThemeMode = "light";
@@ -39,7 +42,7 @@
                 {% block sidebar %} {% include BACKEND_SIDEBAR %} {% endblock %}
                 <!--end::sidebar-->
                 <!--begin::Main-->
-                <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
+
                     <!--begin::Content wrapper-->
                     {% block body %} {% include BACKEND_BODY %}  {% endblock %}
                     <!--end:::Main-->
@@ -47,7 +50,7 @@
                     <!--begin::Footer-->
                     {% block foot %} {% include BACKEND_FOOTER %}  {% endblock %}
                     <!--end::Footer-->
-                </div>
+
                 <!--end:::Main-->
             </div>
             <!--end::Wrapper-->

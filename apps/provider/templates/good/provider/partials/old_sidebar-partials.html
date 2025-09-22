@@ -1,0 +1,31 @@
+{% load static %}
+{% load i18n %}
+
+
+
+
+    <div data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-placement="right-start"
+         class="menu-item py-1">
+        <span class="menu-link menu-center">
+            <span class="menu-icon me-0">
+                <i class="ki-outline ki-delivery-geolocation fs-2hx"></i>
+            </span>
+        </span>
+        <div class="menu-sub menu-sub-dropdown px-lg-2 py-lg-4 w-200px w-lg-225px">
+            <div class="menu-item">
+                <div class="menu-content">
+                    <span class="menu-section fs-5 fw-bolder ps-1 py-1">{% translate 'Provider' %}</span>
+                </div>
+            </div>
+            <div class="menu-sub menu-sub-accordion menu-active-bg">
+                <div class="menu-item">
+                    <a class="menu-link" href="{% url 'provider:AdminProviderList' %}">
+                        <span class="menu-bullet">
+                            <span class="bullet bullet-dot"></span>
+                        </span>
+                        <span class="menu-title">{% translate "Providers" %}</span>
+                    </a>
+                    </div>
+                </div>
+            </div>
+    </div>

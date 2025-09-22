@@ -1,0 +1,73 @@
+{% load static %}
+{% load i18n %}
+
+<!--begin:Menu item-->
+<div data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-placement="right-start"
+     class="menu-item py-1">
+    <!--begin:Menu link-->
+    <span class="menu-link menu-center">
+        <span class="menu-icon me-0">
+            <i class="ki-outline ki-briefcase fs-2hx"></i>
+        </span>
+    </span>
+    <!--end:Menu link-->
+    <!--begin:Menu sub-->
+    <div class="menu-sub menu-sub-dropdown px-lg-2 py-lg-4 w-200px w-lg-225px">
+        <!--begin:Menu item-->
+        <div class="menu-item">
+            <!--begin:Menu content-->
+            <div class="menu-content">
+                <span class="menu-section fs-5 fw-bolder ps-1 py-1">{% translate 'Job Management' %}</span>
+            </div>
+            <!--end:Menu content-->
+        </div>
+        <!--end:Menu item-->
+        
+        <div class="menu-sub menu-sub-accordion menu-active-bg">
+            <!-- All Jobs -->
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'classified:AdminJobList' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'All Jobs' %}</span>
+                </a>
+            </div>
+            <!-- Active Jobs -->
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'classified:AdminActiveJobs' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'Active Jobs' %}</span>
+                </a>
+            </div>
+            <!-- Completed Jobs -->
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'classified:AdminCompletedJobs' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'Completed Jobs' %}</span>
+                </a>
+            </div>
+            <!-- Canceled Jobs -->
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'classified:AdminCanceledJobs' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'Canceled Jobs' %}</span>
+                </a>
+            </div>
+            <!-- Manage Offers -->
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'classified:AdminManageOffers' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'Manage Offers' %}</span>
+                </a>
+            </div>
+            <!-- Manage Negotiations -->
+            <div class="menu-item">
+                <a class="menu-link" href="{% url 'classified:AdminManageNegotiations' %}">
+                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                    <span class="menu-title">{% translate 'Manage Negotiations' %}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <!--end:Menu sub-->
+</div>
+<!--end:Menu item-->
