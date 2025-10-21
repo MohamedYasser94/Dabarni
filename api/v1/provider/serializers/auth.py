@@ -264,7 +264,7 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     id_number = serializers.CharField(required=False)
     is_citizen = serializers.BooleanField(required=False)
     id_image_front = serializers.ImageField(required=False)
-    id_image_back = serializers.ImageField(required=False)
+    # id_image_back = serializers.ImageField(required=False)
     residence_image = serializers.ImageField(required=False)
     
     # Fields from the JobProvider model
@@ -275,20 +275,20 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     )
     experience_years = serializers.IntegerField(required=False)
     company = serializers.CharField(required=False)
-    bio = serializers.CharField(required=False)
+    # bio = serializers.CharField(required=False)
     commercial_number = serializers.CharField(required=False)
     commercial_image = serializers.ImageField(required=False)
-    vat_image = serializers.ImageField(required=False)
-    license_image = serializers.ImageField(required=False)
+    # vat_image = serializers.ImageField(required=False)
+    # license_image = serializers.ImageField(required=False)
 
     class Meta:
         model = JobProvider
         fields = [
             'first_name', 'last_name', 'email', 'dob', 'nationality',
             'residence', 'id_number', 'is_citizen', 'id_image_front',
-            'id_image_back', 'residence_image', 'category', 'experience_years',
-            'company', 'bio', 'commercial_number', 'commercial_image',
-            'vat_image', 'license_image'
+            'residence_image', 'category', 'experience_years',
+            'company', 'commercial_number', 'commercial_image',
+            # 'bio', 'id_image_back', 'vat_image', 'license_image',
         ]
 
     def update(self, instance, validated_data):
@@ -309,7 +309,7 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             profile.id_number = validated_data.pop('id_number', profile.id_number)
             profile.is_citizen = validated_data.pop('is_citizen', profile.is_citizen)
             profile.id_image_front = validated_data.pop('id_image_front', profile.id_image_front)
-            profile.id_image_back = validated_data.pop('id_image_back', profile.id_image_back)
+            # profile.id_image_back = validated_data.pop('id_image_back', profile.id_image_back)
             profile.residence_image = validated_data.pop('residence_image', profile.residence_image)
             profile.save()
 
