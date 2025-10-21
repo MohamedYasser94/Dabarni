@@ -79,7 +79,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=25,  blank=True, null=True)
     position = models.CharField(max_length=30,  blank=True, null=True,
                                 default='Client')
-    phone = models.CharField(max_length=20, validators=[validate_integer], unique=True,
+    phone = models.CharField(max_length=20, validators=[validate_integer], unique=True, blank=True, null=True,
      error_messages={  'unique': "This Phone has already been registered."})
     image = models.ImageField(upload_to=get_file_path, blank=True, null=True)
     auth_provider = models.CharField(
@@ -114,7 +114,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     country = models.CharField(max_length=100, choices=Country_List, default='Egypt', null=True, blank=True)
     governorates = models.CharField(max_length=100, choices=Governorates_List, default='Cairo', null=True, blank=True)
     code = models.CharField(max_length=100, unique=True, null=True, blank=True)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(default=uuid.uuid4, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

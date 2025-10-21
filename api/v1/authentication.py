@@ -98,7 +98,7 @@ def register(request):
             "access_level": access_level,
             "otp_demo": otp
         },
-        status_code=status.HTTP_201_CREATED
+        status_code=status.HTTP_200_OK
     )
 
 @extend_schema(request=ConfirmOTPSerializer,  tags=["Auth"],auth=[])
