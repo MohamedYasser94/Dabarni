@@ -17,7 +17,7 @@ import json
 
 from rest_framework.response import Response
 
-from apps.wallet.models.Payment import Payment
+from apps.wallet.models.payment import Payment
 from apps.wallet.models.billing import Purchase, Invoice
 from core.utils.notification import notify_user_ticket
 

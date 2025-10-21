@@ -1,7 +1,7 @@
 import logging
 from rest_framework import serializers
 
-from apps.wallet.models.Payment import PaymentGateway, Payment, BankAccount, Banks
+from apps.wallet.models.payment import PaymentGateway, Payment, BankAccount, Banks
 from apps.wallet.models.billing import Invoice, Billing
 from apps.wallet.models.models import WalletMoney
 from apps.wallet.models.transaction import MoneyTransaction, PayoutRequest

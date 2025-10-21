@@ -178,30 +178,13 @@ class User(AbstractBaseUser, PermissionsMixin):
             return self.email
 
     def save(self, *args, **kwargs):
-        if not self.code:
-            self.code = (
-                get_random_string(5).upper()
-                + str(uuid.uuid4()).split('-')[1]
-                + 'USER'
-                + uuid.uuid4().hex[:6].upper()
-            )
-
-        if not self.slug:
-            base_slug = slugify(self.phone if self.phone else self.code)
-            slug = base_slug
-            counter = 1
-            while User.objects.filter(slug=slug).exclude(pk=self.pk).exists():
-                slug = f"{base_slug}-{counter}"
-                counter += 1
-            self.slug = slug
-
-        if not self.auth_provider:
-            self.auth_provider = 'phone'
-
+        if not self.code and not self.slug:
+            self.code = str(get_random_string(5).upper()
+                           + str(uuid.uuid4()).split('-')[1] + 'NUC'
+                           + uuid.uuid4().hex[:6].upper())
+            self.slug = slugify(self.email)
+            self.auth_provider = 'email'
         super(User, self).save(*args, **kwargs)
-
-
-        # get token for current user
 
     def tokens(self):
         refresh = RefreshToken.for_user(self)

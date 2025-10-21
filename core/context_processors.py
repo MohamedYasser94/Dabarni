@@ -160,7 +160,6 @@ def language_processors(request):
 
 
 
-
 def template_processors(request):
     try:
         system_check = SystemSetting.objects.get_or_create(title='Digithup')
@@ -179,7 +178,7 @@ def template_processors(request):
                 'BACKEND_SLIDER': 'backend/' + SystemSetting.objects.get(
                     title='Digithup').backend_temp + '/slider.html',
                 'BACKEND_SIDEBAR': 'backend/' + SystemSetting.objects.get(
-                    title='Digithup').backend_temp + '/sidebar.html',
+                    title='Digithup').backend_temp + '/title_sidebar.html',
                 'BACKEND_BREADCRUMB': SystemSetting.objects.get(
                     title='Digithup').backend_temp + '/common/breadcrumb.html',
                 'BACKEND_BODY': 'backend/' + SystemSetting.objects.get(title='Digithup').backend_temp + '/content.html',
@@ -231,7 +230,7 @@ def template_processors(request):
                     'BACKEND_SLIDER': 'backend/' + SystemSetting.objects.get(
                         title='Digithup').backend_temp + '/slider.html',
                     'BACKEND_SIDEBAR': 'backend/' + SystemSetting.objects.get(
-                        title='Digithup').backend_temp + '/sidebar.html',
+                        title='Digithup').backend_temp + '/title_sidebar.html',
                     'BACKEND_BREADCRUMB': SystemSetting.objects.get(
                         title='Digithup').backend_temp + '/common/breadcrumb.html',
                     'BACKEND_BODY': 'backend/' + SystemSetting.objects.get(
@@ -286,7 +285,7 @@ def template_processors(request):
                 'BACKEND_SLIDER': 'backend/' + SystemSetting.objects.get(
                     title='Digithup').backend_temp + '/slider.html',
                 'BACKEND_SIDEBAR': 'backend/' + SystemSetting.objects.get(
-                    title='Digithup').backend_temp + '/sidebar.html',
+                    title='Digithup').backend_temp + '/title_sidebar.html',
                 'BACKEND_BREADCRUMB': SystemSetting.objects.get(
                     title='Digithup').backend_temp + '/common/breadcrumb.html',
                 'BACKEND_BODY': 'backend/' + SystemSetting.objects.get(title='Digithup').backend_temp + '/content.html',

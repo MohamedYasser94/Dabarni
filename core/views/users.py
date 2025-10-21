@@ -263,9 +263,10 @@ def AdminUserUpdate(request, slug):
 
 
             if request.method == 'POST':
+                print(1)
 
                 try:
-                    if user_form.is_valid() or profile_form.is_valid():
+                    if user_form:
                         image = request.FILES.get('image')
                         first_name = request.POST.get('first_name')
                         last_name = request.POST.get('last_name')
@@ -279,6 +280,8 @@ def AdminUserUpdate(request, slug):
                         groups = request.POST.get('groups')
                         country = None
                         country_id = request.POST.get('country')
+
+                        print('is_active', is_active)
 
 
                         lang_id = request.POST.get('lang')
@@ -301,19 +304,21 @@ def AdminUserUpdate(request, slug):
                         if author != None:
                             user_object.is_author = author
                         user_object.save()
-                        user_object.groups.add(groups)
+
                         user_profile = UserProfile.objects.get(user=current_user)
                         if country_id not in ['', None]:
                             user_profile.country = country
                         if lang_id not in ['', None]:
                             user_profile.lang = lang
                         user_profile.save()
-                        print(3)
+                        messages.success(request, _("Your Profile Updated Successfully"), extra_tags='User')
+
                         return redirect(request.META['HTTP_REFERER'])
 
                 except Exception as e:
 
-                    messages.error(request, _("Please Fill All Data"))
+
+                    messages.error(request, _(f"Please Fill All Data {e}"),extra_tags='User')
                     print(4)
             else:
                 context = {
@@ -393,10 +398,7 @@ def AdminUserAccountSettings(request, slug):
                 image = request.FILES.get('image')
                 country_id = request.POST.get('country')
                 lang_id = request.POST.get('lang')
-                try:
-                    country = Country.objects.get(id=country_id)
-                except Exception as e:
-                    country = None
+
                 try:
                     lang = Language.objects.get(id=lang_id)
                 except Exception as e:
@@ -413,7 +415,7 @@ def AdminUserAccountSettings(request, slug):
                 user_object.save()
 
                 user_profile = UserProfile.objects.get(user=current_user)
-                user_profile.country = country
+
                 user_profile.lang = lang
                 user_profile.save()
                 print(3)
@@ -444,68 +446,7 @@ def UserPublicProfile(request, slug, *args, **kwargs):
     setting_form = UserProfileForm(instance=user)
     context = {}
     user_slug = kwargs.get("slug")
-    try:
-        account = User.objects.get(slug=slug)
-    except:
-        return HttpResponse("Something went wrong.")
-    if account:
-        context['id'] = account.id
 
-        context['email'] = account.email
-        if user.image:
-            context['profile_image'] = user.image.url
-        context['hide_email'] = user.hide_email
-
-        try:
-            friend_list = FriendList.objects.get(user=account)
-        except FriendList.DoesNotExist:
-            friend_list = FriendList(user=account)
-            friend_list.save()
-        friends = friend_list.friends.all()
-        context['friends'] = friends
-
-        # Define template variables
-        is_self = True
-        is_friend = False
-        request_sent = FriendRequestStatus.NO_REQUEST_SENT.value  # range: ENUM -> friend/friend_request_status.FriendRequestStatus
-        friend_requests = None
-        user = request.user
-        if user.is_authenticated and user != account:
-            is_self = False
-            if friends.filter(pk=user.id):
-                is_friend = True
-            else:
-                is_friend = False
-                # CASE1: Request has been sent from THEM to YOU: FriendRequestStatus.THEM_SENT_TO_YOU
-                if get_friend_request_or_false(sender=account, receiver=user) != False:
-                    request_sent = FriendRequestStatus.THEM_SENT_TO_YOU.value
-                    context['pending_friend_request_id'] = get_friend_request_or_false(sender=account, receiver=user).id
-                # CASE2: Request has been sent from YOU to THEM: FriendRequestStatus.YOU_SENT_TO_THEM
-                elif get_friend_request_or_false(sender=user, receiver=account) != False:
-                    request_sent = FriendRequestStatus.YOU_SENT_TO_THEM.value
-                # CASE3: No request sent from YOU or THEM: FriendRequestStatus.NO_REQUEST_SENT
-                else:
-                    request_sent = FriendRequestStatus.NO_REQUEST_SENT.value
-
-        elif not user.is_authenticated:
-            is_self = False
-        else:
-            try:
-                friend_requests = FriendRequest.objects.filter(receiver=user, is_active=True)
-            except:
-                pass
-
-        context = {
-            'user': user,
-            'suggestions_user': suggestions_user,
-            'setting_form': setting_form,
-            'is_self': is_self,
-            'is_friend': is_friend,
-            'request_sent': request_sent,
-            'friend_requests': friend_requests,
-            'BASE_URL': settings.BASE_URL,
-
-        }
 
     return render(request, f'{BACKEND_TEMPLATES}/account/user/profile.html', context)
 
@@ -742,24 +683,3 @@ def AdminClientContactDetail(request, slug):
     return render(request, f'{BACKEND_TEMPLATES}/people/contact/details.html', context)
 
 
-def AdminPublicSearch(request, *args, **kwargs):
-    context = {}
-    if request.method == "GET":
-        search_query = request.GET.get("q")
-        if len(search_query) > 0:
-            search_results = User.objects.filter(email__icontains=search_query).filter(
-                username__icontains=search_query).distinct()
-            user = request.user
-            accounts = []  # [(account1, True), (account2, False), ...]
-            if user.is_authenticated:
-                # get the authenticated users friend list
-                auth_user_friend_list = FriendList.objects.get(user=user)
-                for account in search_results:
-                    accounts.append((account, auth_user_friend_list.is_mutual_friend(account)))
-                context['accounts'] = accounts
-            else:
-                for account in search_results:
-                    accounts.append((account, False))
-                context['accounts'] = accounts
-
-    return render(request, "good/utilities/serach/search.html", context)

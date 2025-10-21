@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.wallet.models.Payment import PaymentGateway, PaymentGatewaySetting
+from apps.wallet.models.payment import PaymentGateway, PaymentGatewaySetting
 from apps.wallet.models.billing import Purchase
 
 

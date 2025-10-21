@@ -9,7 +9,7 @@ from api.v1.provider.serializers.classified import *
 from api.v1.provider.serializers.wallet import PayoutRequestSerializer, ProviderWalletMoneySerializer, PaymentGatewaySerializer, \
     BankAccountSerializer
 from apps.classified.models.models import *
-from apps.wallet.models.Payment import PaymentGateway, BankAccount
+from apps.wallet.models.payment import PaymentGateway, BankAccount
 from apps.wallet.models.models import WalletMoney
 from apps.wallet.models.transaction import PayoutRequest
 

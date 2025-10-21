@@ -1,7 +1,7 @@
 
 from django import forms
 
-from apps.wallet.models.Payment import PaymentGateway
+from apps.wallet.models.payment import PaymentGateway
 
 
 class AdminPaymentGatewayForm(forms.ModelForm):

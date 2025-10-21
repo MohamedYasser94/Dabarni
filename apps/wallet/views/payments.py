@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.utils.translation import gettext_lazy as _
 
 from apps.wallet.forms.payment import AdminPaymentGatewayForm
-from apps.wallet.models.Payment import PaymentGateway, PaymentGatewaySetting
+from apps.wallet.models.payment import PaymentGateway, PaymentGatewaySetting
 from helper.commonHelper import BACKEND_TEMPLATES
 from helper.decorators import superuser_only, authenticated_staff
 
