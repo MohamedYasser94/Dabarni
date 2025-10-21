@@ -158,14 +158,12 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
     Serializer to complete a provider's profile in a single request.
     It handles all fields from the registration form across multiple models.
     """
-    # Fields for the User model
-    first_name = serializers.CharField(required=True, write_only=True)
-    last_name = serializers.CharField(required=True, write_only=True)
+    full_name = serializers.CharField(required=True, write_only=True)
     
     # Fields for the UserProfile model
     is_citizen = serializers.BooleanField(required=True, write_only=True)
     id_image_front = serializers.ImageField(required=True, write_only=True)
-    id_image_back = serializers.ImageField(required=False, write_only=True)
+    # id_image_back = serializers.ImageField(required=False, write_only=True)
     residence_image = serializers.ImageField(required=False, write_only=True)
 
     # JobProvider model fields
@@ -175,32 +173,34 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
         help_text="The slug of the job category."
     )
     address = serializers.CharField(required=True)
-    latitude = serializers.CharField(required=False, allow_null=True, write_only=True)
-    longitude = serializers.CharField(required=False, allow_null=True, write_only=True)
     user_image = serializers.ImageField(required=False, write_only=True)
     
     class Meta:
         model = JobProvider
         fields = [
-            'first_name', 'last_name', 'is_citizen', 'id_image_front', 
-            'id_image_back', 'residence_image', 'category', 'address',
-            'latitude', 'longitude', 'user_image'
+            'full_name', 'is_citizen', 'id_image_front', 
+            'residence_image', 'category',
+            'address','user_image',
+            # 'id_image_back',
         ]
 
-    def create(self, validated_data):
+    def update(self, instance, validated_data):
         with transaction.atomic():
             user = self.context.get('request').user
             
             # Update User fields
-            user.first_name = validated_data.pop('first_name')
-            user.last_name = validated_data.pop('last_name')
+            full_name = validated_data.pop('full_name').strip()
+            name_parts = full_name.split()
+
+            user.first_name = name_parts[0] if name_parts else ""
+            user.last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
             user.save()
             
             # Update or create the UserProfile instance
             profile, created = UserProfile.objects.get_or_create(user=user)
             profile.is_citizen = validated_data.pop('is_citizen')
             profile.id_image_front = validated_data.pop('id_image_front')
-            profile.id_image_back = validated_data.pop('id_image_back', None)
+            # profile.id_image_back = validated_data.pop('id_image_back', None)
             profile.residence_image = validated_data.pop('residence_image', None)
             profile.save()
             
