@@ -167,11 +167,7 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
     residence_image = serializers.ImageField(required=False, write_only=True)
 
     # JobProvider model fields
-    category = serializers.SlugRelatedField(
-        queryset=JobCategories.objects.all(),
-        slug_field='slug',
-        help_text="The slug of the job category."
-    )
+    category = serializers.CharField(required=True,write_only=True,help_text="The job category")
     address = serializers.CharField(required=True)
     user_image = serializers.ImageField(required=False, write_only=True)
     
@@ -184,6 +180,22 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
             # 'id_image_back',
         ]
 
+    def validate_category(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("enter a category name")
+        
+        try:
+            category = JobCategories.objects.get(
+                title__iexact=value.strip(), 
+                status='Active'
+            )
+            return category
+        
+        except JobCategories.DoesNotExist:
+            raise serializers.ValidationError(
+                f"Categories '{value}' does not exist or is inactive"
+            )
+        
     def update(self, instance, validated_data):
         with transaction.atomic():
             user = self.context.get('request').user
@@ -205,12 +217,16 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
             profile.save()
             
             # Update the existing JobProvider instance with all remaining data
+            category = validated_data.pop('category', None)
             provider = JobProvider.objects.get(user=user)
             for attr, value in validated_data.items():
                 setattr(provider, attr, value)
+                if category:
+                    provider.category = category
             provider.save()
         
         return provider
+    
 class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     """
     Serializer to display a full provider profile, including related user
