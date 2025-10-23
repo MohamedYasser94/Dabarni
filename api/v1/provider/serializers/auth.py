@@ -284,10 +284,11 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     residence_image = serializers.ImageField(required=False)
     
     # Fields from the JobProvider model
-    category = serializers.SlugRelatedField(
-        queryset=JobCategories.objects.all(),
-        slug_field='slug',
-        required=False
+    category = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        help_text="The job category"
     )
     experience_years = serializers.IntegerField(required=False)
     company = serializers.CharField(required=False)
@@ -306,6 +307,22 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             'company', 'commercial_number', 'commercial_image',
             # 'bio', 'id_image_back', 'vat_image', 'license_image',
         ]
+
+    def validate_category(self, value):
+        if not value or not value.strip():
+            return None
+        
+        try:
+            category = JobCategories.objects.get(
+                title__iexact=value.strip(), 
+                status='Active'
+            )
+            return category
+        
+        except JobCategories.DoesNotExist:
+            raise serializers.ValidationError(
+                f"Categories '{value}' does not exist or is inactive"
+            )
 
     def update(self, instance, validated_data):
         with transaction.atomic():
@@ -330,8 +347,11 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             profile.save()
 
             # Update JobProvider model fields
+            category = validated_data.pop('category', None)
             for attr, value in validated_data.items():
                 setattr(instance, attr, value)
+            if category is not None:
+                instance.category = category
             instance.save()
         
         return instance
