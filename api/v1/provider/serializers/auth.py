@@ -236,7 +236,8 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     user_first_name = serializers.CharField(source='user.first_name', read_only=True)
     user_last_name = serializers.CharField(source='user.last_name', read_only=True)
     user_phone = serializers.CharField(source='user.phone', read_only=True)
-    
+    email = serializers.EmailField(source='user.email', read_only=True)  # إضافة البريد الإلكتروني
+
     # UserProfile model fields
     is_citizen = serializers.BooleanField(source='user.profile.is_citizen', read_only=True)
     id_image_front = serializers.ImageField(source='user.profile.id_image_front', read_only=True)
@@ -244,6 +245,10 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     residence_image = serializers.ImageField(source='user.profile.residence_image', read_only=True)
     user_image = serializers.ImageField(source='user.profile.user_image', read_only=True)
 
+    dob = serializers.DateField(source='user.profile.dob', read_only=True)  # إضافة تاريخ الميلاد
+    nationality = serializers.CharField(source='user.profile.nationality', read_only=True)  # إضافة الجنسية
+    id_number = serializers.CharField(source='user.profile.id_number', read_only=True)  # إضافة رقم الهوية
+    residence = serializers.CharField(source='user.profile.residence', read_only=True)  # إضافة حقل residence
     # JobProvider model fields
     category_title = serializers.CharField(source='category.title', read_only=True)
     
@@ -251,15 +256,16 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
         model = JobProvider
         fields = [
             # From User
-            'user_first_name', 'user_last_name', 'user_phone',
+            'user_first_name', 'user_last_name', 'user_phone', 'email',
             
             # From UserProfile
-            'is_citizen', 'user_image', 'id_image_front', 'id_image_back', 'residence_image',
+            'is_citizen', 'user_image', 'id_image_front', 'id_image_back', 
+            'residence_image', 'dob', 'nationality', 'id_number', 'residence',
 
             # From JobProvider
             'category_title', 'experience_years', 'company', 'bio',
             'address', 'latitude', 'longitude',
-            'commercial_image', 'vat_image', 'license_image',
+            'commercial_image','commercial_number', 'vat_image', 'license_image',
             'profile_completion_percentage',
         ]
 
