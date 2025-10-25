@@ -17,11 +17,11 @@ urlpatterns = [
     path("auth/password-reset/by-phone/", provider_auth.reset_password_by_phone, name="reset_password_by_phone"),
 
     # ===================== Profile & Home URLs =====================
-      path('profile/complete-info/', provider_auth.completeProviderProfile, name='provider-profile-complete-info'),
-      path('profile/', provider_home.retrieveProviderProfile, name='provider-profile-detail'),
-      path('profile/<int:provider_id>/', provider_home.RetrieveProviderProfileById, name='providerProfileByIdWithReviews'),
-      path('profile/update/', provider_home.updateProviderProfile, name='provider-profile-update'),
-      #------------------------------- Provider Home Jobs --------------------------------------------
+    path('profile/complete-info/', provider_auth.completeProviderProfile, name='provider-profile-complete-info'),
+    path('profile/', provider_home.retrieveProviderProfile, name='provider-profile-detail'),
+    path('profile/<int:provider_id>/', provider_home.RetrieveProviderProfileById, name='providerProfileByIdWithReviews'),
+    path('profile/update/', provider_home.updateProviderProfile, name='provider-profile-update'),
+    #------------------------------- Provider Home Jobs --------------------------------------------
     path("home/", provider_home.ProviderHome, name="ProviderHome"),
     path('jobs/available/', provider_home.RetrieveAvailableJobs, name='provider-available-jobs'),
     path('jobs/<int:job_id>/details/', provider_home.GetJobDetails, name='provider-job-details'),
@@ -29,7 +29,7 @@ urlpatterns = [
     path('jobs/negotiate-offer/<int:negotiation_id>/', provider_home.respondToNegotiation, name='provider-negotiate-offer'),
     path('negotiations/<int:negotiation_id>/respond/', provider_home.providerNegotiateResponse, name='provider-negotiate-response'),
     path('jobs/<int:job_id>/accept/', provider_home.AcceptJob, name='providerAcceptJob'),
-     path('jobs/<int:job_id>/finish/', provider_home.FinishJob, name='providerFinishtJob'),
+    path('jobs/<int:job_id>/finish/', provider_home.FinishJob, name='providerFinishtJob'),
     path("profile/", ProviderProfile, name="ProviderProfile"),
     path("profile/update/", ProviderUpdateProfile, name="ProviderUpdateProfile"),
     path("profile/reviews/", provider_home.ProviderJobReviews, name="ProviderJobReviews"),
@@ -48,9 +48,8 @@ urlpatterns = [
     path("jobs/progress/<slug:progress_slug>/complete/", provider_home.ProviderJobCompleteRequest, name="ProviderJobCompleteRequest"),
     path("jobs/negotiations/<int:negotiation_id>/update-status/", provider_home.ProviderUpdateJobNegotiationStatus, name="ProviderUpdateJobNegotiationStatus"),
 
-
-     path('jobs/progress/<int:progress_id>/extra-request/', provider_home.request_extra_amount, name='request_extra_amount'),
-     path('jobs/progress/<int:progress_id>/start/', provider_home.start_work, name='start_job'),
+    path('jobs/progress/<int:progress_id>/extra-request/', provider_home.request_extra_amount, name='request_extra_amount'),
+    path('jobs/progress/<int:progress_id>/start/', provider_home.start_work, name='start_job'),
     # ===================== Wallet & Payout URLs =====================
     path("wallet/", provider_wallet.ProviderWallet, name="ProviderWallet"),
     path("wallet/payouts/", provider_wallet.ProviderPayoutRequestList, name="ProviderPayoutRequestList"),

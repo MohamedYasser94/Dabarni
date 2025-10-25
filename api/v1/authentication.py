@@ -114,18 +114,29 @@ def verify_otp(request):
     access_level = request.data.get("access_level")  
 
     if not phone or not otp or not access_level:
-        return Response({"error": "phone, otp and access_level are required"}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(
+            message="phone, otp and access_level are required",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
 
     try:
         user = User.objects.get(phone=phone, access_level=access_level)
     except User.DoesNotExist:
-        return Response({"error": "User not found with this phone and role"}, status=status.HTTP_404_NOT_FOUND)
+        return error_response(
+            message="User not found with this phone and role",
+            status_code=status.HTTP_404_NOT_FOUND
+        )
 
     if not user.otp or user.otp_expiry < timezone.now():
-        return Response({"error": "OTP expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
-
+        return error_response(
+            message="OTP expired. Please request a new one",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
     if str(user.otp) != str(otp):
-        return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(
+            message="Invalid OTP",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
 
     user.is_active = "Active"
     user.otp_verified = "Active"
@@ -134,10 +145,14 @@ def verify_otp(request):
     user.otp_attempts = 0
     user.save()
 
-    return Response({
-        "message": "User verified successfully",
-        "tokens": user.tokens()
-    }, status=status.HTTP_200_OK)
+    return success_response(
+        message="OTP sent to phone. Please confirm your account.",
+        data={
+            "message": "User verified successfully",
+            "tokens": user.tokens()
+        },
+        status_code=status.HTTP_200_OK
+    )
 
 
 @extend_schema(
@@ -148,6 +163,7 @@ def verify_otp(request):
         400: {'error': 'Invalid or expired token'}
     }
 )
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout(request):
@@ -159,6 +175,12 @@ def logout(request):
     try:
         token = RefreshToken(refresh_token)
         token.blacklist() 
-        return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+        return success_response(
+            message="Logged out successfully",
+            status_code=status.HTTP_200_OK
+            )
     except TokenError:
-        return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(
+            message="Invalid or expired token",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )

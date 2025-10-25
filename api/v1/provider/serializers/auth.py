@@ -167,11 +167,7 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
     residence_image = serializers.ImageField(required=False, write_only=True)
 
     # JobProvider model fields
-    category = serializers.SlugRelatedField(
-        queryset=JobCategories.objects.all(),
-        slug_field='slug',
-        help_text="The slug of the job category."
-    )
+    category = serializers.CharField(required=True,write_only=True,help_text="The job category")
     address = serializers.CharField(required=True)
     user_image = serializers.ImageField(required=False, write_only=True)
     
@@ -184,6 +180,22 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
             # 'id_image_back',
         ]
 
+    def validate_category(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("enter a category name")
+        
+        try:
+            category = JobCategories.objects.get(
+                title__iexact=value.strip(), 
+                status='Active'
+            )
+            return category
+        
+        except JobCategories.DoesNotExist:
+            raise serializers.ValidationError(
+                f"Categories '{value}' does not exist or is inactive"
+            )
+        
     def update(self, instance, validated_data):
         with transaction.atomic():
             user = self.context.get('request').user
@@ -205,12 +217,16 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
             profile.save()
             
             # Update the existing JobProvider instance with all remaining data
+            category = validated_data.pop('category', None)
             provider = JobProvider.objects.get(user=user)
             for attr, value in validated_data.items():
                 setattr(provider, attr, value)
+                if category:
+                    provider.category = category
             provider.save()
         
         return provider
+    
 class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     """
     Serializer to display a full provider profile, including related user
@@ -220,7 +236,8 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     user_first_name = serializers.CharField(source='user.first_name', read_only=True)
     user_last_name = serializers.CharField(source='user.last_name', read_only=True)
     user_phone = serializers.CharField(source='user.phone', read_only=True)
-    
+    email = serializers.EmailField(source='user.email', read_only=True)  # إضافة البريد الإلكتروني
+
     # UserProfile model fields
     is_citizen = serializers.BooleanField(source='user.profile.is_citizen', read_only=True)
     id_image_front = serializers.ImageField(source='user.profile.id_image_front', read_only=True)
@@ -228,6 +245,10 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     residence_image = serializers.ImageField(source='user.profile.residence_image', read_only=True)
     user_image = serializers.ImageField(source='user.profile.user_image', read_only=True)
 
+    dob = serializers.DateField(source='user.profile.dob', read_only=True)  # إضافة تاريخ الميلاد
+    nationality = serializers.CharField(source='user.profile.nationality', read_only=True)  # إضافة الجنسية
+    id_number = serializers.CharField(source='user.profile.id_number', read_only=True)  # إضافة رقم الهوية
+    residence = serializers.CharField(source='user.profile.residence', read_only=True)  # إضافة حقل residence
     # JobProvider model fields
     category_title = serializers.CharField(source='category.title', read_only=True)
     
@@ -235,15 +256,16 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
         model = JobProvider
         fields = [
             # From User
-            'user_first_name', 'user_last_name', 'user_phone',
+            'user_first_name', 'user_last_name', 'user_phone', 'email',
             
             # From UserProfile
-            'is_citizen', 'user_image', 'id_image_front', 'id_image_back', 'residence_image',
+            'is_citizen', 'user_image', 'id_image_front', 'id_image_back', 
+            'residence_image', 'dob', 'nationality', 'id_number', 'residence',
 
             # From JobProvider
             'category_title', 'experience_years', 'company', 'bio',
             'address', 'latitude', 'longitude',
-            'commercial_image', 'vat_image', 'license_image',
+            'commercial_image','commercial_number', 'vat_image', 'license_image',
             'profile_completion_percentage',
         ]
 
@@ -268,10 +290,11 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     residence_image = serializers.ImageField(required=False)
     
     # Fields from the JobProvider model
-    category = serializers.SlugRelatedField(
-        queryset=JobCategories.objects.all(),
-        slug_field='slug',
-        required=False
+    category = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        help_text="The job category"
     )
     experience_years = serializers.IntegerField(required=False)
     company = serializers.CharField(required=False)
@@ -290,6 +313,22 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             'company', 'commercial_number', 'commercial_image',
             # 'bio', 'id_image_back', 'vat_image', 'license_image',
         ]
+
+    def validate_category(self, value):
+        if not value or not value.strip():
+            return None
+        
+        try:
+            category = JobCategories.objects.get(
+                title__iexact=value.strip(), 
+                status='Active'
+            )
+            return category
+        
+        except JobCategories.DoesNotExist:
+            raise serializers.ValidationError(
+                f"Categories '{value}' does not exist or is inactive"
+            )
 
     def update(self, instance, validated_data):
         with transaction.atomic():
@@ -314,8 +353,11 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             profile.save()
 
             # Update JobProvider model fields
+            category = validated_data.pop('category', None)
             for attr, value in validated_data.items():
                 setattr(instance, attr, value)
+            if category is not None:
+                instance.category = category
             instance.save()
         
         return instance
