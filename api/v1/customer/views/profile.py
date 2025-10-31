@@ -26,7 +26,7 @@ class GetProfileView(APIView):
     @extend_schema(tags=["Customer Profile"], responses=UserProfileSerializer)
     def get(self, request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        serializer = UserProfileSerializer(profile)
+        serializer = UserProfileSerializer(profile, context={'request': request})
         return Response(serializer.data)
     
 class UpdateProfileView(APIView):
@@ -34,7 +34,7 @@ class UpdateProfileView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     @extend_schema(tags=["Customer Profile"], request=UserProfileSerializer,
         responses=UserProfileSerializer)
-    def put(self, request):
+    def patch(self, request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         print("Request data ------------------",request.data)
         serializer = UserProfileSerializer(profile, data=request.data, partial=True)

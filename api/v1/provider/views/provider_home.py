@@ -90,7 +90,7 @@ def RetrieveProviderProfileById(request, provider_id):
     request=ProviderProfileUpdateSerializer,
     responses={200: ProviderProfileDetailSerializer, 400: 'Error Response'}
 )
-@api_view(["PUT"])
+@api_view(["PATCH"])
 @permission_classes([IsAuthenticated])
 def updateProviderProfile(request):
     """
