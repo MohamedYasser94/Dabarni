@@ -2,16 +2,18 @@ from rest_framework import serializers
 from user.models import User, UserProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    image = serializers.CharField(source="user.image", required=False)
     first_name = serializers.CharField(source="user.first_name", required=False)
     last_name = serializers.CharField(source="user.last_name", required=False)
     email = serializers.EmailField(source="user.email", required=False)
     phone = serializers.CharField(source="user.phone", required=False)
+    nationality = serializers.CharField(required=False, allow_null=True)
     id_image_front = serializers.ImageField(required=False, allow_null=True)
     id_image_back = serializers.ImageField(required=False, allow_null=True)
     class Meta:
         model = UserProfile
         fields = [
-            "first_name", "last_name", "email", "phone",
+            "image","first_name", "last_name", "email", "phone","nationality",
             "dob", "id_number",  "id_image_front", "id_image_back", "gender",
         ]
 

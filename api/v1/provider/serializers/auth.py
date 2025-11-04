@@ -174,9 +174,8 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobProvider
         fields = [
-            'full_name', 'is_citizen', 'id_image_front', 
-            'residence_image', 'category',
-            'address','user_image',
+            'address', 'full_name', 'is_citizen', 'category',  
+            'user_image', 'id_image_front', 'residence_image', 
             # 'id_image_back',
         ]
 
@@ -206,6 +205,8 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
 
             user.first_name = name_parts[0] if name_parts else ""
             user.last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+            if 'user_image' in validated_data:
+                user.image = validated_data.pop('user_image')
             user.save()
             
             # Update or create the UserProfile instance
@@ -237,13 +238,13 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     user_last_name = serializers.CharField(source='user.last_name', read_only=True)
     user_phone = serializers.CharField(source='user.phone', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)  # إضافة البريد الإلكتروني
+    user_image = serializers.ImageField(source='user.image', read_only=True)
 
     # UserProfile model fields
     is_citizen = serializers.BooleanField(source='user.profile.is_citizen', read_only=True)
     id_image_front = serializers.ImageField(source='user.profile.id_image_front', read_only=True)
     id_image_back = serializers.ImageField(source='user.profile.id_image_back', read_only=True)
     residence_image = serializers.ImageField(source='user.profile.residence_image', read_only=True)
-    user_image = serializers.ImageField(source='user.profile.user_image', read_only=True)
 
     dob = serializers.DateField(source='user.profile.dob', read_only=True)  # إضافة تاريخ الميلاد
     nationality = serializers.CharField(source='user.profile.nationality', read_only=True)  # إضافة الجنسية
@@ -278,7 +279,8 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
     email = serializers.EmailField(required=False, write_only=True)
-    
+    user_image = serializers.ImageField(required=False, write_only=True)
+
     # Fields from the UserProfile model (assumed to exist)
     dob = serializers.DateField(required=False)
     nationality = serializers.CharField(required=False)
@@ -298,7 +300,7 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     )
     experience_years = serializers.IntegerField(required=False)
     company = serializers.CharField(required=False)
-    # bio = serializers.CharField(required=False)
+    bio = serializers.CharField(required=False)
     commercial_number = serializers.CharField(required=False)
     commercial_image = serializers.ImageField(required=False)
     # vat_image = serializers.ImageField(required=False)
@@ -307,11 +309,11 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobProvider
         fields = [
-            'first_name', 'last_name', 'email', 'dob', 'nationality',
-            'residence', 'id_number', 'is_citizen', 'id_image_front',
-            'residence_image', 'category', 'experience_years',
-            'company', 'commercial_number', 'commercial_image',
-            # 'bio', 'id_image_back', 'vat_image', 'license_image',
+            'user_image','first_name', 'last_name', 'email', 'dob', 
+            'nationality', 'residence', 'id_number', 'is_citizen',
+            'category','experience_years',  'commercial_number', 'company',
+            'id_image_front', 'residence_image', 'commercial_image','bio',
+            #'id_image_back', 'vat_image', 'license_image',
         ]
 
     def validate_category(self, value):
@@ -338,6 +340,8 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             user.first_name = validated_data.pop('first_name', user.first_name)
             user.last_name = validated_data.pop('last_name', user.last_name)
             user.email = validated_data.pop('email', user.email)
+            if 'user_image' in validated_data:
+                user.image = validated_data.pop('user_image')
             user.save()
             
             # Update UserProfile model fields (assumed to exist)

@@ -90,7 +90,7 @@ def RetrieveProviderProfileById(request, provider_id):
     request=ProviderProfileUpdateSerializer,
     responses={200: ProviderProfileDetailSerializer, 400: 'Error Response'}
 )
-@api_view(["PUT"])
+@api_view(["PATCH"])
 @permission_classes([IsAuthenticated])
 def updateProviderProfile(request):
     """
@@ -119,7 +119,7 @@ def updateProviderProfile(request):
             provider_profile = serializer.save()
             return success_response(
                 message="تم تحديث ملف مقدم الخدمة بنجاح",
-                data=ProviderProfileDetailSerializer(provider_profile).data,
+                data=ProviderProfileDetailSerializer(provider_profile,context={'request': request}).data,
                 status_code=status.HTTP_200_OK
             )
         except Exception as e:
