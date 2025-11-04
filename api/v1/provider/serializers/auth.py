@@ -300,7 +300,7 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     )
     experience_years = serializers.IntegerField(required=False)
     company = serializers.CharField(required=False)
-    # bio = serializers.CharField(required=False)
+    bio = serializers.CharField(required=False)
     commercial_number = serializers.CharField(required=False)
     commercial_image = serializers.ImageField(required=False)
     # vat_image = serializers.ImageField(required=False)
@@ -312,8 +312,8 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             'user_image','first_name', 'last_name', 'email', 'dob', 
             'nationality', 'residence', 'id_number', 'is_citizen',
             'category','experience_years',  'commercial_number', 'company',
-            'id_image_front', 'residence_image', 'commercial_image',
-            # 'bio', 'id_image_back', 'vat_image', 'license_image',
+            'id_image_front', 'residence_image', 'commercial_image','bio',
+            #'id_image_back', 'vat_image', 'license_image',
         ]
 
     def validate_category(self, value):

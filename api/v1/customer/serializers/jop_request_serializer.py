@@ -54,7 +54,7 @@ class JobCreateSerializer(serializers.ModelSerializer):
     
     category = serializers.SlugRelatedField(
         queryset=JobCategories.objects.all(),
-        slug_field='slug',
+        slug_field='title',
         help_text="The slug of the job category."
     )
     
@@ -100,6 +100,8 @@ class JobCreateSerializer(serializers.ModelSerializer):
             JobMedia.objects.create(job=job, video=video_data)
             
         return job
+
+
 class ProviderOfferSerializer(serializers.ModelSerializer):
     """
     Serializer to display all details of a job offer, including provider's info + progressId.
