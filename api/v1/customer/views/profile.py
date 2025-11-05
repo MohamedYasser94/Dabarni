@@ -36,7 +36,6 @@ class UpdateProfileView(APIView):
         responses=UserProfileSerializer)
     def patch(self, request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        print("Request data ------------------",request.data)
         serializer = UserProfileSerializer(profile, data=request.data, partial=True,context={'request': request})
         if serializer.is_valid():
             serializer.save()
