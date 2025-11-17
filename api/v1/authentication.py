@@ -137,6 +137,12 @@ def verify_otp(request):
             message="Invalid OTP",
             status_code=status.HTTP_400_BAD_REQUEST
         )
+    
+    is_new_user = (
+        user.otp_verified != "Active" or 
+        not user.first_name or 
+        not user.last_name
+    )
 
     user.is_active = "Active"
     user.otp_verified = "Active"
@@ -149,7 +155,9 @@ def verify_otp(request):
         message="OTP sent to phone. Please confirm your account.",
         data={
             "message": "User verified successfully",
-            "tokens": user.tokens()
+            "tokens": user.tokens(),
+            "is_new_user": is_new_user,
+            "user_status": "new" if is_new_user else "existing",
         },
         status_code=status.HTTP_200_OK
     )

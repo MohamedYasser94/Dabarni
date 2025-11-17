@@ -112,6 +112,9 @@ class ProviderOfferSerializer(serializers.ModelSerializer):
     provider_accepted = serializers.BooleanField(read_only=True)
     customer_accepted = serializers.BooleanField(read_only=True)
     progressId = serializers.SerializerMethodField()  
+    provider_image = serializers.SerializerMethodField()
+    provider_category = serializers.SerializerMethodField()
+    provider_rating = serializers.SerializerMethodField()
 
     class Meta:
         model = JobOffer
@@ -119,30 +122,79 @@ class ProviderOfferSerializer(serializers.ModelSerializer):
             'id',
             'providerId',
             'providerName',
+            'provider_image',
+            'provider_category',
+            'provider_rating',
             'providerPhone',
             'price',
             'status',
             'create_at',
             'provider_accepted',
             'customer_accepted',
-            'progressId',  
+            'progressId',
         ]
 
     def get_progressId(self, obj):
         if hasattr(obj, 'progresses') and obj.progresses.exists():
             return obj.progresses.first().id
         return None
+    
+    def get_provider_image(self, obj):
+        request = self.context.get('request')
+        if obj.provider.user and obj.provider.user.image:
+            return request.build_absolute_uri(obj.provider.user.image.url) if request else obj.provider.user.image.url
+        return None
+
+    def get_provider_category(self, obj):
+        if obj.provider.category:
+            return obj.provider.category.title
+        return None
+
+    def get_provider_rating(self, obj):
+        if hasattr(obj.provider, 'average_rating'):
+            return obj.provider.average_rating
+        return 0.0
+
 
 
 
 
 class JobNegotiateSerializer(serializers.ModelSerializer):
     """
-    Serializer to display negotiation details.
+    Serializer to display negotiation details with provider info.
     """
+    provider_id = serializers.IntegerField(source='provider.id', read_only=True)
+    provider_name = serializers.CharField(source='provider.user.get_full_name', read_only=True)
+    provider_phone = serializers.CharField(source='provider.user.phone', read_only=True)
+    provider_image = serializers.SerializerMethodField()
+    provider_category = serializers.SerializerMethodField()
+    provider_rating = serializers.SerializerMethodField()
+
     class Meta:
         model = JobNegotiate
-        fields = '__all__'
+        fields = [
+            'id',
+            'provider_id','provider_name','provider_phone','provider_image','provider_category','provider_rating',
+            'provider_price','customer_price', 'provider_accepted','customer_accepted',
+            'code','slug','create_at','update_at','job','offer','customer',
+        ]
+
+    def get_provider_image(self, obj):
+        request = self.context.get('request')
+        if obj.provider.user and obj.provider.user.image:
+            return request.build_absolute_uri(obj.provider.user.image.url) if request else obj.provider.user.image.url
+        return None
+
+    def get_provider_category(self, obj):
+        if obj.provider.category:
+            return obj.provider.category.title
+        return None
+
+    def get_provider_rating(self, obj):
+        if hasattr(obj.provider, 'average_rating'):
+            return obj.provider.average_rating
+        return 0.0
+    
 
 class JobCategorySerializer(serializers.ModelSerializer):
     """
@@ -196,16 +248,31 @@ class JobDetailSerializer(serializers.ModelSerializer):
     progresses = JobProgressSerializer(many=True, read_only=True)
     offers = ProviderOfferSerializer(many=True, read_only=True) 
     negotiations = JobNegotiateSerializer(many=True, read_only=True, source='negotiates')
-
+    customer_name = serializers.SerializerMethodField()
+    customer_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
         fields = [
-            "id","title","description","quantity","price",
-            "category","location","media","scheduled_at",
+            "id","title","description","customer_name", "customer_image",
+            "quantity","price", "category","location","media","scheduled_at",
             "progresses","offers","negotiations","views",
-            "code","slug","create_at"
+            "code","slug","create_at" ,
         ]
+    
+    def get_customer_name(self, obj):
+        if obj.customer:
+            if obj.customer.first_name or obj.customer.last_name:
+                return f'{obj.customer.first_name or ""} {obj.customer.last_name or ""}'.strip()
+            return obj.customer.email
+        return "مستخدم غير معروف"
+
+    def get_customer_image(self, obj):
+        request = self.context.get('request')
+        if obj.customer and obj.customer.image:
+            return request.build_absolute_uri(obj.customer.image.url) if request else obj.customer.image.url
+        return None
+
 
 
 class JobNegotiateCreateSerializer(serializers.ModelSerializer):
