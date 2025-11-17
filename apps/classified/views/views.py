@@ -101,16 +101,17 @@ def AdminJobCategoryUpdate(request, slug):
 @authenticated_staff
 @staff_only
 def AdminJobCategoryDelete(request, slug):
-    category = JobCategories.objects.get(slug=slug)
+    try:
+        category = JobCategories.objects.get(slug=slug)
+    except JobCategories.DoesNotExist:
+        messages.error(request, _("Category not found"), extra_tags='Category')
+        return HttpResponseRedirect(reverse_lazy('classified:AdminJobCategoriesList'))
+    
     if request.method == "POST":
+        category_name = category.title
         category.delete()
-        messages.success(request, _("Category Deleted Successfully"), extra_tags='Category')
-        return HttpResponseRedirect(reverse_lazy('provider:AdminJobCategoriesList'))
-
-    context = {
-        'item_to_delete': category,
-        'current_page': _('Categories')
-    }
-    return render(request, f'{BACKEND_TEMPLATES}/classified/category/delete.html', context)
-
-
+        messages.success(request, _(f"Category '{category_name}' deleted successfully"), extra_tags='Category')
+        return HttpResponseRedirect(reverse_lazy('classified:AdminJobCategoriesList'))
+    
+    messages.error(request, _("Invalid request method"), extra_tags='Category')
+    return HttpResponseRedirect(reverse_lazy('classified:AdminJobCategoriesList'))
