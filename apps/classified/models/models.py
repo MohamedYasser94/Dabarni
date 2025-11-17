@@ -119,7 +119,7 @@ class JobMedia(models.Model):
     image = models.ImageField(upload_to=get_file_path, null=True, blank=True)
     image_url = models.URLField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=MultiFile_Type, null=True, blank=True)
-    video = models.URLField(null=True, blank=True)
+    video = models.FileField(upload_to=get_file_path, null=True, blank=True)
     video_cover = models.ImageField(upload_to=get_file_path, null=True, blank=True)
     file = models.FileField(upload_to=get_file_path, blank=True, null=True)
     code = models.CharField(max_length=50, null=True, blank=True)
