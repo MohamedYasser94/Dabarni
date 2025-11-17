@@ -196,16 +196,31 @@ class JobDetailSerializer(serializers.ModelSerializer):
     progresses = JobProgressSerializer(many=True, read_only=True)
     offers = ProviderOfferSerializer(many=True, read_only=True) 
     negotiations = JobNegotiateSerializer(many=True, read_only=True, source='negotiates')
-
+    customer_name = serializers.SerializerMethodField()
+    customer_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
         fields = [
-            "id","title","description","quantity","price",
-            "category","location","media","scheduled_at",
+            "id","title","description","customer_name", "customer_image",
+            "quantity","price", "category","location","media","scheduled_at",
             "progresses","offers","negotiations","views",
-            "code","slug","create_at"
+            "code","slug","create_at" ,
         ]
+    
+    def get_customer_name(self, obj):
+        if obj.customer:
+            if obj.customer.first_name or obj.customer.last_name:
+                return f'{obj.customer.first_name or ""} {obj.customer.last_name or ""}'.strip()
+            return obj.customer.email
+        return "مستخدم غير معروف"
+
+    def get_customer_image(self, obj):
+        request = self.context.get('request')
+        if obj.customer and obj.customer.image:
+            return request.build_absolute_uri(obj.customer.image.url) if request else obj.customer.image.url
+        return None
+
 
 
 class JobNegotiateCreateSerializer(serializers.ModelSerializer):
