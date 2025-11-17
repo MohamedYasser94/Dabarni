@@ -23,6 +23,7 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
     """
     Serializer to display a full provider profile, including related user data and reviews.
     """
+    user_image = serializers.ImageField(source='user.image', read_only=True)
     user_first_name = serializers.CharField(source='user.first_name', read_only=True)
     user_last_name = serializers.CharField(source='user.last_name', read_only=True)
     user_phone = serializers.CharField(source='user.phone', read_only=True)
@@ -35,7 +36,7 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobProvider
         fields = [
-            'id', 'user_first_name', 'user_last_name', 'user_phone',
+            'id', 'user_image', 'user_first_name', 'user_last_name', 'user_phone',
             'category_title', 'experience_years', 'company', 'bio',
             'address', 'latitude', 'longitude',
             'commercial_image', 'vat_image', 'license_image',
@@ -43,9 +44,9 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_average_rating(self, obj):
-        avg = JobReview.objects.filter(job__provider=obj).aggregate(average=Avg('rating'))
+        avg = JobReview.objects.filter(job__customer=obj.user).aggregate(average=Avg('rating'))
         return round(avg['average'], 2) if avg['average'] else 0.0
 
     def get_reviews(self, obj):
-        reviews = JobReview.objects.filter(job__provider=obj).order_by('-create_at')[:10]
+        reviews = JobReview.objects.filter(job__customer=obj.user).order_by('-create_at')[:10]
         return ProviderReviewSerializer(reviews, many=True).data

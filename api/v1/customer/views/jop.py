@@ -198,10 +198,10 @@ def cancel_job(request, job_id):
         # Update the main Job's status field as well for consistency
         job_instance.status = 'Inactive'
         job_instance.save()
-
+        serializer = JobDetailSerializer(job_instance, context={'request': request})
         return success_response(
             message="تم إلغاء الوظيفة بنجاح",
-            data=JobDetailSerializer(job_instance).data,
+            data=serializer.data,
             status_code=status.HTTP_200_OK
         )
     except Exception as e:

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from user.models import User, UserProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    image = serializers.CharField(source="user.image", required=False)
+    image = serializers.ImageField(source="user.image", required=False)
     first_name = serializers.CharField(source="user.first_name", required=False)
     last_name = serializers.CharField(source="user.last_name", required=False)
     email = serializers.EmailField(source="user.email", required=False)
@@ -27,3 +27,4 @@ class UserProfileSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
