@@ -50,7 +50,7 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS: List[str]  = ['127.0.0.1','localhost','192.168.2.2','31.97.37.69',
 
-                                'manfz.sa' ,'www.manfz.sa',
+                                'manfz.sa' ,'www.manfz.sa','dabarni.yllabena.com',
                              ]
 
 
