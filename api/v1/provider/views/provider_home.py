@@ -789,6 +789,37 @@ def start_work(request, progress_id):
     except JobProgress.DoesNotExist:
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def assign_job(request, progress_id):
+    """
+    المزود يقوم بقبول/تعيين المهمة لنفسه (تغيير الحالة إلى Assigned)
+    """
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        if progress.provider.user != request.user:
+            return Response({"status": False, "message": "غير مخول للقيام بهذا الإجراء"}, status=403)
+        
+        if progress.progress_status == "Assigned":return Response({"status": False, "message": "تم تعيين المهمة مسبقًا"}, status=400)
+
+        progress.progress_status = "Assigned"
+        progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تم تعيين المهمة وقبولها بنجاح",
+            "data": {
+                "id": progress.id,
+                "progress_status": progress.progress_status
+            }
+        })
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+    except Exception as e:
+        return Response({"status": False, "message": str(e)}, status=500)
 #============================================= last edits ============================================= 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

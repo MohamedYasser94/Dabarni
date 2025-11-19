@@ -64,4 +64,5 @@ urlpatterns = [
     path("chat/dialogs/", provider_chat.ApiUserChatSellerLists, name="ApiUserChatSellerLists"),
     path("chat/messages/", provider_chat.ApiProviderChatMessages, name="ApiProviderChatMessages"),
     path("chat/messages/save/", provider_chat.SaveChatMessageAPI, name="SaveChatMessageAPI"),
+    path('jobs/progress/<int:progress_id>/assign/', provider_home.assign_job, name='assign_job'),
 ]
