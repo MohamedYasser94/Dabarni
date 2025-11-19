@@ -295,8 +295,7 @@ class UserAddress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     label = models.CharField(max_length=100, validators=[UnicodeUsernameValidator], null=True, blank=True)
     country = models.CharField(max_length=100, choices=Country_List, default='Egypt', null=True, blank=True)
-    governorates = models.CharField(max_length=100, choices=SAUDI_CITIES_BY_GOVERNORATE, default='Cairo', null=True,
-                                    blank=True)
+    governorates = models.CharField(max_length=100, choices=SAUDI_CITIES_BY_GOVERNORATE, default='Cairo', null=True,blank=True)
     city = models.CharField(max_length=100,  null=True, blank=True)
     area = models.CharField(max_length=100,  null=True, blank=True)
     address = models.CharField(max_length=200, validators=[UnicodeUsernameValidator], null=True, blank=True)
@@ -307,16 +306,7 @@ class UserAddress(models.Model):
     apartment_number = models.CharField(max_length=50, null=True, blank=True)
     latitude = models.CharField(max_length=100, null=True, blank=True)
     longitude = models.CharField(max_length=100, null=True, blank=True)
-    property_type = models.CharField(
-        max_length=20,
-        choices=[
-            ("apartment", "شقة"),
-            ("villa", "فيلا"),
-            ("office", "مكتب"),
-            ("house", "منزل"),
-        ],
-        null=True, blank=True
-    )
+    property_type = models.CharField(max_length=20,null=True, blank=True)
     phone = models.CharField(max_length=100, validators=[validate_integer], null=True, blank=True)
     note = models.CharField(max_length=50, validators=[UnicodeUsernameValidator], blank=True, null=True)
     default = models.CharField(max_length=20, choices=Active_Status, default='Inactive', null=True, blank=True)
@@ -334,7 +324,6 @@ class UserAddress(models.Model):
             code = f'UserAddress-{get_random_string(5).upper()}'
             self.code = code
             self.slug = slugify(code)
-
         super(UserAddress, self).save(*args, **kwargs)
 
 

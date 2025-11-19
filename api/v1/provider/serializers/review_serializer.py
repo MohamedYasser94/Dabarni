@@ -49,4 +49,4 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
 
     def get_reviews(self, obj):
         reviews = JobReview.objects.filter(job__customer=obj.user).order_by('-create_at')[:10]
-        return ProviderReviewSerializer(reviews, many=True).data
+        return ProviderReviewSerializer(reviews, many=True).data    

@@ -1,7 +1,6 @@
 {% extends BACKEND_BASE %}
 {% load static %}
 {% load i18n %}
-
 {% block body %}
     <!--begin::Main-->
     <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
@@ -161,14 +160,12 @@
                                             </div>
                                             <!--end::Menu item-->
                                             <div class="menu-item px-3">
-                                                <form id="{{ item.slug }}" method="POST"
-                                                      action="{% url 'classified:AdminJobCategoryDelete' item.slug %}">
-                                                    {% csrf_token %} </form>
-
-
-                                                <a class="menu-link px-3" href="" onclick="
-                                                        if (confirm('Are You Sure To Delete {{ item.title }} ?')){document.getElementById('{{ item.slug }}').submit();}else{event.stopPropagation(); event.preventDefault();}"
-                                                   title="Link Title">
+                                                <form id="delete-form-{{ item.slug }}" method="POST" 
+                                                    action="{% url 'classified:AdminJobCategoryDelete' item.slug %}">
+                                                    {% csrf_token %}
+                                                </form>
+                                                <a class="menu-link px-3 text-danger" href="#" 
+                                                onclick="confirmDelete('{{ item.slug }}', '{{ item.title }}')">
                                                     {% translate 'Delete' %}
                                                 </a>
 
@@ -337,10 +334,30 @@
     </div>
 {% endblock %}
 {% block custom_js %}
-
 <script src="{% static '' %}{{ BACKEND_ASSETS }}/js/custom/apps/ecommerce/catalog/categories.js"></script>
+<script>
+function confirmDelete(slug, title) {
+    Swal.fire({
+        title: '{% translate "Are you sure?" %}',
+        text: '{% translate "You are about to delete category:" %} ' + title,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: '{% translate "Yes, delete it!" %}',
+        cancelButtonText: '{% translate "Cancel" %}'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('delete-form-' + slug).submit();
+        }
+    });
+}
 
-
-{% endblock custom_js %}
-{% block foot %} {% include BACKEND_FOOTER %}  {% endblock %}
+function confirmDeleteBasic(slug, title) {
+    if (confirm('{% translate "Are you sure you want to delete" %} "' + title + '"?')) {
+        document.getElementById('delete-form-' + slug).submit();
+    }
+}
+</script>
+{% endblock custom_js %}{% block foot %} {% include BACKEND_FOOTER %}  {% endblock %}
 {% block js %} {% include BACKEND_JS %}  {% endblock %}

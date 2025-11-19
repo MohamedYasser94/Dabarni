@@ -6,7 +6,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.exceptions import TokenError
 from django.db import transaction
-from apps.classified.models.models import JobCategories, JobProvider
+from apps.classified.models.models import JobCategories, JobProvider, JobReview
+from django.db.models import Avg
 from user.models import *
 
 User = get_user_model()
@@ -237,22 +238,22 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     user_first_name = serializers.CharField(source='user.first_name', read_only=True)
     user_last_name = serializers.CharField(source='user.last_name', read_only=True)
     user_phone = serializers.CharField(source='user.phone', read_only=True)
-    email = serializers.EmailField(source='user.email', read_only=True)  # إضافة البريد الإلكتروني
+    email = serializers.EmailField(source='user.email', read_only=True)
     user_image = serializers.ImageField(source='user.image', read_only=True)
-
     # UserProfile model fields
     is_citizen = serializers.BooleanField(source='user.profile.is_citizen', read_only=True)
     id_image_front = serializers.ImageField(source='user.profile.id_image_front', read_only=True)
     id_image_back = serializers.ImageField(source='user.profile.id_image_back', read_only=True)
     residence_image = serializers.ImageField(source='user.profile.residence_image', read_only=True)
-
-    dob = serializers.DateField(source='user.profile.dob', read_only=True)  # إضافة تاريخ الميلاد
-    nationality = serializers.CharField(source='user.profile.nationality', read_only=True)  # إضافة الجنسية
-    id_number = serializers.CharField(source='user.profile.id_number', read_only=True)  # إضافة رقم الهوية
-    residence = serializers.CharField(source='user.profile.residence', read_only=True)  # إضافة حقل residence
+    dob = serializers.DateField(source='user.profile.dob', read_only=True)
+    nationality = serializers.CharField(source='user.profile.nationality', read_only=True)
+    id_number = serializers.CharField(source='user.profile.id_number', read_only=True)
+    residence = serializers.CharField(source='user.profile.residence', read_only=True)
     # JobProvider model fields
     category_title = serializers.CharField(source='category.title', read_only=True)
-    
+    # إضافة rating
+    average_rating = serializers.SerializerMethodField()
+
     class Meta:
         model = JobProvider
         fields = [
@@ -267,8 +268,12 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
             'category_title', 'experience_years', 'company', 'bio',
             'address', 'latitude', 'longitude',
             'commercial_image','commercial_number', 'vat_image', 'license_image',
-            'profile_completion_percentage',
+            'profile_completion_percentage', 'average_rating'  
         ]
+
+    def get_average_rating(self, obj):
+        avg = JobReview.objects.filter(job__customer=obj.user).aggregate(average=Avg('rating'))
+        return round(avg['average'], 2) if avg['average'] else 0.0
 
 class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     """
