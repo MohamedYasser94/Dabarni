@@ -297,5 +297,33 @@ class JobNegotiateListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'offer','provider','provider_name',
             'offer_price','customer_price','provider_accepted',
-            'customer_accepted','created_at',
+            'customer_accepted','create_at','update_at'
         ]
+
+class JobNegotiateListSerializer(serializers.ModelSerializer):
+    provider_id = serializers.IntegerField(source='provider.id', read_only=True)
+    provider_name = serializers.CharField(source='provider.first_name', read_only=True) # أو get_full_name()
+    provider_phone = serializers.CharField(source='provider.phone', read_only=True) # تأكد أن حقل الهاتف موجود في موديل المستخدم
+    provider_image = serializers.SerializerMethodField()
+    provider_category = serializers.CharField(source='provider.category', read_only=True) 
+    provider_rating = serializers.SerializerMethodField()
+    provider_price = serializers.DecimalField(source='offer.price', max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = JobNegotiate
+        fields = [
+            'id','provider_id','provider_name','provider_phone','provider_image','provider_category','provider_rating','provider_price',
+            'customer_price','provider_accepted','customer_accepted','code','slug','create_at','update_at',
+            'job','offer','customer'
+        ]
+
+    def get_provider_image(self, obj):
+        request = self.context.get('request')
+        if obj.provider.user and obj.provider.user.image:
+            return request.build_absolute_uri(obj.provider.user.image.url) if request else obj.provider.user.image.url
+        return None
+
+    def get_provider_rating(self, obj):
+        if hasattr(obj.provider, 'average_rating'):
+            return obj.provider.average_rating
+        return 0.0

@@ -548,10 +548,6 @@ def get_job_progress(request, progress_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_job_negotiations(request, job_id):
-    """
-    API endpoint to list all negotiations for a specific job.
-    Only the customer who owns the job can view this list.
-    """
     try:
         job = get_object_or_404(Job, pk=job_id)
 
@@ -562,19 +558,13 @@ def list_job_negotiations(request, job_id):
             )
 
         negotiations = JobNegotiate.objects.filter(job=job).select_related('offer', 'provider')
-
-        if not negotiations.exists():
-             return success_response(
-                message="لا توجد مفاوضات جارية لهذا العمل.",
-                data=[],
-                status_code=status.HTTP_200_OK
-            )
-        
-        serializer = JobNegotiateListSerializer(negotiations, many=True)
+        serializer = JobNegotiateListSerializer(negotiations, many=True, context={'request': request})
 
         return success_response(
             message="تم جلب قائمة المفاوضات بنجاح.",
-            data=serializer.data,
+            data={
+                "negotiations": serializer.data
+            },
             status_code=status.HTTP_200_OK
         )
 
@@ -583,4 +573,4 @@ def list_job_negotiations(request, job_id):
             message="حدث خطأ أثناء جلب المفاوضات.",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
-        )
+        )    
