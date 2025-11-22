@@ -14,6 +14,7 @@ from api.v1.customer.serializers.jop_request_serializer import (
     JobCreateSerializer,
     JobDetailSerializer,
     JobNegotiateCreateSerializer,
+    JobNegotiateListSerializer,
     ProviderOfferSerializer,
 )
 from api.v1.response import success_response, error_response
@@ -539,4 +540,47 @@ def get_job_progress(request, progress_id):
         return error_response(
             message="لم يتم العثور على التقدم الذي بدأ بعد.",
             status_code=status.HTTP_404_NOT_FOUND
+        )
+
+@extend_schema(
+    tags=["Customer Offers"],
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_job_negotiations(request, job_id):
+    """
+    API endpoint to list all negotiations for a specific job.
+    Only the customer who owns the job can view this list.
+    """
+    try:
+        job = get_object_or_404(Job, pk=job_id)
+
+        if job.customer != request.user:
+            return error_response(
+                message="ليس لديك صلاحية لعرض مفاوضات هذا العمل.",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        negotiations = JobNegotiate.objects.filter(job=job).select_related('offer', 'provider')
+
+        if not negotiations.exists():
+             return success_response(
+                message="لا توجد مفاوضات جارية لهذا العمل.",
+                data=[],
+                status_code=status.HTTP_200_OK
+            )
+        
+        serializer = JobNegotiateListSerializer(negotiations, many=True)
+
+        return success_response(
+            message="تم جلب قائمة المفاوضات بنجاح.",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء جلب المفاوضات.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
         )

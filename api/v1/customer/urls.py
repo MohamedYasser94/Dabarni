@@ -40,7 +40,7 @@ urlpatterns = [
 
       #--------------------- Job Negotiate ----------------------------
       path('offers/<int:offer_id>/negotiate/', jop.NegotiateOffer, name='customer-negotiate-offer'),
-
+      path('jobs/<int:job_id>/negotiations/', jop.list_job_negotiations, name='list-job-negotiations'),
 
       #---------------------- Customer Wallet ---------------------------
      path('wallet/create/', customer_wallet.create_wallet, name='create_wallet'),
