@@ -721,8 +721,8 @@ def request_extra_amount(request, progress_id):
         progress = JobProgress.objects.get(id=progress_id)
 
         # التأكد أن المستخدم هو المزود
-        if not progress.provider or progress.provider.user != request.user:
-            return Response({"status": False, "message": "غير مخول لإرسال طلب مبلغ إضافي"}, status=403)
+        # if not progress.provider or progress.provider.user != request.user:
+        #     return Response({"status": False, "message": "غير مخول لإرسال طلب مبلغ إضافي"}, status=403)
 
         # البيانات المرسلة
         extra_cost = request.data.get('extra_cost')
@@ -766,9 +766,9 @@ def start_work(request, progress_id):
     try:
         progress = JobProgress.objects.get(id=progress_id)
 
-        # فقط المزود المخصص يمكنه بدء العمل
-        if progress.provider.user != request.user:
-            return Response({"status": False, "message": "غير مخول للبدء"}, status=403)
+        # # فقط المزود المخصص يمكنه بدء العمل
+        # if progress.provider.user != request.user:
+        #     return Response({"status": False, "message": "غير مخول للبدء"}, status=403)
 
         if progress.start_at:
             return Response({"status": False, "message": "تم بدء العمل مسبقًا"}, status=400)
@@ -799,8 +799,8 @@ def assign_job(request, progress_id):
     try:
         progress = JobProgress.objects.get(id=progress_id)
 
-        if progress.provider.user != request.user:
-            return Response({"status": False, "message": "غير مخول للقيام بهذا الإجراء"}, status=403)
+        # if progress.provider.user != request.user:
+        #     return Response({"status": False, "message": "غير مخول للقيام بهذا الإجراء"}, status=403)
         
         if progress.progress_status == "Assigned":return Response({"status": False, "message": "تم تعيين المهمة مسبقًا"}, status=400)
 
