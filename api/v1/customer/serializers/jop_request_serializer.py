@@ -287,3 +287,15 @@ class JobNegotiateCreateSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError("السعر يجب أن يكون أكبر من الصفر.")
         return value
+    
+class JobNegotiateListSerializer(serializers.ModelSerializer):
+    provider_name = serializers.CharField(source='provider.first_name', read_only=True) # أو أي حقل للاسم
+    offer_price = serializers.DecimalField(source='offer.price', max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = JobNegotiate
+        fields = [
+            'id', 'offer','provider','provider_name',
+            'offer_price','customer_price','provider_accepted',
+            'customer_accepted','created_at',
+        ]
