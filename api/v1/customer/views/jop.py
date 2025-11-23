@@ -338,9 +338,9 @@ def CustomerAcceptOffer(request, offer_id):
     """
     Accept an offer (API).
     This endpoint will:
-      - mark the offer as Accepted
-      - create/update the JobProgress and set it to InProgress
-      - mark other offers as Rejected
+        - mark the offer as Accepted
+        - create/update the JobProgress and set it to Assigned
+        - mark other offers as Rejected
     Returns: job data + progress_id
     """
     try:
@@ -380,8 +380,8 @@ def CustomerAcceptOffer(request, offer_id):
                 # لو موجود → نعدله
                 job_progress.offer = offer
                 job_progress.provider = offer.provider
-                job_progress.progress_status = 'Pending'
-                job_progress.status = 'Pending'
+                job_progress.progress_status = 'Assigned'
+                job_progress.status = 'Assigned'
                 job_progress.total_cost = offer.price
                 job_progress.start_at = None
                 job_progress.payment_status = 'Pending'
@@ -393,8 +393,8 @@ def CustomerAcceptOffer(request, offer_id):
                     offer=offer,
                     provider=offer.provider,
                     customer=job.customer,
-                    progress_status='Pending',
-                    status='Pending',
+                    progress_status='Assigned',
+                    status='Assigned',
                     total_cost=offer.price,
                     start_at=None,
                     payment_status='Pending'

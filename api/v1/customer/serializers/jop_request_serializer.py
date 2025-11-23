@@ -28,11 +28,26 @@ class UserAddressSerializer(serializers.ModelSerializer):
 class JobProgressSerializer(serializers.ModelSerializer):
     """
     Serializer to display details of a JobProgress object.
+    Updated to include provider details when assigned.
     """
+    providerId = serializers.IntegerField(source='provider.id', read_only=True)
+    providerName = serializers.CharField(source='provider.user.get_full_name', read_only=True)
+    providerPhone = serializers.CharField(source='provider.user.phone', read_only=True)
+    provider_image = serializers.SerializerMethodField()
+
     class Meta:
         model = JobProgress
-        fields = ['id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
+        fields = [
+            'id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by',
+            'providerId','providerName','provider_image','providerPhone'
+        ]
 
+    def get_provider_image(self, obj):
+        request = self.context.get('request')
+        if obj.provider and obj.provider.user and obj.provider.user.image:
+            return request.build_absolute_uri(obj.provider.user.image.url) if request else obj.provider.user.image.url
+        return None
+    
 class JobCreateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating a new Job. This serializer is for INPUT (POST requests).
@@ -212,13 +227,13 @@ class UserAddressSerializer(serializers.ModelSerializer):
         model = UserAddress
         fields = '__all__' 
 
-class JobProgressSerializer(serializers.ModelSerializer):
-    """
-    Serializer to display details of a JobProgress object.
-    """
-    class Meta:
-        model = JobProgress
-        fields = ['id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
+# class JobProgressSerializer(serializers.ModelSerializer):
+#     """
+#     Serializer to display details of a JobProgress object.
+#     """
+#     class Meta:
+#         model = JobProgress
+#         fields = ['id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
 
 class JobMediaSerializer(serializers.ModelSerializer):
     """
