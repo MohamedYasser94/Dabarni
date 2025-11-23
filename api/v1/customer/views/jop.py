@@ -111,13 +111,12 @@ def retrieve_job(request, job_id):
     tags=["Customer Jobs"],
     responses={200: JobDetailSerializer(many=True), 500: 'Error Response'},
 )
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_jobs_by_progress_status(request, status_param):
     """
     API endpoint to list jobs based on their progress status.
-    Accepted status values: 'Pending', 'Completed', 'Cancelled'.
+    Accepted status values: 'Pending', 'Completed', 'Cancelled', 'In Progress'.
     """
     valid_statuses = ['Pending', 'Completed', 'Cancelled','In Progress']
     
@@ -133,7 +132,7 @@ def list_jobs_by_progress_status(request, status_param):
             progresses__progress_status__iexact=status_param
         )
 
-        serializer = JobDetailSerializer(jobs, many=True)
+        serializer = JobDetailSerializer(jobs, many=True, context={'request': request})
         return success_response(
             message=f"تم جلب قائمة الوظائف بالحالة '{status_param}' بنجاح",
             data=serializer.data,
