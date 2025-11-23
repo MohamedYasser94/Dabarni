@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from api.v1.constants import JobOfferStatus, JobProgressStatus
 from apps.classified.models.models import Job, JobNegotiate, JobOffer, JobProgress
 from django.db import transaction
+from django.db.models import Prefetch
 from api.v1.customer.serializers.jop_request_serializer import (
     JobCreateSerializer,
     JobDetailSerializer,
@@ -65,9 +66,20 @@ def create_job(request):
 def list_my_jobs(request):
     """
     API endpoint to list jobs for the current authenticated user.
+    Shows negotiations ONLY if both customer_price and provider_price are set.
     """
     try:
-        jobs = Job.objects.filter(customer=request.user).select_related('customer', 'category')
+        negotiations_filter = Prefetch(
+            'negotiates',
+            queryset=JobNegotiate.objects.filter(
+                customer_price__isnull=False, 
+                provider_price__isnull=False
+            )
+        )
+
+        jobs = Job.objects.filter(customer=request.user)\
+            .select_related('customer', 'category')\
+            .prefetch_related(negotiations_filter) 
         serializer = JobDetailSerializer(jobs, many=True, context={'request': request})
         return success_response(
             message="تم جلب قائمة الوظائف بنجاح",
