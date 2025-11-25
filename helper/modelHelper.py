@@ -670,8 +670,8 @@ JobProvider_Type = ( ('Company', _("Company")),
                     ('institution', _("Institution")),  ('Freelance Document', _("Freelance Document")),)
 
 Job_Offer_Status = (('Accepted', 'Accepted'), ('Rejected', 'Rejected'), ('Pending', 'Pending'), )
-Job_Progress_Status = (('Pending', 'Pending'), ('In Progress', 'In Progress'), ('Completed', 'Completed'),
-                       ('On Hold', 'On Hold'), ('Cancelled', 'Cancelled'),)
+Job_Progress_Status =    (('Pending', 'Pending'), ('In Progress', 'In Progress'), ('Completed', 'Completed'),
+                        ('On Hold', 'On Hold'), ('Cancelled', 'Cancelled'),('Assigned', 'Assigned'),)
 ################### Blog ##############################
 Service_Type = (('Service', 'Service'), ('Work', 'Work'), ('Product', 'Product'), ('Project', 'Project'),
                 ('Portfolio', 'Portfolio'), ('Other', 'Other'))

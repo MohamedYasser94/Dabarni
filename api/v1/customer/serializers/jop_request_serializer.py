@@ -31,6 +31,7 @@ class JobProgressSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = JobProgress
+        model = JobProgress
         fields = ['id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
 
 class JobCreateSerializer(serializers.ModelSerializer):
@@ -212,13 +213,13 @@ class UserAddressSerializer(serializers.ModelSerializer):
         model = UserAddress
         fields = '__all__' 
 
-class JobProgressSerializer(serializers.ModelSerializer):
-    """
-    Serializer to display details of a JobProgress object.
-    """
-    class Meta:
-        model = JobProgress
-        fields = ['id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
+# class JobProgressSerializer(serializers.ModelSerializer):
+#     """
+#     Serializer to display details of a JobProgress object.
+#     """
+#     class Meta:
+#         model = JobProgress
+#         fields = ['id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
 
 class JobMediaSerializer(serializers.ModelSerializer):
     """

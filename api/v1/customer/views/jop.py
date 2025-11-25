@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from api.v1.constants import JobOfferStatus, JobProgressStatus
 from apps.classified.models.models import Job, JobNegotiate, JobOffer, JobProgress
 from django.db import transaction
+from django.db.models import Prefetch
 from api.v1.customer.serializers.jop_request_serializer import (
     JobCreateSerializer,
     JobDetailSerializer,
@@ -65,9 +66,20 @@ def create_job(request):
 def list_my_jobs(request):
     """
     API endpoint to list jobs for the current authenticated user.
+    Shows negotiations ONLY if both customer_price and provider_price are set.
     """
     try:
-        jobs = Job.objects.filter(customer=request.user).select_related('customer', 'category')
+        negotiations_filter = Prefetch(
+            'negotiates',
+            queryset=JobNegotiate.objects.filter(
+                customer_price__isnull=False, 
+                provider_price__isnull=False
+            )
+        )
+
+        jobs = Job.objects.filter(customer=request.user)\
+            .select_related('customer', 'category')\
+            .prefetch_related(negotiations_filter) 
         serializer = JobDetailSerializer(jobs, many=True, context={'request': request})
         return success_response(
             message="تم جلب قائمة الوظائف بنجاح",
@@ -111,15 +123,14 @@ def retrieve_job(request, job_id):
     tags=["Customer Jobs"],
     responses={200: JobDetailSerializer(many=True), 500: 'Error Response'},
 )
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_jobs_by_progress_status(request, status_param):
     """
     API endpoint to list jobs based on their progress status.
-    Accepted status values: 'Pending', 'Completed', 'Cancelled'.
+    Accepted status values: 'Pending', 'Completed', 'Cancelled', 'In Progress', 'Assigned'.
     """
-    valid_statuses = ['Pending', 'Completed', 'Cancelled','In Progress']
+    valid_statuses = ['Pending', 'Completed', 'Cancelled','In Progress','Assigned']
     
     if status_param not in valid_statuses:
         return error_response(
@@ -133,7 +144,7 @@ def list_jobs_by_progress_status(request, status_param):
             progresses__progress_status__iexact=status_param
         )
 
-        serializer = JobDetailSerializer(jobs, many=True)
+        serializer = JobDetailSerializer(jobs, many=True, context={'request': request})
         return success_response(
             message=f"تم جلب قائمة الوظائف بالحالة '{status_param}' بنجاح",
             data=serializer.data,
@@ -339,9 +350,9 @@ def CustomerAcceptOffer(request, offer_id):
     """
     Accept an offer (API).
     This endpoint will:
-      - mark the offer as Accepted
-      - create/update the JobProgress and set it to InProgress
-      - mark other offers as Rejected
+        - mark the offer as Accepted
+        - create/update the JobProgress and set it to InProgress
+        - mark other offers as Rejected
     Returns: job data + progress_id
     """
     try:

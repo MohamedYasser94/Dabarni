@@ -32,12 +32,14 @@ class JobOfferStatus:
 
 class JobProgressStatus:
     PENDING = "Pending"
+    ASSIGNED = "Assigned"
     IN_PROGRESS = "In Progress"
     COMPLETED = "Completed"
     CANCELLED = "Cancelled"
 
     CHOICES = [
         (PENDING, "Pending"),
+        (ASSIGNED, "Assigned"),
         (IN_PROGRESS, "In Progress"),
         (COMPLETED, "Completed"),
         (CANCELLED, "Cancelled"),
