@@ -599,7 +599,7 @@ def respondToNegotiation(request, negotiation_id):
                 
                 job_progress = get_object_or_404(JobProgress, job=negotiation.job)
                 job_progress.offer = offer
-                job_progress.progress_status = JobProgressStatus.IN_PROGRESS 
+                job_progress.progress_status = JobProgressStatus.ASSIGNED 
                 job_progress.total_cost = negotiation.customer_price # The final agreed price
                 job_progress.save()
 
@@ -789,7 +789,12 @@ def start_work(request, progress_id):
     except JobProgress.DoesNotExist:
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
 
-
+@extend_schema(
+    tags=["Provider Jobs"],
+    summary="تعيين العمل",
+    description="المزود يعيين بالعمل على JobProgress",
+    responses={200: dict, 400: dict, 403: dict, 404: dict}
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def assign_job(request, progress_id):

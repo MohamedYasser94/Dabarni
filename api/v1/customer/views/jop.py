@@ -128,9 +128,9 @@ def retrieve_job(request, job_id):
 def list_jobs_by_progress_status(request, status_param):
     """
     API endpoint to list jobs based on their progress status.
-    Accepted status values: 'Pending', 'Completed', 'Cancelled', 'In Progress'.
+    Accepted status values: 'Pending', 'Completed', 'Cancelled', 'In Progress', 'Assigned'.
     """
-    valid_statuses = ['Pending', 'Completed', 'Cancelled','In Progress']
+    valid_statuses = ['Pending', 'Completed', 'Cancelled','In Progress','Assigned']
     
     if status_param not in valid_statuses:
         return error_response(
