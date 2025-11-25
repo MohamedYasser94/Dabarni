@@ -28,48 +28,11 @@ class UserAddressSerializer(serializers.ModelSerializer):
 class JobProgressSerializer(serializers.ModelSerializer):
     """
     Serializer to display details of a JobProgress object.
-    Shows provider details ONLY if status is Assigned, In Progress, or Completed.
     """
-    providerId = serializers.SerializerMethodField()
-    providerName = serializers.SerializerMethodField()
-    providerPhone = serializers.SerializerMethodField()
-    provider_image = serializers.SerializerMethodField()
-
     class Meta:
         model = JobProgress
-        fields = [
-            'id', 'progress_status', 'reason', 'total_cost', 'start_at', 
-            'canceled_at', 'canceled_by','providerId','providerName','provider_image','providerPhone'
-        ]
-
-    def _should_show_provider_info(self, obj):
-        allowed_statuses = ['Assigned', 'In Progress', 'Completed']
-        return obj.progress_status in allowed_statuses
-
-    def get_providerId(self, obj):
-        if self._should_show_provider_info(obj) and obj.provider:
-            return obj.provider.id
-        return None
-
-    def get_providerName(self, obj):
-        if self._should_show_provider_info(obj) and obj.provider:
-            if obj.provider.first_name or obj.provider.last_name:
-                return f'{obj.provider.first_name or ""} {obj.provider.last_name or ""}'.strip()
-            return obj.provider.username
-        return None
-
-    def get_providerPhone(self, obj):
-        if self._should_show_provider_info(obj) and obj.provider and hasattr(obj.provider, 'phone'):
-             return obj.provider.phone
-        return None
-
-    def get_provider_image(self, obj):
-        if self._should_show_provider_info(obj) and obj.provider:
-            request = self.context.get('request')
-            if obj.provider.image:
-                return request.build_absolute_uri(obj.provider.image.url) if request else obj.provider.image.url
-        return None
-
+        model = JobProgress
+        fields = ['id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
 
 class JobCreateSerializer(serializers.ModelSerializer):
     """

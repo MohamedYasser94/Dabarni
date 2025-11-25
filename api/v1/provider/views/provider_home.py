@@ -334,7 +334,9 @@ def GetJobDetails(request, job_id):
             errors={'detail': str(e)}
         )
 
-
+@extend_schema(
+    tags=["Job Progress"],
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def AcceptJob(request, job_id):
@@ -599,7 +601,7 @@ def respondToNegotiation(request, negotiation_id):
                 
                 job_progress = get_object_or_404(JobProgress, job=negotiation.job)
                 job_progress.offer = offer
-                job_progress.progress_status = JobProgressStatus.ASSIGNED 
+                job_progress.progress_status = JobProgressStatus.IN_PROGRESS  
                 job_progress.total_cost = negotiation.customer_price # The final agreed price
                 job_progress.save()
 
@@ -789,42 +791,6 @@ def start_work(request, progress_id):
     except JobProgress.DoesNotExist:
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
 
-@extend_schema(
-    tags=["Provider Jobs"],
-    summary="تعيين العمل",
-    description="المزود يعيين بالعمل على JobProgress",
-    responses={200: dict, 400: dict, 403: dict, 404: dict}
-)
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def assign_job(request, progress_id):
-    """
-    المزود يقوم بقبول/تعيين المهمة لنفسه (تغيير الحالة إلى Assigned)
-    """
-    try:
-        progress = JobProgress.objects.get(id=progress_id)
-
-        # if progress.provider.user != request.user:
-        #     return Response({"status": False, "message": "غير مخول للقيام بهذا الإجراء"}, status=403)
-        
-        if progress.progress_status == "Assigned":return Response({"status": False, "message": "تم تعيين المهمة مسبقًا"}, status=400)
-
-        progress.progress_status = "Assigned"
-        progress.save()
-
-        return Response({
-            "status": True,
-            "message": "تم تعيين المهمة وقبولها بنجاح",
-            "data": {
-                "id": progress.id,
-                "progress_status": progress.progress_status
-            }
-        })
-
-    except JobProgress.DoesNotExist:
-        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
-    except Exception as e:
-        return Response({"status": False, "message": str(e)}, status=500)
 #============================================= last edits ============================================= 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
