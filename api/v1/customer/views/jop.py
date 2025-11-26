@@ -320,8 +320,7 @@ def getOffersByJob(request, job_id):
         offers = JobOffer.objects.filter(job=job).select_related('provider__user')
 
         # Serialize the offers
-        serializer = ProviderOfferSerializer(offers, many=True)
-
+        serializer = ProviderOfferSerializer(offers, many=True, context={'request': request})
         return success_response(
             message="تم جلب العروض بنجاح.",
             data=serializer.data,
