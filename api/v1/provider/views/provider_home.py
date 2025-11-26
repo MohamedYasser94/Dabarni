@@ -15,7 +15,7 @@ from apps.classified.models.models import Job
 from api.v1.response import success_response, error_response
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from user.models import UserProfile
 
 
@@ -203,22 +203,35 @@ def ProviderMyOrders(request, progress_status):
 def list_provider_jobs_by_status(request, status_param):
     """
     API endpoint for Providers to list jobs based on status.
+    Filters nested offers/negotiations to show only the provider's own data.
     """
-    valid_statuses = ['Pending', 'Completed', 'Cancelled', 'In Progress', 'Assigned', 'Accepted', 'Rejected']
+    # valid_statuses = ['Pending', 'Completed', 'Cancelled', 'In Progress', 'Accepted', 'Rejected']
     
-    if status_param not in valid_statuses:
-        return error_response(
-            message=f"الحالة غير صالحة. الرجاء استخدام إحدى القيم التالية: {', '.join(valid_statuses)}",
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
+    # if status_param not in valid_statuses:
+    #     return error_response(
+    #         message=f"الحالة غير صالحة. الرجاء استخدام إحدى القيم التالية: {', '.join(valid_statuses)}",
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #     )
 
     try:
         user = request.user
+        my_offers_prefetch = Prefetch(
+            'offers', 
+            queryset=JobOffer.objects.filter(provider__user=user)
+        )
+        my_negotiates_prefetch = Prefetch(
+            'negotiates', 
+            queryset=JobNegotiate.objects.filter(provider__user=user)
+        )
+
         jobs = Job.objects.filter(
             Q(offers__provider__user=user) | Q(negotiates__provider__user=user)
         ).filter(
             Q(progresses__progress_status__iexact=status_param) |
             Q(offers__status__iexact=status_param, offers__provider__user=user)
+        ).prefetch_related(
+            my_offers_prefetch,
+            my_negotiates_prefetch 
         ).distinct()
 
         serializer = JobDetailSerializer(jobs, many=True, context={'request': request})
@@ -256,7 +269,6 @@ def RetrieveAvailableJobs(request):
       - radius_km: float (default 50.0)
     """
     try:
-        print("Fetching available jobs for provider:", request.user.id)
         provider = get_object_or_404(JobProvider, user=request.user)
 
         # Optional query params override provider location
