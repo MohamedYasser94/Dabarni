@@ -15,7 +15,7 @@ from apps.classified.models.models import Job
 from api.v1.response import success_response, error_response
 from django.db import transaction
 from django.utils import timezone
-
+from django.db.models import Q
 from user.models import UserProfile
 
 
@@ -151,6 +151,7 @@ def ProviderHome(request):
         "job_offer": job_offer_serializer.data,
     }
     return Response(data, status=status.HTTP_200_OK)
+
 @extend_schema(
     tags=["Provider Orders"],
     responses={200: 'ProviderOrdersResponse', 404: 'Not Found Response', 500: 'Error Response'}
@@ -193,7 +194,49 @@ def ProviderMyOrders(request, progress_status):
             errors={'detail': str(e)}
         )
 
+@extend_schema(
+    tags=["Provider Orders"],
+    responses={200: JobDetailSerializer(many=True), 500: 'Error Response'},
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_provider_jobs_by_status(request, status_param):
+    """
+    API endpoint for Providers to list jobs based on status.
+    """
+    valid_statuses = ['Pending', 'Completed', 'Cancelled', 'In Progress', 'Assigned', 'Accepted', 'Rejected']
+    
+    if status_param not in valid_statuses:
+        return error_response(
+            message=f"الحالة غير صالحة. الرجاء استخدام إحدى القيم التالية: {', '.join(valid_statuses)}",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
 
+    try:
+        user = request.user
+        jobs = Job.objects.filter(
+            Q(offers__provider__user=user) | Q(negotiates__provider__user=user)
+        ).filter(
+            Q(progresses__progress_status__iexact=status_param) |
+            Q(offers__status__iexact=status_param, offers__provider__user=user)
+        ).distinct()
+
+        serializer = JobDetailSerializer(jobs, many=True, context={'request': request})
+        
+        return success_response(
+            message=f"تم جلب قائمة وظائف المزود بالحالة '{status_param}' بنجاح",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return error_response(
+            message="حدث خطأ أثناء جلب قائمة الوظائف الخاصة بالمزود",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
 
 @extend_schema(
     tags=["Provider Jobs"],
@@ -344,7 +387,7 @@ def AcceptJob(request, job_id):
     Provider accepts the job at client's price:
     - creates a JobOffer (or marks existing offer accepted)
     - sets provider_accepted=True and accepted_at
-    - creates a JobProgress row (InProgress / Accepted)
+    - Fix: Updates existing JobProgress if found, otherwise creates one.
     """
     try:
         provider = get_object_or_404(JobProvider, user=request.user)
@@ -371,29 +414,27 @@ def AcceptJob(request, job_id):
                 status='InProgress',
             )
 
-        # create JobProgress (reflect acceptance)
-        job_progress, created = JobProgress.objects.get_or_create(
-        job=job,
-        provider=provider,
-        defaults={
-            'offer': offer,
-            'customer': job.customer,
-            'progress_status': 'Pending',
-            'status': 'Pending',
-            'total_cost': offer.price,
-            'start_at': None
-        }
-    )
+        job_progress = JobProgress.objects.filter(job=job).first()
 
-        if not created:
+        if job_progress:
+            job_progress.provider = provider
             job_progress.offer = offer
             job_progress.progress_status = 'Pending'
             job_progress.status = 'Pending'
             job_progress.total_cost = offer.price
-            job_progress.start_at = None  
+            job_progress.start_at = None
             job_progress.save()
-
-
+        else:
+            job_progress = JobProgress.objects.create(
+                job=job,
+                provider=provider,
+                offer=offer,
+                customer=job.customer,
+                progress_status='Pending',
+                status='Pending',
+                total_cost=offer.price,
+                start_at=None
+            )
 
         data = JobOfferSerializer(offer, context={'request': request}).data
 
@@ -402,6 +443,7 @@ def AcceptJob(request, job_id):
 
         return Response({"isSuccess": True, "message": "تم قبول الطلب بنجاح", "data": data},
                         status=status.HTTP_201_CREATED)
+
     except JobProvider.DoesNotExist:
         return Response({"isSuccess": False, "message": "ملف مقدم الخدمة غير موجود."},
                         status=status.HTTP_404_NOT_FOUND)
@@ -410,7 +452,7 @@ def AcceptJob(request, job_id):
         traceback.print_exc()
         return Response({"isSuccess": False, "message": "حدث خطأ.", "errors": str(e)},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
 @extend_schema(
     description="Provider finishes a job and marks its progress as Completed.",
     responses={
@@ -723,8 +765,8 @@ def request_extra_amount(request, progress_id):
         progress = JobProgress.objects.get(id=progress_id)
 
         # التأكد أن المستخدم هو المزود
-        # if not progress.provider or progress.provider.user != request.user:
-        #     return Response({"status": False, "message": "غير مخول لإرسال طلب مبلغ إضافي"}, status=403)
+        if not progress.provider or progress.provider.user != request.user:
+            return Response({"status": False, "message": "غير مخول لإرسال طلب مبلغ إضافي"}, status=403)
 
         # البيانات المرسلة
         extra_cost = request.data.get('extra_cost')
@@ -754,7 +796,7 @@ def request_extra_amount(request, progress_id):
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
     
 @extend_schema(
-    tags=["Provider Jobs"],
+    tags=["Job Progress"],
     summary="بدء العمل",
     description="المزود يبدأ العمل على JobProgress",
     responses={200: dict, 400: dict, 403: dict, 404: dict}

@@ -114,6 +114,7 @@ class Job(models.Model):
         # Pass all arguments to the parent save method
         super(Job, self).save(*args, **kwargs)
 
+
 class JobMedia(models.Model):
     job= models.ForeignKey(Job, on_delete=models.CASCADE, related_name='media')
     image = models.ImageField(upload_to=get_file_path, null=True, blank=True)

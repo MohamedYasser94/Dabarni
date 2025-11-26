@@ -37,6 +37,7 @@ urlpatterns = [
 
     # ===================== Job & Order URLs =====================
     path("orders/<str:progress_status>/", provider_home.ProviderMyOrders, name="ProviderMyOrders"),
+    path('jobs/status/<str:status_param>/', provider_home.list_provider_jobs_by_status, name='list-provider-jobs-by-status'),
     # path("jobs/<slug:job_slug>/details/", provider_home.ProviderJobDetails, name="ProviderJobDetails"),
     path("jobs/offers/<slug:offer_slug>/details/", provider_home.ProviderJobOfferDetails, name="ProviderJobOfferDetails"),
     path("jobs/offers/<slug:offer_slug>/update-status/", provider_home.ProviderUpdateJobOfferStatus, name="ProviderUpdateJobOfferStatus"),
