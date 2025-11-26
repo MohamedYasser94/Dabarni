@@ -308,6 +308,7 @@ def RetrieveAvailableJobs(request):
         jobsQueryset = (
             Job.objects
             .filter(category=provider.category, progresses__progress_status='Pending')
+            .exclude(offers__provider=provider)
             .select_related('location')
             .distinct()
         )
