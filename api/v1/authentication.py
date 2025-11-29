@@ -14,7 +14,10 @@ from rest_framework_simplejwt.tokens import RefreshToken ,TokenError
 from rest_framework.permissions import IsAuthenticated
 from api.v1.response import success_response, error_response
 from apps.classified.models.models import JobProvider, JobCategories
+from firebase_admin import auth as firebase_auth
+import logging
 
+logger = logging.getLogger(__name__)
 VALID_ACCESS_LEVELS = ['Client', 'Provider']
 
 @extend_schema(request=RegisterSerializer, tags=["Auth"], auth=[])
@@ -101,13 +104,13 @@ def register(request):
         status_code=status.HTTP_200_OK
     )
 
-@extend_schema(request=ConfirmOTPSerializer,  tags=["Auth"],auth=[])
+@extend_schema(request=ConfirmOTPSerializer, tags=["Auth"], auth=[])
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @authentication_classes([])
 def verify_otp(request):
     """
-    Step 2: Verify OTP and activate user
+    Step 2: Verify OTP, activate user, and generate Firebase Token
     """
     phone = request.data.get("phone")
     otp = request.data.get("otp")
@@ -126,12 +129,13 @@ def verify_otp(request):
             message="User not found with this phone and role",
             status_code=status.HTTP_404_NOT_FOUND
         )
-
+    
     if not user.otp or user.otp_expiry < timezone.now():
         return error_response(
             message="OTP expired. Please request a new one",
             status_code=status.HTTP_400_BAD_REQUEST
         )
+    
     if str(user.otp) != str(otp):
         return error_response(
             message="Invalid OTP",
@@ -150,12 +154,45 @@ def verify_otp(request):
     user.otp_expiry = None
     user.otp_attempts = 0
     user.save()
+    firebase_token = None
+    
+    try:
+        if not user.firebase_uid:
+            try:
+                existing_firebase_user = firebase_auth.get_user_by_phone_number(user.phone)
+                user.firebase_uid = existing_firebase_user.uid
+                user.save()
+                logger.info(f"Linked existing Firebase user for {user.phone}")
+            
+            except firebase_auth.UserNotFoundError:
+                try:
+                    firebase_user = firebase_auth.create_user(
+                        phone_number=user.phone,
+                        display_name=f"{user.first_name} {user.last_name}" if user.first_name else "New User"
+                    )
+                    user.firebase_uid = firebase_user.uid
+                    user.save()
+                    logger.info(f"Created new Firebase user for {user.phone}")
+                except Exception as create_error:
+                    logger.error(f"Error creating Firebase user: {str(create_error)}")
+        if user.firebase_uid:
+            additional_claims = {
+                'django_user_id': user.id,
+                'access_level': user.access_level,
+                'phone': user.phone
+            }
+            custom_token_bytes = firebase_auth.create_custom_token(user.firebase_uid, additional_claims)
+            firebase_token = custom_token_bytes.decode('utf-8')
 
+    except Exception as e:
+        logger.error(f"General Error generating Firebase token for user {user.phone}: {str(e)}")
     return success_response(
-        message="OTP sent to phone. Please confirm your account.",
+        message="User verified successfully",
         data={
             "message": "User verified successfully",
             "tokens": user.tokens(),
+            "firebase_token": firebase_token,
+            "firebase_uid": user.firebase_uid,
             "is_new_user": is_new_user,
             "user_status": "new" if is_new_user else "existing",
         },
@@ -171,7 +208,6 @@ def verify_otp(request):
         400: {'error': 'Invalid or expired token'}
     }
 )
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout(request):

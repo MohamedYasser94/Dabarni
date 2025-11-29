@@ -1,5 +1,6 @@
 from django.urls import path
-from api.v1.provider.views import provider_auth, provider_home, provider_wallet, provider_chat
+from api.v1.provider.views import provider_auth, provider_home, provider_wallet
+from api.v1.provider.views.providerchat import *
 from api.v1.provider.views.provider_home import ProviderProfile, ProviderUpdateProfile
 
 app_name = 'provider_api'
@@ -61,8 +62,8 @@ urlpatterns = [
     path("wallet/bank-account/add/", provider_wallet.AddProviderBankAccount, name="AddProviderBankAccount"),
 
     # ===================== Chat URLs =====================
-    path("chat/start/<slug:order_slug>/", provider_chat.StartChatView, name="StartChatView"),
-    path("chat/dialogs/", provider_chat.ApiUserChatSellerLists, name="ApiUserChatSellerLists"),
-    path("chat/messages/", provider_chat.ApiProviderChatMessages, name="ApiProviderChatMessages"),
-    path("chat/messages/save/", provider_chat.SaveChatMessageAPI, name="SaveChatMessageAPI"),
+    path('chat/start/<slug:job_slug>/', provider_start_chat_view, name='start-chat'),
+    path('chat/list/', Api_provider_Chat_Lists, name='chat-list'),
+    path('chat/messages/', Api_provider_Chat_All_Messages, name='chat-messages'),
+    path('chat/messages/save/', provider_send_Messages, name='save-chat-message'),
 ]
