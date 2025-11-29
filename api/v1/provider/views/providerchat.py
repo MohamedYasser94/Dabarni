@@ -60,11 +60,6 @@ def cleanup_firestore_chats(request):
 
 #----------------------------- Helper Functions ----------------------------
 def update_firebase_chat_context(dialog, job_progress, provider_user, customer_user):
-    """
-    دالة لتحديث بيانات المحادثة في Firestore.
-    نقوم بتحديثها حتى لو كانت المحادثة موجودة مسبقاً لنضمن أن 
-    الـ job_slug يشير إلى المهمة الحالية التي يتحدثون عنها.
-    """
     try:
         from firebase_admin import firestore
         db = firestore.client()
