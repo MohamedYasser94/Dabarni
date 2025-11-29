@@ -1,6 +1,5 @@
 from django.urls import path
-
-
+from api.v1.customer.views.customer_chat import *
 from apps.front.views import views, blocks 
 from api.v1.customer.views import profile ,jop , category, review, customer_wallet
 
@@ -51,7 +50,9 @@ urlpatterns = [
     #------------------- Progress ----------------
   path('jobs/progress/<int:progress_id>/', jop.get_job_progress, name='get_job_progress'),
 
-
-     
-
+    # ===================== Chat URLs =====================
+    path('chat/start/<slug:job_slug>/', customer_start_chat_view, name='start-chat'),
+    path('chat/list/', Api_customer_Chat_Lists, name='chat-list'),
+    path('chat/messages/', Api_customer_Chat_All_Messages, name='chat-messages'),
+    path('chat/messages/save/', customer_send_Messages, name='save-chat-message'),
 ]
