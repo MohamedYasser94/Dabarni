@@ -32,7 +32,7 @@ class JobProgressSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobProgress
         model = JobProgress
-        fields = ['id', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
+        fields = ['id','slug', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
 
 class JobCreateSerializer(serializers.ModelSerializer):
     """
