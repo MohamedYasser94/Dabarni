@@ -584,3 +584,61 @@ def list_job_negotiations(request, job_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )    
+    
+
+@extend_schema(
+    tags=["Customer Jobs"],
+    summary="موافقة العميل على المبلغ الإضافي",
+    description="يقوم العميل بالموافقة على التكلفة الإضافية، ويتم تحديث السعر الكلي للطلب تلقائياً.",
+    responses={200: dict, 400: dict, 403: dict, 404: dict}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def approve_extra_cost(request, progress_id):
+    """
+    العميل يوافق على المبلغ الإضافي ويتم إضافته للمجموع الكلي
+    """
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        if progress.customer != request.user:
+            return Response({
+                "status": False,
+                "message": "عذراً، هذا الطلب لا يخصك."
+            }, status=403)
+
+        if not progress.extra_cost or progress.extra_cost <= 0:
+            return Response({
+                "status": False,
+                "message": "لا يوجد مبلغ إضافي مطلوب للموافقة عليه."
+            }, status=400)
+
+        if progress.extra_cost_approved:
+            return Response({
+                "status": False,
+                "message": "تمت الموافقة على هذا المبلغ مسبقاً."
+            }, status=400)
+
+        progress.extra_cost_approved = True
+        progress.extra_approved_time = timezone.now()
+        current_total = progress.total_cost if progress.total_cost else 0
+        new_total = current_total + progress.extra_cost
+        progress.total_cost = new_total
+        progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تمت الموافقة على المبلغ الإضافي بنجاح.",
+            "data": {
+                "id": progress.id,
+                "extra_cost": progress.extra_cost,
+                "new_total_cost": progress.total_cost,
+                "approved_at": progress.extra_approved_time
+            }
+        }, status=200)
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+    except Exception as e:
+        print(f"Error in approve_extra_cost: {e}")
+        return Response({"status": False, "message": "حدث خطأ غير متوقع"}, status=500)
