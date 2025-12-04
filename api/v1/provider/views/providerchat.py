@@ -373,8 +373,7 @@ def provider_send_Messages(request):
             try:
                 file_instance = UploadedFile.objects.create(
                     file=uploaded_file_obj,
-                    user=sender,
-                    name=uploaded_file_obj.name
+                    uploaded_by=sender,
                 )
                 if hasattr(file_instance.file, 'url'):
                     file_url_str = request.build_absolute_uri(file_instance.file.url)
