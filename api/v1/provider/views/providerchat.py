@@ -17,7 +17,7 @@ from rest_framework.decorators import api_view, permission_classes, parser_class
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from core.models.chat import Dialog, Message, UploadedFile
-from django.db.models import Q
+from django.db.models import Q , Count
 from django.utils import timezone
 from django.http import JsonResponse
 
@@ -163,9 +163,13 @@ def Api_provider_Chat_Lists(request):
     """
     current_user = request.user
     dialogs = Dialog.objects.filter(
-        Q(provider=current_user) | Q(customer=current_user)
-    ).select_related('provider', 'customer', 'job').prefetch_related('messages')
-
+            Q(provider=current_user) | Q(customer=current_user)
+        ).annotate(
+            unread_count=Count(
+                'messages',
+                filter=Q(messages__read=False) & ~Q(messages__sender=current_user)
+            )
+        ).select_related('provider', 'customer', 'job').prefetch_related('messages')
     chat_seller_lists_data = []
 
     for dialog in dialogs:
@@ -212,6 +216,7 @@ def Api_provider_Chat_Lists(request):
             "last_message_content": last_message_content,
             "seller_list": seller_list_json,
             "imageUrl": other_user_image_url, 
+            "unread_count": dialog.unread_count,
         }
         chat_seller_lists_data.append(chat_item)
 
@@ -258,7 +263,7 @@ def Api_provider_Chat_All_Messages(request):
 
         if current_user != dialog.provider and current_user != dialog.customer:
             return Response({'error': 'You do not have permission to view this chat.'}, status=status.HTTP_403_FORBIDDEN)
-
+        Message.objects.filter(dialog=dialog, read=False).exclude(sender=current_user).update(read=True)
         other_user = dialog.provider if dialog.customer == current_user else dialog.customer
         messages_queryset = Message.objects.filter(dialog=dialog)\
             .exclude(deleted_by=current_user)\
