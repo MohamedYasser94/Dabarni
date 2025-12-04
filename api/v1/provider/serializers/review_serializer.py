@@ -22,6 +22,7 @@ class ProviderReviewSerializer(serializers.ModelSerializer):
 class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
     """
     Serializer to display a full provider profile, including related user data and reviews.
+    Relies on JobProgress to link Jobs to Providers.
     """
     user_image = serializers.ImageField(source='user.image', read_only=True)
     user_first_name = serializers.CharField(source='user.first_name', read_only=True)
@@ -40,13 +41,25 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
             'category_title', 'experience_years', 'company', 'bio',
             'address', 'latitude', 'longitude',
             'commercial_image', 'vat_image', 'license_image',
-            'profile_completion_percentage', 'average_rating', 'reviews'
+            'profile_completion_percentage', 'average_rating','reviews'
         ]
 
     def get_average_rating(self, obj):
-        avg = JobReview.objects.filter(job__customer=obj.user).aggregate(average=Avg('rating'))
+        """
+        Calculates average rating based on jobs linked via JobProgress.
+        Masar (Path): JobReview -> Job -> JobProgress (provider=obj)
+        """
+        avg = JobReview.objects.filter(
+            job__progresses__provider=obj
+        ).aggregate(average=Avg('rating'))
+        
         return round(avg['average'], 2) if avg['average'] else 0.0
 
     def get_reviews(self, obj):
-        reviews = JobReview.objects.filter(job__customer=obj.user).order_by('-create_at')[:10]
-        return ProviderReviewSerializer(reviews, many=True).data    
+        """
+        Fetches the latest 10 reviews for jobs done by this provider.
+        """
+        reviews = JobReview.objects.filter(
+            job__progresses__provider=obj
+        ).distinct().order_by('-create_at')[:10]
+        return ProviderReviewSerializer(reviews, many=True).data
