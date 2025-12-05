@@ -183,7 +183,7 @@ def Api_provider_Chat_Lists(request):
             last_message_content = last_message.content if last_message.content else "Attachment"
         else:
             last_activity_time = dialog.created_at
-            last_message_content = "No messages yet."
+            last_message_content = ""
 
         other_user_image_url = None
         try:
