@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from apps.classified.models.models import Job, JobReview, JobProgress
 from api.v1.customer.serializers.JobReviewCreateSerializer import JobReviewCreateSerializer
 from api.v1.response import success_response, error_response
-
+from api.v1.global_serializer.fcm import send_general_notification
 
 @extend_schema(
     tags=["Customer Review"],
@@ -22,13 +22,10 @@ def createJobReview(request, job_id):
     API endpoint for a customer to submit a rating and review with media for a completed job.
     """
     try:
-        # Get the job, ensuring it belongs to the authenticated user
         job = get_object_or_404(Job, pk=job_id, customer=request.user)
 
-        # Get the related JobProgress record to check the job status
         job_progress = get_object_or_404(JobProgress, job=job)
 
-        # Check the progress_status field of the JobProgress model
         if job_progress.progress_status != 'Completed':
             return error_response(
                 message="لا يمكن تقييم هذه الوظيفة إلا بعد اكتمالها.",
@@ -39,6 +36,32 @@ def createJobReview(request, job_id):
         
         if serializer.is_valid():
             review = serializer.save()
+
+            try:
+                provider_user = job_progress.provider.user
+                customer_name = request.user.get_full_name() or "Client"
+                rating_value = getattr(review, 'rating')
+                noti_title = "تقييم جديد!"
+                noti_body = f"قام {customer_name} بتقييمك بـ {rating_value} نجوم على وظيفة: {job.title}"
+
+                noti_data = {
+                    "type": "new_review",
+                    "job_id": job.id,
+                    "review_id": review.id,
+                    "provider_id": job_progress.provider.id,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+
+                send_general_notification(
+                    receiver=provider_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="new_review",
+                    extra_data=noti_data
+                )
+            except Exception as noti_error:
+                pass
+
             return success_response(
                 message="تم إرسال التقييم بنجاح.",
                 data=JobReviewCreateSerializer(review).data,

@@ -20,7 +20,7 @@ from api.v1.customer.serializers.jop_request_serializer import (
 )
 from api.v1.response import success_response, error_response
 from apps.wallet.models.models import Wallet
-
+from api.v1.global_serializer.fcm import send_general_notification
 
 @extend_schema(
     tags=["Customer Jobs"],
@@ -352,6 +352,7 @@ def CustomerAcceptOffer(request, offer_id):
         - mark the offer as Accepted
         - create/update the JobProgress and set it to InProgress
         - mark other offers as Rejected
+        - Send Notification to the Provider
     Returns: job data + progress_id
     """
     try:
@@ -361,15 +362,14 @@ def CustomerAcceptOffer(request, offer_id):
                 pk=offer_id
             )
             job = offer.job
-
-            # تأكيد صلاحية العميل
+            offer.status = 'Accepted'
+            offer.save()
             if job.customer != request.user:
                 return error_response(
                     message="ليس لديك صلاحية لقبول هذا العرض.",
                     status_code=status.HTTP_403_FORBIDDEN
                 )
 
-            # راجع الـ negotiation إن وجد
             negotiation = JobNegotiate.objects.filter(job=job, provider=offer.provider).first()
             if negotiation and negotiation.customer_accepted:
                 return error_response(
@@ -377,18 +377,15 @@ def CustomerAcceptOffer(request, offer_id):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Update offer
             offer.status = 'Accepted'
             offer.save()
 
-            # ابحث عن JobProgress للـ job + customer
             job_progress = JobProgress.objects.filter(
                 job=job,
                 customer=job.customer
             ).first()
 
             if job_progress:
-                # لو موجود → نعدله
                 job_progress.offer = offer
                 job_progress.provider = offer.provider
                 job_progress.progress_status = 'Pending'
@@ -398,7 +395,6 @@ def CustomerAcceptOffer(request, offer_id):
                 job_progress.payment_status = 'Pending'
                 job_progress.save()
             else:
-                # لو مش موجود → نكريت جديد
                 job_progress = JobProgress.objects.create(
                     job=job,
                     offer=offer,
@@ -411,7 +407,6 @@ def CustomerAcceptOffer(request, offer_id):
                     payment_status='Pending'
                 )
 
-            # Update negotiation if present
             if negotiation:
                 negotiation.customer_accepted = True
                 negotiation.provider_accepted = True
@@ -420,10 +415,48 @@ def CustomerAcceptOffer(request, offer_id):
                 negotiation.provider_price = offer.price
                 negotiation.save()
 
-            # Reject other offers
             JobOffer.objects.filter(job=job).exclude(pk=offer_id).update(status='Rejected')
 
-        # prepare response data (include progress_id so frontend can redirect)
+            try:
+                provider_user = offer.provider.user 
+                customer_name = request.user.get_full_name() or "Customer"
+                
+                noti_title = "تم قبول عرضك!"
+                noti_body = f"وافق {customer_name} على عرضك المقدم للوظيفة: {job.title}"
+                noti_data = {
+                    "job_id": job.id,
+                    "job_slug": job.slug,
+                    "offer_id": offer.id,
+                    "progress_id": job_progress.id,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+
+                send_general_notification(
+                    receiver=provider_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="offer_accepted",
+                    extra_data=noti_data
+                )
+            except Exception as noti_error:
+                pass
+
+            other_offers = JobOffer.objects.filter(job=job).exclude(pk=offer_id).select_related('provider__user')
+            for other_offer in other_offers:
+                try:
+                    send_general_notification(
+                        receiver=other_offer.provider.user,
+                        title="تحديث بخصوص عرضك",
+                        body=f"تم إغلاق الوظيفة '{job.title}'. تم اختيار عرض آخر، حظاً أوفر في المرة القادمة!",
+                        notification_type="offer_rejected",
+                        extra_data={
+                            "job_id": job.id,
+                            "job_slug": job.slug
+                        }
+                    )
+                except Exception:
+                    continue
+            other_offers.update(status='Rejected')
         job_data = JobDetailSerializer(job, context={"request": request}).data
         response_data = {
             "job": job_data,

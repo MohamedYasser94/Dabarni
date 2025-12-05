@@ -8,6 +8,7 @@ from firebase_admin import firestore, messaging, auth as firebase_auth
 from apps.classified.models.models import JobProgress
 from django.core.paginator import Paginator, EmptyPage
 from rest_framework.parsers import MultiPartParser, FormParser
+from api.v1.global_serializer.fcm import send_chat_notification
 try:
     SERVER_TIMESTAMP = firestore.SERVER_TIMESTAMP
 except Exception:
@@ -436,7 +437,13 @@ def customer_send_Messages(request):
             logger.error(f"Failed to sync message to Firestore: {firestore_error}")
 
         recipient = dialog.provider if sender == dialog.customer else dialog.customer
-        send_fcm_notification(sender, recipient, new_message, dialog)
+        notification_body = text if text else "Sent an attachment"
+        send_chat_notification(
+            sender=sender,
+            receiver=recipient,
+            message_text=notification_body,
+            dialog_id=dialog.id
+        )
 
         return Response({
             "success": True,
@@ -451,32 +458,3 @@ def customer_send_Messages(request):
     except Exception as e:
         logger.error(f"Error in SaveChatMessageAPI: {str(e)}", exc_info=True)
         return Response({"error": "An unexpected server error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#----------------------------- It will be deleted later. ----------------------------
-def send_fcm_notification(sender, recipient, message_obj, dialog_obj):
-    try:
-        if not recipient.fcm_token:
-            return
-
-        notification_body = message_obj.content if message_obj.content else "Sent an attachment"
-        msg = messaging.Message(
-            notification=messaging.Notification(
-                title=f"{sender.get_full_name()}",
-                body=notification_body,
-            ),
-            token=recipient.fcm_token,
-            data={
-                "type": "chat_message",
-                "sender_id": str(sender.id),
-                "sender_name": sender.get_full_name(),
-                "dialog_id": str(dialog_obj.id),
-                "dialog_slug": dialog_obj.slug or "",
-                "job_slug": dialog_obj.job.slug if dialog_obj.job else "",
-                "message_type": message_obj.message_type,
-                "click_action": "FLUTTER_NOTIFICATION_CLICK"
-            }
-        )
-        messaging.send(msg)
-        logger.info(f"FCM notification sent to {recipient.email}")
-    except Exception as e:
-        logger.error(f"FCM Error: {str(e)}")
