@@ -96,8 +96,11 @@ def provider_start_chat_view(request, job_slug):
                 {'error': "Job has no provider assigned yet."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+            
         customer = current_job_progress.customer
-        provider_user = current_job_progress.provider.user
+        provider_profile = current_job_progress.provider 
+        provider_user = provider_profile.user
+        
         if request.user != customer and request.user != provider_user:
             return Response(
                 {'error': "You are not authorized to view this chat."}, 
@@ -117,12 +120,10 @@ def provider_start_chat_view(request, job_slug):
             }
         )
         
-        if created:
-            logger.info(f"New Dialog created: {dialog.id}")
-        else:
-            logger.info(f"Existing Dialog retrieved: {dialog.id}")
-
         update_firebase_chat_context(dialog, current_job_progress, provider_user, customer)
+
+        provider_slug = getattr(provider_user, 'slug', None)
+        customer_slug = getattr(customer, 'slug', None)
 
         return Response({
             'dialog_id': str(dialog.id),
@@ -132,6 +133,10 @@ def provider_start_chat_view(request, job_slug):
             'participant_uids': {
                 'provider': provider_user.firebase_uid,
                 'customer': customer.firebase_uid
+            },
+            'participant_slugs': {
+                'provider': provider_slug,
+                'customer': customer_slug
             },
             'job_context': {
                 'slug': current_job_progress.slug,

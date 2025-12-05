@@ -123,6 +123,8 @@ def customer_start_chat_view(request, job_slug):
             logger.info(f"Existing Dialog retrieved: {dialog.id}")
 
         update_firebase_chat_context(dialog, current_job_progress, provider_user, customer)
+        provider_slug = getattr(provider_user, 'slug', None)
+        customer_slug = getattr(customer, 'slug', None)
 
         return Response({
             'dialog_id': str(dialog.id),
@@ -132,6 +134,10 @@ def customer_start_chat_view(request, job_slug):
             'participant_uids': {
                 'provider': provider_user.firebase_uid,
                 'customer': customer.firebase_uid
+            },
+            'participant_slugs': {
+                'provider': provider_slug,
+                'customer': customer_slug
             },
             'job_context': {
                 'slug': current_job_progress.slug,
