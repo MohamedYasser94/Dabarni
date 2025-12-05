@@ -32,7 +32,7 @@ def retrieveProviderProfile(request):
     try:
         provider_profile = get_object_or_404(JobProvider, user=request.user)
         
-        serializer = ProviderProfileDetailSerializer(provider_profile, context={'request': request})
+        serializer = ProviderProfileWithReviewsDetailSerializer(provider_profile, context={'request': request})
         
         return success_response(
             message="تم جلب ملف مقدم الخدمة بنجاح",
