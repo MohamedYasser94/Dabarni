@@ -478,7 +478,7 @@ class JobProgress(models.Model):
     extra_request_time = models.DateTimeField(blank=True, null=True)
     extra_approved_time = models.DateTimeField(blank=True, null=True)
     extra_request = models.TextField(blank=True, null=True)
-    extra_cost_approved = models.BooleanField(default=False)
+    extra_cost_approved = models.BooleanField(null=True, default=None)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     progress_status = models.CharField(max_length=20, choices=Job_Progress_Status, default='Pending', null=True, blank=True)
     provider_progress = models.TextField(blank=True, null=True)

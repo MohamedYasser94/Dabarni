@@ -675,3 +675,63 @@ def approve_extra_cost(request, progress_id):
     except Exception as e:
         print(f"Error in approve_extra_cost: {e}")
         return Response({"status": False, "message": "حدث خطأ غير متوقع"}, status=500)
+
+
+@extend_schema(
+    tags=["Customer Jobs"],
+    summary="رفض العميل للمبلغ الإضافي",
+    description="يقوم العميل برفض التكلفة الإضافية المقترحة من قبل مقدم الخدمة.",
+    responses={200: dict, 400: dict, 403: dict, 404: dict}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reject_extra_cost(request, progress_id):
+    """
+    العميل يرفض المبلغ الإضافي ويتم تسجيل الرفض
+    """
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        if progress.customer != request.user:
+            return Response({
+                "status": False,
+                "message": "عذراً، هذا الطلب لا يخصك."
+            }, status=403)
+
+        if not progress.extra_cost or progress.extra_cost <= 0:
+            return Response({
+                "status": False,
+                "message": "لا يوجد مبلغ إضافي لرفضه."
+            }, status=400)
+
+        if progress.extra_cost_approved is True:
+            return Response({
+                "status": False,
+                "message": "عذراً، لقد قمت بالموافقة على هذا المبلغ مسبقاً ولا يمكن رفضه الآن."
+            }, status=400)
+
+        if progress.extra_cost_approved is False:
+            return Response({
+                "status": False,
+                "message": "تم رفض هذا المبلغ مسبقاً."
+            }, status=400)
+
+        progress.extra_cost_approved = False
+        progress.extra_approved_time = timezone.now() 
+        progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تم رفض المبلغ الإضافي.",
+            "data": {
+                "id": progress.id,
+                "extra_cost": progress.extra_cost,
+                "status": "Rejected"
+            }
+        }, status=200)
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+    except Exception as e:
+        print(f"Error in reject_extra_cost: {e}")
+        return Response({"status": False, "message": "حدث خطأ غير متوقع"}, status=500)
