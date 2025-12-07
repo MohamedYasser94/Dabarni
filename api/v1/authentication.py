@@ -5,15 +5,15 @@ from rest_framework.decorators import api_view
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from datetime import timedelta
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from drf_spectacular.utils import extend_schema
 from user.models import User
-from api.v1.global_serializer.auth_serializer import RegisterSerializer , ConfirmOTPSerializer , UserAddressSerializer ,LogoutSerializer
+from api.v1.global_serializer.auth_serializer import RegisterSerializer , ConfirmOTPSerializer ,LogoutSerializer, UpdateFCMTokenSerializer
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken ,TokenError
 from rest_framework.permissions import IsAuthenticated
 from api.v1.response import success_response, error_response
-from apps.classified.models.models import JobProvider, JobCategories
+from apps.classified.models.models import JobProvider
 from firebase_admin import auth as firebase_auth
 import logging
 
@@ -227,4 +227,47 @@ def logout(request):
         return error_response(
             message="Invalid or expired token",
             status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@extend_schema(
+    request=UpdateFCMTokenSerializer, 
+    tags=["Notification"], 
+    summary="Update FCM Token",
+    description="Update the user's FCM token to receive push notifications."
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) 
+def update_fcm_token(request):
+    """
+    Update the logged-in user's FCM Token.
+    """
+    fcm_token = request.data.get("fcm_token")
+
+    if not fcm_token:
+        return error_response(
+            message="fcm_token is required",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = request.user
+        user.fcm_token = fcm_token
+        user.save()
+        logger.info(f"FCM Token updated successfully for user {user.email} (ID: {user.id})")
+
+        return success_response(
+            message="FCM token updated successfully",
+            data={
+                "user_id": user.id,
+                "fcm_token_fragment": fcm_token
+            },
+            status_code=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        logger.error(f"Error updating FCM token for user {request.user.id}: {str(e)}", exc_info=True)
+        return error_response(
+            message="An error occurred while updating the token",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
