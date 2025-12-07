@@ -227,7 +227,6 @@ def Api_provider_Chat_Lists(request):
         chat_seller_lists_data.append(chat_item)
 
     chat_seller_lists_data.sort(key=lambda x: x['date_time_str'] or '', reverse=True)
-
     return Response({"chat_seller_lists": chat_seller_lists_data})
 
 
@@ -458,3 +457,44 @@ def provider_send_Messages(request):
     except Exception as e:
         logger.error(f"Error in SaveChatMessageAPI: {str(e)}", exc_info=True)
         return Response({"error": "An unexpected server error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@extend_schema(tags=["provider chat"])
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def provider_delete_specific_chat(request, dialog_id):
+    """
+    API endpoint to delete a specific chat dialog from both Django SQL and Firestore.
+    """
+    user = request.user
+    dialog = get_object_or_404(Dialog, id=dialog_id)
+
+    if dialog.provider != user :
+        return Response(
+            {'error': "You do not have permission to delete this chat."}, 
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        db = firestore.client()
+        chat_ref = db.collection('chats').document(str(dialog.id))
+        chat_ref.delete()
+        batch = db.batch()
+        messages = chat_ref.collection('messages').limit(500).stream()
+        for msg in messages:
+            batch.delete(msg.reference)
+        batch.commit()
+        dialog.delete()
+
+        logger.info(f"Chat {dialog_id} deleted by user {user.id}")
+
+        return Response({
+            'message': 'Chat deleted successfully from both Database and Firestore.',
+            'dialog_id': dialog_id
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error deleting chat {dialog_id}: {str(e)}")
+        return Response(
+            {'error': 'Failed to delete chat.', 'details': str(e)}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

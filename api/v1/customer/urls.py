@@ -49,4 +49,6 @@ urlpatterns = [
     path('chat/list/', Api_customer_Chat_Lists, name='chat-list'),
     path('chat/messages/', Api_customer_Chat_All_Messages, name='chat-messages'),
     path('chat/messages/save/', customer_send_Messages, name='save-chat-message'),
+    path('chat/delete/<int:dialog_id>/', customer_delete_specific_chat, name='delete-chat'),
+
 ]

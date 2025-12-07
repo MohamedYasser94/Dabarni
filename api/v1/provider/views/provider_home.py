@@ -811,6 +811,8 @@ def providerNegotiateResponse(request, negotiation_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+
+
 @extend_schema(
     tags=["Provider Jobs"],
     summary="طلب مبلغ إضافي",
@@ -826,22 +828,19 @@ def request_extra_amount(request, progress_id):
     try:
         progress = JobProgress.objects.get(id=progress_id)
 
-        # التأكد أن المستخدم هو المزود
         if not progress.provider or progress.provider.user != request.user:
             return Response({"status": False, "message": "غير مخول لإرسال طلب مبلغ إضافي"}, status=403)
 
-        # البيانات المرسلة
         extra_cost = request.data.get('extra_cost')
         extra_request = request.data.get('extra_request', '')
 
         if not extra_cost:
             return Response({"status": False, "message": "الرجاء إدخال المبلغ"}, status=400)
 
-        # تحديث الـ progress
         progress.extra_cost = extra_cost
         progress.extra_request = extra_request
         progress.extra_request_time = timezone.now()
-        progress.extra_cost_approved = False
+        progress.extra_cost_approved = None
         progress.save()
 
         return Response({
@@ -856,7 +855,8 @@ def request_extra_amount(request, progress_id):
 
     except JobProgress.DoesNotExist:
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
-    
+
+
 @extend_schema(
     tags=["Job Progress"],
     summary="بدء العمل",
