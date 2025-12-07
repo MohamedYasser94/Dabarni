@@ -253,6 +253,7 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     category_title = serializers.CharField(source='category.title', read_only=True)
     # إضافة rating
     average_rating = serializers.SerializerMethodField()
+    five_star_reviews_count = serializers.SerializerMethodField()
 
     class Meta:
         model = JobProvider
@@ -268,7 +269,7 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
             'category_title', 'experience_years', 'company', 'bio',
             'address', 'latitude', 'longitude',
             'commercial_image','commercial_number', 'vat_image', 'license_image',
-            'profile_completion_percentage', 'average_rating'  
+            'profile_completion_percentage', 'average_rating' ,'five_star_reviews_count',
         ]
 
     def get_average_rating(self, obj):
@@ -280,6 +281,13 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
         ).aggregate(average=Avg('rating'))
         
         return round(avg['average'], 2) if avg['average'] else 0.0
+    
+    def get_five_star_reviews_count(self, obj):
+        count = JobReview.objects.filter(
+            job__progresses__provider=obj,
+            rating=5
+        ).count()
+        return count
 
 class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     """
