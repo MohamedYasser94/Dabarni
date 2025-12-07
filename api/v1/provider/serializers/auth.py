@@ -272,7 +272,13 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_average_rating(self, obj):
-        avg = JobReview.objects.filter(job__customer=obj.user).aggregate(average=Avg('rating'))
+        """
+        Calculates average rating based on jobs linked via JobProgress.
+        """
+        avg = JobReview.objects.filter(
+            job__progresses__provider=obj
+        ).aggregate(average=Avg('rating'))
+        
         return round(avg['average'], 2) if avg['average'] else 0.0
 
 class ProviderProfileUpdateSerializer(serializers.ModelSerializer):

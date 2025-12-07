@@ -24,6 +24,7 @@ urlpatterns = [
     path('jobs/status/<str:status_param>/', jop.list_jobs_by_progress_status, name='customer-jobs-by-status'),
     path('jobs/<int:job_id>/cancel/', jop.cancel_job, name='customer-job-cancel'),
     path('jobs/progress/<int:progress_id>/approve-extra/', jop.approve_extra_cost, name='customer-approve-extra'),
+    path('jobs/progress/<int:progress_id>/reject-extra/', jop.reject_extra_cost, name='customer-reject-extra'),
   #--------------------- Cancel Job with Fee ----------------------------
     path('jobs/<int:job_id>/cancel-with-fee/', jop.CancelJobWithFee, name='customer-cancel-job-with-fee'),
     path('jobs/<int:job_id>/offers/', jop.getOffersByJob, name='customer-job-offers'),

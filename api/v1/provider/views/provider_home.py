@@ -32,7 +32,7 @@ def retrieveProviderProfile(request):
     try:
         provider_profile = get_object_or_404(JobProvider, user=request.user)
         
-        serializer = ProviderProfileWithReviewsDetailSerializer(provider_profile, context={'request': request})
+        serializer = ProviderProfileDetailSerializer(provider_profile, context={'request': request})
         
         return success_response(
             message="تم جلب ملف مقدم الخدمة بنجاح",
@@ -50,7 +50,7 @@ def retrieveProviderProfile(request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
-    
+
 @extend_schema(
     tags=["Provider Profile"],
     responses={200: ProviderProfileWithReviewsDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
@@ -83,7 +83,7 @@ def RetrieveProviderProfileById(request, provider_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
-    
+
 
 @extend_schema(
     tags=["Provider Profile"],
@@ -1192,11 +1192,16 @@ def ProviderUpdateProfile(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ProviderJobReviews(request):
-    provider = JobProvider.objects.get(id=request.user.id)
-    job_reviews = JobReview.objects.filter(provider=provider)
+    try:
+        provider = JobProvider.objects.get(user=request.user)
+    except JobProvider.DoesNotExist:
+            return Response({'message': 'Provider profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    ### serializers
-    job_reviews_serializer = JobReviewSerializer(job_reviews, many=True,context={'request': request})
+    job_reviews = JobReview.objects.filter(
+        job__progresses__provider=provider
+    ).prefetch_related('media').order_by('-create_at')
+
+    job_reviews_serializer = JobReviewSerializer(job_reviews, many=True, context={'request': request})
 
     data = {
         "job_reviews": job_reviews_serializer.data,

@@ -1,5 +1,3 @@
-# D:\Python Projects\Dabarni_fork\Dabarni\api\v1\customer\views\jop_request_views.py
-
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -23,7 +21,6 @@ def createJobReview(request, job_id):
     """
     try:
         job = get_object_or_404(Job, pk=job_id, customer=request.user)
-
         job_progress = get_object_or_404(JobProgress, job=job)
 
         if job_progress.progress_status != 'Completed':
@@ -33,7 +30,7 @@ def createJobReview(request, job_id):
             )
 
         serializer = JobReviewCreateSerializer(data=request.data, context={'request': request, 'job': job})
-        
+
         if serializer.is_valid():
             review = serializer.save()
 
@@ -43,7 +40,6 @@ def createJobReview(request, job_id):
                 rating_value = getattr(review, 'rating')
                 noti_title = "تقييم جديد!"
                 noti_body = f"قام {customer_name} بتقييمك بـ {rating_value} نجوم على وظيفة: {job.title}"
-
                 noti_data = {
                     "type": "new_review",
                     "job_id": job.id,
@@ -64,7 +60,7 @@ def createJobReview(request, job_id):
 
             return success_response(
                 message="تم إرسال التقييم بنجاح.",
-                data=JobReviewCreateSerializer(review).data,
+                data=JobReviewCreateSerializer(review, context={'request': request}).data,
                 status_code=status.HTTP_201_CREATED
             )
         else:
@@ -73,17 +69,19 @@ def createJobReview(request, job_id):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 errors=serializer.errors
             )
-            
+
     except Job.DoesNotExist:
         return error_response(
             message="لم يتم العثور على الوظيفة.",
             status_code=status.HTTP_404_NOT_FOUND,
         )
+
     except JobProgress.DoesNotExist:
         return error_response(
             message="لم يتم العثور على سجل تقدم لهذه الوظيفة. يرجى التواصل مع الدعم.",
             status_code=status.HTTP_404_NOT_FOUND,
         )
+
     except Exception as e:
         return error_response(
             message="حدث خطأ أثناء إرسال التقييم.",
