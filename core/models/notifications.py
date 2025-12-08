@@ -17,24 +17,16 @@ User = get_user_model()
 
 
 class Notification(models.Model):
-    sender_model = models.ForeignKey(ContentType, related_name='notification_sender', on_delete=models.CASCADE,
-                                     null=True,
-                                     blank=True)
+    sender_model = models.ForeignKey(ContentType, related_name='notification_sender', on_delete=models.CASCADE,null=True,blank=True)
     sender_id = models.PositiveIntegerField(null=True, blank=True)
     sender = GenericForeignKey('sender_model', 'sender_id')
-    receiver_model = models.ForeignKey(ContentType, related_name='notification_receiver', on_delete=models.CASCADE,
-                                       null=True,
-                                       blank=True)
+    receiver_model = models.ForeignKey(ContentType, related_name='notification_receiver', on_delete=models.CASCADE,null=True,blank=True)
     receiver_id = models.PositiveIntegerField(null=True, blank=True)
     receiver = GenericForeignKey('receiver_model', 'receiver_id')
-    owner_model = models.ForeignKey(ContentType, related_name='notification_owner', on_delete=models.SET_NULL,
-                                    null=True,
-                                    blank=True)
+    owner_model = models.ForeignKey(ContentType, related_name='notification_owner', on_delete=models.SET_NULL,null=True,blank=True)
     owner_id = models.PositiveIntegerField(null=True, blank=True)
     owner = GenericForeignKey('owner_model', 'owner_id')
-    auditor_model = models.ForeignKey(ContentType, related_name='notification_auditor', on_delete=models.PROTECT,
-                                      null=True,
-                                      blank=True)
+    auditor_model = models.ForeignKey(ContentType, related_name='notification_auditor', on_delete=models.PROTECT,null=True,blank=True)
     auditor_id = models.PositiveIntegerField(null=True, blank=True)
     auditor = GenericForeignKey('auditor_model', 'auditor_id')
     notification_type = models.CharField(max_length=50)
@@ -70,22 +62,15 @@ class Notification(models.Model):
 class ChatNotification(models.Model):
     # Who the notification is sent to
     target = models.ForeignKey(User, on_delete=models.CASCADE)
-
     # The user that the creation of the notification was triggered by.
     from_user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="from_user")
-
-    redirect_url = models.URLField(max_length=500, null=True, unique=False, blank=True,
-                                   help_text="The URL to be visited when a notification is clicked.")
-
+    redirect_url = models.URLField(max_length=500, null=True, unique=False, blank=True,help_text="The URL to be visited when a notification is clicked.")
     # statement describing the notification (ex: "Mitch sent you a friend request")
     verb = models.CharField(max_length=255, unique=False, blank=True, null=True)
-
     # When the notification was created/updated
     timestamp = models.DateTimeField(auto_now_add=True)
-
     # Some notifications can be marked as "read". (I used "read" instead of "active". I think its more appropriate)
     read = models.BooleanField(default=False)
-
     # A generic type that can refer to a FriendRequest, Unread Message, or any other type of "Notification"
     # See article: https://simpleisbetterthancomplex.com/tutorial/2016/10/13/how-to-use-generic-relations.html
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -98,19 +83,17 @@ class ChatNotification(models.Model):
     def get_content_object_type(self):
         return str(self.content_object.get_cname)
 
-
 class MobileDevice(models.Model):
     participant = models.OneToOneField(User, related_name='device', on_delete=CASCADE)
     platform = models.CharField(max_length=20, choices=(('iOS', 'iOS'), ('Android', 'Android'),))
     token = models.TextField()
-
 
 class MobileNotification(TimeStampedModel):
     recipient = models.ForeignKey(User, related_name='user_device_notifications', on_delete=CASCADE)
     title = models.CharField(max_length=512, null=True, blank=True)
     message = models.TextField()
     status = models.CharField(max_length=10, default='unread')
-
+    notification_type = models.CharField(max_length=50, default='general')
 
 class InAppMessage(models.Model):
     sender = models.ForeignKey(User, related_name='appsent_messages', on_delete=CASCADE)

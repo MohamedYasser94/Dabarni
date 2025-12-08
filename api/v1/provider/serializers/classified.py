@@ -1,7 +1,6 @@
 import logging
-
 from rest_framework import serializers
-
+from core.models.notifications import MobileNotification
 from apps.classified.models.models import JobCategories,Job,JobMedia,JobProvider,JobOffer,JobNegotiate,JobProgress,JobReview,JobReviewMedia
 
 logger = logging.getLogger(__name__)
@@ -105,3 +104,12 @@ class ProviderNegotiateCreateSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError("السعر يجب أن يكون أكبر من الصفر.")
         return value
+
+class MobileNotificationSerializer(serializers.ModelSerializer):
+    content = serializers.CharField(source='message')
+    type = serializers.CharField(source='notification_type')
+    date = serializers.DateTimeField(source='created', format="%Y-%m-%d %H:%M:%S")
+
+    class Meta:
+        model = MobileNotification
+        fields = ['id','title','content','type','date','status',]

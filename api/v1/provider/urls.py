@@ -1,5 +1,6 @@
 from django.urls import path
 from api.v1.provider.views import provider_auth, provider_home, provider_wallet
+from api.v1.provider.views.notification_views import UserNotificationListView
 from api.v1.provider.views.providerchat import *
 from api.v1.provider.views.provider_home import ProviderProfile, ProviderUpdateProfile
 
@@ -67,4 +68,7 @@ urlpatterns = [
     path('chat/messages/', Api_provider_Chat_All_Messages, name='chat-messages'),
     path('chat/messages/save/', provider_send_Messages, name='save-chat-message'),
     path('chat/delete/<uuid:dialog_id>/', provider_delete_specific_chat, name='delete-chat'),
+
+    # ===================== Notification URLs =====================
+    path('notifications/', UserNotificationListView.as_view(), name='provider-notification-list'),
 ]
