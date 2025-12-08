@@ -66,5 +66,5 @@ urlpatterns = [
     path('chat/list/', Api_provider_Chat_Lists, name='chat-list'),
     path('chat/messages/', Api_provider_Chat_All_Messages, name='chat-messages'),
     path('chat/messages/save/', provider_send_Messages, name='save-chat-message'),
-    path('chat/delete/<int:dialog_id>/', provider_delete_specific_chat, name='delete-chat'),
+    path('chat/delete/<uuid:dialog_id>/', provider_delete_specific_chat, name='delete-chat'),
 ]
