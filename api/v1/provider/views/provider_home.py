@@ -699,15 +699,15 @@ def respondToNegotiation(request, negotiation_id):
                 negotiation.save()
 
                 # Update the main offer and job progress
-                offer = negotiation.offer
-                offer.status = 'Accepted' # Offer is now accepted by both parties
-                offer.save()
+                # offer = negotiation.offer
+                # offer.status = 'Accepted' # Offer is now accepted by both parties
+                # offer.save()
                 
-                job_progress = get_object_or_404(JobProgress, job=negotiation.job)
-                job_progress.offer = offer
-                job_progress.progress_status = JobProgressStatus.IN_PROGRESS  
-                job_progress.total_cost = negotiation.customer_price # The final agreed price
-                job_progress.save()
+                # job_progress = get_object_or_404(JobProgress, job=negotiation.job)
+                # job_progress.offer = offer
+                # job_progress.progress_status = JobProgressStatus.IN_PROGRESS  
+                # job_progress.total_cost = negotiation.customer_price # The final agreed price
+                # job_progress.save()
 
                 # A notification would be sent to the customer here
                 
