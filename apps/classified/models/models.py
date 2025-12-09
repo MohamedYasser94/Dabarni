@@ -191,59 +191,39 @@ class JobProvider(models.Model):
 
     @property
     def profile_completion_percentage(self):
-        """
-        Calculates the profile completion percentage based on a weighted system.
-        """
-        total_percentage = 0
-
-        # --- Category 1: Personal Data (Weight: 25%) ---
-        # These fields are on the related User and UserProfile models
+        total_fields = 19
+        filled_count = 0
+        user = self.user
+        user_checks = [user.first_name,user.last_name,user.email,user.phone,user.image]
+        for field in user_checks:
+            if field:
+                filled_count += 1
+        provider_checks = [self.category,self.experience_years,self.company,self.address,self.commercial_image,self.commercial_number]
+        for field in provider_checks:
+            if field:
+                filled_count += 1
         try:
-            profile = self.user.profile
-            personal_data_fields = [
-                self.user.first_name, self.user.last_name, self.user.email, self.user.phone,
-                profile.dob, profile.nationality, profile.residence
+            profile = user.profile 
+            profile_checks = [
+                getattr(profile, 'id_image_front', None),
+                getattr(profile, 'id_image_back', None),
+                getattr(profile, 'residence_image', None),
+                getattr(profile, 'dob', None),
+                getattr(profile, 'nationality', None),
+                getattr(profile, 'id_number', None),
+                getattr(profile, 'residence', None),
             ]
-            personal_weight = 25 / len(personal_data_fields)
-            completed_personal = sum(1 for field in personal_data_fields if field)
-            total_percentage += completed_personal * personal_weight
-        except self.user.profile.__class__.DoesNotExist:
-            pass  # No profile, no points for this section
-
-        # --- Category 2: Job Details (Weight: 25%) ---
-        job_details_fields = [self.category, self.experience_years, self.company, self.business_phone, self.address]
-        job_weight = 25 / len(job_details_fields)
-        completed_job = sum(1 for field in job_details_fields if field)
-        total_percentage += completed_job * job_weight
-
-        # --- Category 3: Bio (Weight: 25%) ---
-        if self.bio and self.bio.strip():
-            total_percentage += 25
-
-        # --- Category 4: Documents (Weight: 25%) ---
-        # Documents are on both UserProfile and JobProvider
-        completed_docs = 0
-        document_fields = [
-            self.commercial_image, self.vat_image, self.license_image, self.commercial_image2
-        ]
-
-        # Check JobProvider documents
-        completed_docs += sum(1 for field in document_fields if field)
-
-        # Check UserProfile documents
-        try:
-            profile = self.user.profile
-            profile_docs = [profile.id_image_front, profile.id_image_back, profile.residence_image]
-            completed_docs += sum(1 for field in profile_docs if field)
-            total_docs = len(document_fields) + len(profile_docs)
-        except self.user.profile.__class__.DoesNotExist:
-            total_docs = len(document_fields)  # Only count provider docs if no profile exists
-
-        if total_docs > 0:
-            doc_weight = 25 / total_docs
-            total_percentage += completed_docs * doc_weight
-
-        return int(total_percentage)
+            for val in profile_checks:
+                if val:
+                    filled_count += 1
+            if getattr(profile, 'is_citizen', None) is not None:
+                filled_count += 1
+        except AttributeError:
+            pass
+        if total_fields == 0:
+            return 0
+        percentage = (filled_count / total_fields) * 100
+        return int(percentage)
 
     def _build_thumb_name(self, image_name: str, width: int, height: int) -> str:
         # image_name is relative to MEDIA_ROOT (e.g., images/abcd.jpg)
@@ -339,59 +319,39 @@ class JobProvider(models.Model):
 
     @property
     def profile_completion_percentage(self):
-        """
-        Calculates the profile completion percentage based on a weighted system.
-        """
-        total_percentage = 0
-
-        # --- Category 1: Personal Data (Weight: 25%) ---
-        # These fields are on the related User and UserProfile models
+        total_fields = 19
+        filled_count = 0
+        user = self.user
+        user_checks = [user.first_name,user.last_name,user.email,user.phone,user.image]
+        for field in user_checks:
+            if field:
+                filled_count += 1
+        provider_checks = [self.category,self.experience_years,self.company,self.address,self.commercial_image,self.commercial_number]
+        for field in provider_checks:
+            if field:
+                filled_count += 1
         try:
-            profile = self.user.profile
-            personal_data_fields = [
-                self.user.first_name, self.user.last_name, self.user.email, self.user.phone,
-                profile.dob, profile.nationality, profile.residence
+            profile = user.profile
+            profile_checks = [
+                getattr(profile, 'id_image_front', None),
+                getattr(profile, 'id_image_back', None),
+                getattr(profile, 'residence_image', None),
+                getattr(profile, 'dob', None),
+                getattr(profile, 'nationality', None),
+                getattr(profile, 'id_number', None),
+                getattr(profile, 'residence', None),
             ]
-            personal_weight = 25 / len(personal_data_fields)
-            completed_personal = sum(1 for field in personal_data_fields if field)
-            total_percentage += completed_personal * personal_weight
-        except self.user.profile.__class__.DoesNotExist:
-            pass  # No profile, no points for this section
-
-        # --- Category 2: Job Details (Weight: 25%) ---
-        job_details_fields = [self.category, self.experience_years, self.company, self.business_phone, self.address]
-        job_weight = 25 / len(job_details_fields)
-        completed_job = sum(1 for field in job_details_fields if field)
-        total_percentage += completed_job * job_weight
-
-        # --- Category 3: Bio (Weight: 25%) ---
-        if self.bio and self.bio.strip():
-            total_percentage += 25
-
-        # --- Category 4: Documents (Weight: 25%) ---
-        # Documents are on both UserProfile and JobProvider
-        completed_docs = 0
-        document_fields = [
-            self.commercial_image, self.vat_image, self.license_image, self.commercial_image2
-        ]
-
-        # Check JobProvider documents
-        completed_docs += sum(1 for field in document_fields if field)
-
-        # Check UserProfile documents
-        try:
-            profile = self.user.profile
-            profile_docs = [profile.id_image_front, profile.id_image_back, profile.residence_image]
-            completed_docs += sum(1 for field in profile_docs if field)
-            total_docs = len(document_fields) + len(profile_docs)
-        except self.user.profile.__class__.DoesNotExist:
-            total_docs = len(document_fields)  # Only count provider docs if no profile exists
-
-        if total_docs > 0:
-            doc_weight = 25 / total_docs
-            total_percentage += completed_docs * doc_weight
-
-        return int(total_percentage)
+            for val in profile_checks:
+                if val:
+                    filled_count += 1
+            if getattr(profile, 'is_citizen', None) is not None:
+                filled_count += 1
+        except AttributeError:
+            pass
+        if total_fields == 0:
+            return 0
+        percentage = (filled_count / total_fields) * 100
+        return int(percentage)
 
     def save(self, *args, **kwargs):
         if not self.code and not self.slug:

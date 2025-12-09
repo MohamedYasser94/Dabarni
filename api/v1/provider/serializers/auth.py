@@ -164,7 +164,7 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
     # Fields for the UserProfile model
     is_citizen = serializers.BooleanField(required=True, write_only=True)
     id_image_front = serializers.ImageField(required=True, write_only=True)
-    # id_image_back = serializers.ImageField(required=False, write_only=True)
+    id_image_back = serializers.ImageField(required=False, write_only=True)
     residence_image = serializers.ImageField(required=False, write_only=True)
 
     # JobProvider model fields
@@ -177,7 +177,7 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
         fields = [
             'address', 'full_name', 'is_citizen', 'category',  
             'user_image', 'id_image_front', 'residence_image', 
-            # 'id_image_back',
+            'id_image_back',
         ]
 
     def validate_category(self, value):
@@ -214,7 +214,7 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
             profile, created = UserProfile.objects.get_or_create(user=user)
             profile.is_citizen = validated_data.pop('is_citizen')
             profile.id_image_front = validated_data.pop('id_image_front')
-            # profile.id_image_back = validated_data.pop('id_image_back', None)
+            profile.id_image_back = validated_data.pop('id_image_back', None)
             profile.residence_image = validated_data.pop('residence_image', None)
             profile.save()
             
@@ -307,7 +307,7 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     id_number = serializers.CharField(required=False)
     is_citizen = serializers.BooleanField(required=False)
     id_image_front = serializers.ImageField(required=False)
-    # id_image_back = serializers.ImageField(required=False)
+    id_image_back = serializers.ImageField(required=False)
     residence_image = serializers.ImageField(required=False)
     
     # Fields from the JobProvider model
@@ -322,8 +322,8 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     bio = serializers.CharField(required=False)
     commercial_number = serializers.CharField(required=False)
     commercial_image = serializers.ImageField(required=False)
-    # vat_image = serializers.ImageField(required=False)
-    # license_image = serializers.ImageField(required=False)
+    vat_image = serializers.ImageField(required=False)
+    license_image = serializers.ImageField(required=False)
 
     class Meta:
         model = JobProvider
@@ -332,7 +332,7 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             'nationality', 'residence', 'id_number', 'is_citizen',
             'category','experience_years',  'commercial_number', 'company',
             'id_image_front', 'residence_image', 'commercial_image','bio',
-            #'id_image_back', 'vat_image', 'license_image',
+            'id_image_back', 'vat_image', 'license_image',
         ]
 
     def validate_category(self, value):
@@ -371,7 +371,7 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             profile.id_number = validated_data.pop('id_number', profile.id_number)
             profile.is_citizen = validated_data.pop('is_citizen', profile.is_citizen)
             profile.id_image_front = validated_data.pop('id_image_front', profile.id_image_front)
-            # profile.id_image_back = validated_data.pop('id_image_back', profile.id_image_back)
+            profile.id_image_back = validated_data.pop('id_image_back', profile.id_image_back)
             profile.residence_image = validated_data.pop('residence_image', profile.residence_image)
             profile.save()
 
