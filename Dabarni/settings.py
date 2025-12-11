@@ -48,7 +48,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS: List[str]  = ['127.0.0.1','localhost','192.168.2.2','31.97.37.69',
+ALLOWED_HOSTS: List[str]  = ['127.0.0.1','localhost','192.168.5.2','31.97.37.69',
 
                                 'manfz.sa' ,'www.manfz.sa','dabarni.yllabena.com',
                              ]
@@ -284,7 +284,8 @@ else:
  ####PayTabs Settings
 PAYTABS_URL = 'https://secure-egypt.paytabs.com/payment/request'
 PAYTABS_PROFILE_ID = '146659'
-PAYTABS_SERVER_KEY = 'SWJ9RN6JJL-JLKWDLGRNW-KK2WRM2K6W'
+PAYTABS_SERVER_KEY = 'SLJ9RN6J9J-JLKWDLGR6T-Z6WRNTD92W'
+PAYTABS_CLIENT_KEY = 'CRK26D-9H2G6B-KVDBTR-HTN222'
 PAYTABS_CALLBACK_URL = 'https://manfz.sa/api/v1/callbacks-paytabs/'
 PAYTABS_RETURN_URL = 'https://manfz.sa/payment-success/' # Or your desired return page
 

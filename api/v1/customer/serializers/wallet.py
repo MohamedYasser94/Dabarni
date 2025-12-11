@@ -2,6 +2,7 @@
 from decimal import Decimal
 from rest_framework import serializers
 from apps.wallet.models.models import Wallet, WalletMoney, WalletLocked
+from apps.wallet.models.transaction import TreasuryTransactions
 
 
 class WalletSerializer(serializers.ModelSerializer):
@@ -52,3 +53,38 @@ class WithdrawSerializer(serializers.Serializer):
         if value <= Decimal("0.00"):
             raise serializers.ValidationError("amount must be greater than 0")
         return value
+
+
+class TreasuryTransactionSerializer(serializers.ModelSerializer):
+    """Serializer for TreasuryTransactions - returns list of user payment transactions"""
+
+    class Meta:
+        model = TreasuryTransactions
+        fields = [
+            "id",
+            "wallet",
+            "transaction_type",
+            "transaction_mode",
+            "transaction_status",
+            "transaction_category",
+            "amount",
+            "receive",
+            "send",
+            "note",
+            "month",
+            "year",
+            "code",
+            "slug",
+            "status",
+            "create_at",
+            "update_at"
+        ]
+        read_only_fields = [
+            "id",
+            "wallet",
+            "code",
+            "slug",
+            "create_at",
+            "update_at"
+        ]
+

@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from django.utils.crypto import get_random_string
 from slugify import slugify
 
-from helper.modelHelper import WALLET_STATUS, Current_App, Access_Level, Transaction_Money_Category
+from helper.modelHelper import WALLET_STATUS, Current_App, Access_Level, Transaction_Money_Category, Active_Status
 
 User = get_user_model()
 UserModel = get_user_model()
@@ -52,7 +52,7 @@ class WalletResetPassword(models.Model):
     reset_code = models.CharField(max_length=200, blank=False, null=False, default='None')
     code = models.CharField(max_length=50, null=True, blank=True)
     slug = models.SlugField(max_length=128, unique=True, null=True, blank=True, )
-    status = models.BooleanField(default=False)
+    status = models.CharField(max_length=100, choices=Active_Status, default='Active')
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
 
@@ -79,7 +79,7 @@ class Wallet(models.Model):
     app = models.CharField(max_length=20, choices=Current_App, default='Digithup', null=True, blank=True)
     code = models.CharField(max_length=50, null=True, blank=True)
     slug = models.SlugField(max_length=128, unique=True, null=True, blank=True, )
-    status = models.BooleanField(default=False)
+    status = models.CharField(max_length=100, choices=Active_Status, default='Active')
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
 
@@ -116,7 +116,7 @@ class WalletMoney(models.Model):
     send = models.DecimalField(max_digits=50, decimal_places=2, default=0, null=True, blank=True)   # 100.00
     code = models.CharField(max_length=50, null=True, blank=True)
     slug = models.SlugField(max_length=128, unique=True, null=True, blank=True, )
-    status = models.BooleanField(default=False)
+    status = models.CharField(max_length=100, choices=Active_Status, default='Active')
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
 

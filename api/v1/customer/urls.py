@@ -2,6 +2,7 @@ from django.urls import path
 from api.v1.customer.views.customer_chat import *
 from apps.front.views import views, blocks 
 from api.v1.customer.views import profile ,jop , category, review, customer_wallet
+from apps.wallet.views.payment_gateway import paytabs
 
 app_name = 'customer_api'
 
@@ -41,11 +42,7 @@ urlpatterns = [
       path('offers/<int:offer_id>/negotiate/', jop.NegotiateOffer, name='customer-negotiate-offer'),
       path('jobs/<int:job_id>/negotiations/', jop.list_job_negotiations, name='list-job-negotiations'),
 
-      #---------------------- Customer Wallet ---------------------------
-     path('wallet/create/', customer_wallet.create_wallet, name='create_wallet'),
-    path('wallet/deposit/', customer_wallet.deposit_money, name='deposit_money'),
-    path('wallet/withdraw/', customer_wallet.withdraw_money, name='withdraw_money'),
-    path('wallet/balance/', customer_wallet.get_balance, name='get_balance'),
+
 
     #------------------- Progress ----------------
   path('jobs/progress/<int:progress_id>/', jop.get_job_progress, name='get_job_progress'),
@@ -55,4 +52,25 @@ urlpatterns = [
     path('chat/list/', Api_customer_Chat_Lists, name='chat-list'),
     path('chat/messages/', Api_customer_Chat_All_Messages, name='chat-messages'),
     path('chat/messages/save/', customer_send_Messages, name='save-chat-message'),
+
+
+
+#---------------------- Customer Wallet ---------------------------
+     path('wallet/create/', customer_wallet.create_wallet, name='create_wallet'),
+    path('wallet/deposit/', customer_wallet.deposit_money, name='deposit_money'),
+    path('wallet/withdraw/', customer_wallet.withdraw_money, name='withdraw_money'),
+    path('wallet/balance/', customer_wallet.get_balance, name='get_balance'),
+    path('wallet/transactions/', customer_wallet.get_transactions, name='get_transactions'),
+
+
+    ############### Payment Url
+    path('payment/paytabs/keys/', paytabs.api_get_paytabs_keys, name='api_get_paytabs_keys'),
+    path('callbacks-paytabs/', paytabs.api_callback_url_paytabs, name='api_callback_paytabs'),
+
+    path('user/payment-status-update/', paytabs.ApiJobsPaymentStatusUpdate, name='ApiJobsPaymentStatusUpdate'),
+    path('user/payment-status-failed/', paytabs.ApiJobsPaymentStatusFailed, name='ApiJobsPaymentStatusFailed'),
+
+    ################### Job API ##################
+
+    path('callbacks-paytabs/', paytabs.api_callback_url_paytabs, name='api_callback_url_paytabs'),
 ]

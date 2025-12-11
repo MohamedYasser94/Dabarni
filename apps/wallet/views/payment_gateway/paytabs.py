@@ -1,4 +1,5 @@
 import logging
+from datetime import timezone
 
 from django.http import HttpResponseRedirect
 
@@ -17,145 +18,30 @@ import json
 
 from rest_framework.response import Response
 
+from apps.classified.models.models import JobProgress
 from apps.wallet.models.payment import Payment
 from apps.wallet.models.billing import Purchase, Invoice
 from core.utils.notification import notify_user_ticket
 
 logger = logging.getLogger(__name__)
-def payment_paytabs(request, slug):
-    """
-    Initiates a payment request with PayTabs.
-    """
-    if Purchase.objects.filter(slug=slug, purchase_status='Pending', source='Web', ).exists():
-        purchase = Purchase.objects.get(slug=slug, purchase_status='Pending', source='Web', )
 
-        # PayTabs API endpoint
-        url = "https://secure-egypt.paytabs.com/payment/request"
 
-        # Required parameters for PayTabs
-        payload = {
+######################## For App Flutter
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_get_paytabs_keys(request):
+    """
+    API endpoint to securely provide PayTabs keys to the Flutter app.
+    """
+    try:
+        keys = {
             "profile_id": settings.PAYTABS_PROFILE_ID,
-            "tran_type": "sale",
-            "tran_class": "ecom",
-            "cart_id": str(purchase.id),
-            "cart_description": f"Order #{purchase.serial_no}",
-            "cart_currency": "EGP",
-            "cart_amount": float(purchase.amount),
-            "callback": settings.PAYTABS_CALLBACK_URL,
-            "return": settings.PAYTABS_RETURN_URL,
-            "customer_details": {
-                "name": f"{purchase.owner.first_name} {purchase.owner.last_name}",
-                "email": purchase.owner.email,
-                "phone": purchase.owner.phone,
-                "street1": 'SA Defult Street',
-                "city": 'SA',
-                "state":'SA',
-                "country": "EG",
-                "zip": "00000"
-            }
+            "server_key": settings.PAYTABS_SERVER_KEY,
+            "client_key": settings.PAYTABS_CLIENT_KEY  # <-- ADD CLIENT KEY TO YOUR settings.py
         }
-
-        # Sending the request to PayTabs
-        response = requests.post(url, headers={'Authorization': settings.PAYTABS_SERVER_KEY}, json=payload)
-        response_data = response.json()
-
-        if response.status_code == 200 and 'redirect_url' in response_data:
-            # Create Invoice and Payment records
-            invoice = Invoice.objects.create(
-                sender_model=ContentType.objects.get(model='Purchase'),
-                sender_id=purchase.id,
-                owner_model=ContentType.objects.get(model='User'),
-                owner_id=purchase.owner.id,
-                title=f"Purchase {purchase.serial_no} Invoice",
-                created_by='PayTabs System',
-            )
-            Payment.objects.create(
-                sender_model=ContentType.objects.get(model='Invoice'),
-                sender_id=invoice.id,
-                receiver_model=ContentType.objects.get(model='Purchase'),
-                receiver_id=purchase.id,
-                owner_model=ContentType.objects.get(model='User'),
-                owner_id=invoice.owner_id,
-                amount=purchase.amount,
-                payment_status='Pending',
-                payment_method='Online Payment',
-                payment_gateway='PayTabs',
-            )
-            # Redirect to PayTabs payment page
-            print('Redirecting to PayTabs payment page...')
-            print('Redirect URL:', response_data['redirect_url'])
-            print('Payment reference:', response_data)
-            return HttpResponseRedirect(response_data['redirect_url'])
-        else:
-            messages.error(request, "Failed to initiate payment with PayTabs.")
-            print('Error initiating payment with PayTabs:', response_data.get('message', 'Unknown error'))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-    else:
-        messages.warning(request, 'Please enter your information correctly.')
-        print('Purchase not found or not in pending status.')
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-
-@csrf_exempt
-def api_callback_url_paytabs(request):
-    """
-    Handles the callback from PayTabs after a payment attempt.
-    """
-    print('api_callback_url_paytabs Received callback from PayTabs...', request.method, request.body, request.META.get('HTTP_REFERER'))
-    if request.method == 'POST':
-        callback_data = json.loads(request.body)
-        cart_id = callback_data.get('cart_id')
-        tran_ref = callback_data.get('tran_ref')
-        payment_result = callback_data.get('payment_result', {})
-        response_status = payment_result.get('response_status')
-
-        if Purchase.objects.filter(id=cart_id).exists():
-            purchase = Purchase.objects.get(id=cart_id)
-            invoice = Invoice.objects.get(sender_model=ContentType.objects.get(model='Purchase').id, sender_id=purchase.id)
-            payment = Payment.objects.get(sender_id=invoice.id)
-
-            if response_status == 'A':  # 'A' for Approved
-                print('Payment approved.' ,response_status)
-                purchase.ordered = True
-                purchase.purchase_status = "Received"
-                purchase.payment_status = "Completed"
-                purchase.tracking_no = tran_ref  # Using tran_ref as tracking number
-                purchase.save()
-
-                invoice.is_success = True
-                invoice.message = "Payment Successfully"
-                invoice.number = tran_ref
-                invoice.save()
-
-                payment.payment_status = 'Completed'
-                payment.gateway_transaction = tran_ref
-                payment.save()
-
-                # Notify user
-                try:
-                    message = f"Your order has been successfully purchased. Order ID: {purchase.id}."
-                    notify_user_ticket(request, purchase.owner.email, message)
-                except Exception as e:
-                    print(f"Error sending notification: {e}")
-
-                return redirect('home:PaymentSuccess')
-            else:
-                purchase.order_status = "Failed"
-                purchase.payment_status = "Failed"
-                purchase.save()
-
-                invoice.is_success = False
-                invoice.message = payment_result.get('response_message', 'Payment Failed')
-                invoice.save()
-
-                payment.payment_status = 'Failed'
-                payment.save()
-
-                messages.warning(request, "Payment failed. Please try again.")
-                return redirect('home:cancel')
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+        return Response(keys, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"detail": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -176,7 +62,7 @@ def api_initiate_paytabs_payment(request):
         return JsonResponse({'status': 'error', 'message': 'Missing order_slug'}, status=400)
 
     try:
-        job_request = JobRequest.objects.filter(slug=order_slug).first()
+        job_request = JobProgress.objects.filter(slug=order_slug).first()
         if not job_request:
             return JsonResponse({'status': 'error', 'message': 'Job request not found'}, status=404)
 
@@ -186,13 +72,15 @@ def api_initiate_paytabs_payment(request):
 
         # URLs
         url = settings.PAYTABS_URL
+        print('url',url)
         profile_id = settings.PAYTABS_PROFILE_ID
         server_key = settings.PAYTABS_SERVER_KEY
         callback_url = settings.PAYTABS_CALLBACK_URL
 
         # return_url يختلف حسب المصدر
+        tran_ref = request.data.get('tran_ref', 'default_tran_ref')
         if platform == 'app':
-            return_url = f"manfz://payment-success?order_slug={order_slug}"
+            return_url = f"manfz://payment-success?status=success"
         else:
             return_url = settings.PAYTABS_RETURN_URL
 
@@ -211,16 +99,24 @@ def api_initiate_paytabs_payment(request):
                 "name": name,
                 "email": email,
                 "phone": phone,
-                "street1": "Default Street",
-                "city": "Cairo",
-                "state": "Cairo",
+                "street1": "N/A",
                 "country": "EG",
+                "city": "N/A",
+                "state": "N/A",
                 "zip": "12345",
             },
         }
 
         response = requests.post(url, headers={'Authorization': server_key}, json=payload)
         response_data = response.json()
+        print(response_data)
+        if response.status_code != 200:
+            print('Error initiating payment with PayTabs:', response_data.get('message', 'Unknown error'))
+            return JsonResponse({
+                'status': 'error',
+                'message': response_data.get('message', 'Failed to initiate payment with PayTabs.'),
+                'details': response_data,
+            }, status=400)
 
         if response.status_code == 200 and 'redirect_url' in response_data:
             return JsonResponse({
@@ -253,7 +149,7 @@ def api_callback_url_paytabs(request):
         response_status = payment_result.get('response_status')
 
         try:
-            job_request = JobRequest.objects.get(slug=order_slug)
+            job_request = JobProgress.objects.get(slug=order_slug)
 
             if response_status == 'A':  # 'A' for Approved
                 job_request.payment_status = "Complete"
@@ -264,7 +160,147 @@ def api_callback_url_paytabs(request):
                 job_request.save()
 
             return JsonResponse({'status': 'success'})
-        except JobRequest.DoesNotExist:
+        except JobProgress.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def ApiJobsPaymentStatusUpdate(request):
+    """
+    Handles the successful payment confirmation from the Flutter app.
+    Updates the JobRequest and creates associated Purchase and Invoice records.
+    """
+    if request.method == 'POST':
+        try:
+            data = request.data
+            order_slug = data.get('order_slug')
+            tran_ref = data.get('tran_ref')
+
+            if not order_slug or not tran_ref:
+                return Response({"detail": "order_slug and tran_ref are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            job_request = JobProgress.objects.filter(slug=order_slug, user=request.user).first()
+
+            if not job_request:
+                return Response({"detail": "Job request not found or you do not have permission."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            if job_request.payment_status == 'Complete':
+                return Response({"detail": "This order has already been paid."}, status=status.HTTP_200_OK)
+
+            # 1. Update the JobRequest
+            job_request.payment_status = "Complete"
+            job_request.progress = "Pending"
+            # Use the actual price from the job request, not final_price which might be null
+            job_request.final_price = job_request.price
+            job_request.save()
+
+            # 2. Create the Purchase record
+            # CORRECTED: Use request.user directly
+            user = request.user
+
+            try:
+                purchase = Purchase.objects.filter(
+                    owner_model=ContentType.objects.get(model='User'),
+                    owner_id=user.id,
+                                                    sender_model=ContentType.objects.get(model='JobRequest'),
+                                                    sender_id=job_request.id,
+                                                   ).first()
+                if purchase:
+                    purchase.amount = job_request.final_price
+                    purchase.purchase_status = "Received"
+                    purchase.payment_status = "Completed"
+                    purchase.tracking_no = tran_ref
+                    purchase.save()
+
+            except Purchase.DoesNotExist:
+
+                purchase = Purchase.objects.create(
+                    sender_model=ContentType.objects.get(model='JobRequest'),
+                    sender_id=job_request.id,
+                    # Assuming the receiver is the provider of the job
+                    receiver_model=ContentType.objects.get(model='JobProvider'),
+                    receiver_id=job_request.classified_job.provider.id,
+                    owner_model=ContentType.objects.get(model='User'),
+                    owner_id=user.id,
+                    amount=job_request.final_price,
+                    purchase_status="Received",
+                    payment_status="Completed",
+                    tracking_no=tran_ref,
+                    source='App',
+                    purchase_date=timezone.now(),
+                )
+
+            # 3. Create the Invoice and Payment records
+            invoice = Invoice.objects.create(
+                sender_model=ContentType.objects.get(model='Purchase'),
+                sender_id=purchase.id,
+                owner_model=ContentType.objects.get(model='User'),
+                owner_id=user.id,
+                title=f"Purchase {purchase.serial_no} Invoice",
+                created_by='PayTabs System',
+                gateway_transaction=tran_ref,
+                is_success=True,
+                message="Payment successful via app."
+            )
+            Payment.objects.create(
+                sender_model=ContentType.objects.get(model='Invoice'),
+                sender_id=invoice.id,
+                receiver_model=ContentType.objects.get(model='Purchase'),
+                receiver_id=purchase.id,
+                owner_model=ContentType.objects.get(model='User'),
+                owner_id=user.id,
+                amount=purchase.amount,
+                payment_status='Completed',
+                payment_method='Online Payment',
+                payment_gateway='PayTabs',
+                gateway_transaction=tran_ref
+            )
+
+            return Response({"detail": "Payment status updated and records created successfully."},
+                            status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            print(f"Error in ApiJobsPaymentStatusUpdate: {str(e)}")
+            return Response({"detail": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({"detail": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def ApiJobsPaymentStatusFailed(request):
+    """
+    Handles a payment failure or cancellation confirmation from the app.
+    Marks the associated JobRequest as 'Canceled'.
+    """
+    if request.method == 'POST':
+        try:
+            data = request.data
+            order_slug = data.get('order_slug')
+
+            if not order_slug:
+                return Response({"detail": "order_slug is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            job_request = JobProgress.objects.filter(slug=order_slug, user=request.user).first()
+            if not job_request:
+                return Response({"detail": "Job request not found or you do not have permission."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            # Mark the request as canceled
+            job_request.progress = 'Canceled'
+            job_request.payment_status = 'Failed'
+            job_request.save()
+
+            return Response({"detail": "Job request marked as canceled successfully."},
+                            status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"Error in ApiJobsPaymentStatusFailed: {str(e)}")
+            return Response({"detail": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({"detail": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
