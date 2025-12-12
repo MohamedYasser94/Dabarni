@@ -6,6 +6,9 @@ pip install django django-environ django-mptt PyQRCode drf_spectacular drf_spect
 
 
 pip install gdal-3.10.2-cp312-cp312-win_amd64.whl
+
+
+ python manage.py runserver 192.168.5.2:8058
  """
 
 

@@ -90,7 +90,7 @@ def provider_start_chat_view(request, job_slug):
     Refreshes the Firebase context with the current Job details.
     """
     try:
-        current_job_progress = get_object_or_404(JobProgress, slug=job_slug)
+        current_job_progress = get_object_or_404(JobProgress, job__slug=job_slug)
         if not current_job_progress.provider:
             return Response(
                 {'error': "Job has no provider assigned yet."}, 
@@ -371,16 +371,17 @@ def provider_send_Messages(request):
 
         if uploaded_file_obj:
             try:
+                # Create UploadedFile using the correct model field name 'uploaded_by'
                 file_instance = UploadedFile.objects.create(
                     file=uploaded_file_obj,
-                    user=sender,
-                    name=uploaded_file_obj.name
+                    uploaded_by=sender
                 )
                 if hasattr(file_instance.file, 'url'):
                     file_url_str = request.build_absolute_uri(file_instance.file.url)
                     
             except Exception as e:
                 logger.error(f"Failed to save UploadedFile: {str(e)}")
+                print('Failed to save UploadedFile',e)
                 return Response({"error": "Failed to upload file"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         new_message = Message.objects.create(

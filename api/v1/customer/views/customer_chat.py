@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from firebase_admin import firestore, messaging, auth as firebase_auth
-from apps.classified.models.models import JobProgress
+from apps.classified.models.models import JobProgress, Job
 from django.core.paginator import Paginator, EmptyPage
 from rest_framework.parsers import MultiPartParser, FormParser
 try:
@@ -90,7 +90,8 @@ def customer_start_chat_view(request, job_slug):
     Refreshes the Firebase context with the current Job details.
     """
     try:
-        current_job_progress = get_object_or_404(JobProgress, slug=job_slug)
+
+        current_job_progress = get_object_or_404(JobProgress, job__slug=job_slug)
         if not current_job_progress.provider:
             return Response(
                 {'error': "Job has no provider assigned yet."}, 
@@ -146,6 +147,7 @@ def customer_start_chat_view(request, job_slug):
         import traceback
         error_details = traceback.format_exc()
         logger.error(f"CRASH: {str(e)} \n {error_details}")
+        print('error ',e)
         return Response({
             'error': "Server Error (Debug Mode)",
             'details': str(e),
@@ -373,8 +375,7 @@ def customer_send_Messages(request):
             try:
                 file_instance = UploadedFile.objects.create(
                     file=uploaded_file_obj,
-                    user=sender,
-                    name=uploaded_file_obj.name
+                    uploaded_by=sender
                 )
                 if hasattr(file_instance.file, 'url'):
                     file_url_str = request.build_absolute_uri(file_instance.file.url)
