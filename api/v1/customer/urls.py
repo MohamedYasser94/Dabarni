@@ -1,5 +1,6 @@
 from django.urls import path
 from api.v1.customer.views.customer_chat import *
+from api.v1.global_views import fcm_notification_views
 from apps.front.views import views, blocks 
 from api.v1.customer.views import profile ,jop , category, review, customer_wallet
 from apps.wallet.views.payment_gateway import paytabs
@@ -53,6 +54,14 @@ urlpatterns = [
     path('chat/messages/', Api_customer_Chat_All_Messages, name='chat-messages'),
     path('chat/messages/save/', customer_send_Messages, name='save-chat-message'),
 
+
+# FCM Notification endpoints
+    path("", fcm_notification_views.list_notifications, name="list-notifications"),
+    path("create/", fcm_notification_views.create_notification, name="create-notification"),
+    path("notifications/<int:notification_id>/", fcm_notification_views.get_notification_detail, name="notification-detail"),
+    path("notifications/<int:notification_id>/mark-as-read/", fcm_notification_views.mark_as_read, name="mark-as-read"),
+    path("notifications/mark-all-as-read/", fcm_notification_views.mark_all_as_read, name="mark-all-as-read"),
+    path("notifications/<int:notification_id>/delete/", fcm_notification_views.delete_notification, name="delete-notification"),
 
 
 #---------------------- Customer Wallet ---------------------------
