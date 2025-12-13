@@ -1,4 +1,6 @@
 from django.urls import path
+
+from api.v1.global_views import fcm_notification_views
 from api.v1.provider.views import provider_auth, provider_home, provider_wallet
 from api.v1.provider.views.notification_views import NotificationDeleteView, NotificationListView
 from api.v1.provider.views.providerchat import *
@@ -72,4 +74,13 @@ urlpatterns = [
     # ===================== Notification URLs =====================
     path('notifications/', NotificationListView.as_view(), name='provider-notification-list'),
     path('notifications/<int:pk>/delete/', NotificationDeleteView.as_view(), name='notification-delete'),
+
+
+# FCM Notification endpoints
+    path("notifications/", fcm_notification_views.list_notifications, name="list-notifications"),
+    path("notifications/create/", fcm_notification_views.create_notification, name="create-notification"),
+    path("notifications/<int:notification_id>/", fcm_notification_views.get_notification_detail, name="notification-detail"),
+    path("notifications/<int:notification_id>/mark-as-read/", fcm_notification_views.mark_as_read, name="mark-as-read"),
+    path("notifications/mark-all-as-read/", fcm_notification_views.mark_all_as_read, name="mark-all-as-read"),
+    path("notifications/<int:notification_id>/delete/", fcm_notification_views.delete_notification, name="delete-notification"),
 ]

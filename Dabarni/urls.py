@@ -24,6 +24,7 @@ from rest_framework import permissions
 from rest_framework_simplejwt import views as jwt_views
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from api.v1 import authentication
+from api.v1.global_views import fcm_notification_views
 
 from home.views.chat import dialog_list_view
 
@@ -51,7 +52,16 @@ urlpatterns = [path('i18n/', include('django.conf.urls.i18n')),
         path('verify-otp/', authentication.verify_otp, name='auth-verify-otp'),
         path('logout/', authentication.logout, name='auth-logout'),
     ]), name='authentication_api'),
- 
+
+    path('notifications/', include([
+        path('', fcm_notification_views.list_notifications, name='list-notifications'),
+        path('create/', fcm_notification_views.create_notification, name='create-notification'),
+        path('<int:notification_id>/', fcm_notification_views.get_notification_detail, name='notification-detail'),
+        path('<int:notification_id>/mark-as-read/', fcm_notification_views.mark_as_read, name='mark-as-read'),
+        path('mark-all-as-read/', fcm_notification_views.mark_all_as_read, name='mark-all-as-read'),
+        path('<int:notification_id>/delete/', fcm_notification_views.delete_notification, name='delete-notification'),
+    ]), name='notifications_api'),
+
 ]
 
 urlpatterns += i18n_patterns(
