@@ -1,7 +1,4 @@
 from django.urls import path
-
-
-from apps.front.views import views, blocks 
 from api.v1 import authentication
 from api.v1.global_views import fcm_notification_views
 

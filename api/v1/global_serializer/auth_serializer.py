@@ -36,3 +36,6 @@ class UserAddressSerializer(serializers.ModelSerializer):
         ]
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
+
+class UpdateFCMTokenSerializer(serializers.Serializer):
+    fcm_token = serializers.CharField(required=True, help_text="The Firebase Cloud Messaging token from Flutter")

@@ -5,15 +5,15 @@ from rest_framework.decorators import api_view
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from datetime import timedelta
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from drf_spectacular.utils import extend_schema
 from user.models import User
-from api.v1.global_serializer.auth_serializer import RegisterSerializer , ConfirmOTPSerializer , UserAddressSerializer ,LogoutSerializer
+from api.v1.global_serializer.auth_serializer import RegisterSerializer , ConfirmOTPSerializer ,LogoutSerializer, UpdateFCMTokenSerializer
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken ,TokenError
 from rest_framework.permissions import IsAuthenticated
 from api.v1.response import success_response, error_response
-from apps.classified.models.models import JobProvider, JobCategories
+from apps.classified.models.models import JobProvider
 from firebase_admin import auth as firebase_auth
 import logging
 
@@ -228,3 +228,4 @@ def logout(request):
             message="Invalid or expired token",
             status_code=status.HTTP_400_BAD_REQUEST
         )
+

@@ -1,7 +1,7 @@
 # D:\Python Projects\Dabarni_fork\Dabarni\api\v1\customer\views\jop_request_views.py
 
 from django.utils import timezone
-from flask import Response
+from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -20,7 +20,7 @@ from api.v1.customer.serializers.jop_request_serializer import (
 )
 from api.v1.response import success_response, error_response
 from apps.wallet.models.models import Wallet
-
+from api.v1.global_serializer.fcm import send_general_notification
 
 @extend_schema(
     tags=["Customer Jobs"],
@@ -352,6 +352,7 @@ def CustomerAcceptOffer(request, offer_id):
         - mark the offer as Accepted
         - create/update the JobProgress and set it to InProgress
         - mark other offers as Rejected
+        - Send Notification to the Provider
     Returns: job data + progress_id
     """
     try:
@@ -361,15 +362,14 @@ def CustomerAcceptOffer(request, offer_id):
                 pk=offer_id
             )
             job = offer.job
-
-            # تأكيد صلاحية العميل
+            offer.status = 'Accepted'
+            offer.save()
             if job.customer != request.user:
                 return error_response(
                     message="ليس لديك صلاحية لقبول هذا العرض.",
                     status_code=status.HTTP_403_FORBIDDEN
                 )
 
-            # راجع الـ negotiation إن وجد
             negotiation = JobNegotiate.objects.filter(job=job, provider=offer.provider).first()
             if negotiation and negotiation.customer_accepted:
                 return error_response(
@@ -377,18 +377,15 @@ def CustomerAcceptOffer(request, offer_id):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Update offer
             offer.status = 'Accepted'
             offer.save()
 
-            # ابحث عن JobProgress للـ job + customer
             job_progress = JobProgress.objects.filter(
                 job=job,
                 customer=job.customer
             ).first()
 
             if job_progress:
-                # لو موجود → نعدله
                 job_progress.offer = offer
                 job_progress.provider = offer.provider
                 job_progress.progress_status = 'Pending'
@@ -398,7 +395,6 @@ def CustomerAcceptOffer(request, offer_id):
                 job_progress.payment_status = 'Pending'
                 job_progress.save()
             else:
-                # لو مش موجود → نكريت جديد
                 job_progress = JobProgress.objects.create(
                     job=job,
                     offer=offer,
@@ -411,7 +407,6 @@ def CustomerAcceptOffer(request, offer_id):
                     payment_status='Pending'
                 )
 
-            # Update negotiation if present
             if negotiation:
                 negotiation.customer_accepted = True
                 negotiation.provider_accepted = True
@@ -420,10 +415,48 @@ def CustomerAcceptOffer(request, offer_id):
                 negotiation.provider_price = offer.price
                 negotiation.save()
 
-            # Reject other offers
             JobOffer.objects.filter(job=job).exclude(pk=offer_id).update(status='Rejected')
 
-        # prepare response data (include progress_id so frontend can redirect)
+            try:
+                provider_user = offer.provider.user 
+                customer_name = request.user.get_full_name() or "Customer"
+                
+                noti_title = "تم قبول عرضك!"
+                noti_body = f"وافق {customer_name} على عرضك المقدم للوظيفة: {job.title}"
+                noti_data = {
+                    "job_id": job.id,
+                    "job_slug": job.slug,
+                    "offer_id": offer.id,
+                    "progress_id": job_progress.id,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+
+                send_general_notification(
+                    receiver=provider_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="offer_accepted",
+                    extra_data=noti_data
+                )
+            except Exception as noti_error:
+                pass
+
+            other_offers = JobOffer.objects.filter(job=job).exclude(pk=offer_id).select_related('provider__user')
+            for other_offer in other_offers:
+                try:
+                    send_general_notification(
+                        receiver=other_offer.provider.user,
+                        title="تحديث بخصوص عرضك",
+                        body=f"تم إغلاق الوظيفة '{job.title}'. تم اختيار عرض آخر، حظاً أوفر في المرة القادمة!",
+                        notification_type="offer_rejected",
+                        extra_data={
+                            "job_id": job.id,
+                            "job_slug": job.slug
+                        }
+                    )
+                except Exception:
+                    continue
+            other_offers.update(status='Rejected')
         job_data = JobDetailSerializer(job, context={"request": request}).data
         response_data = {
             "job": job_data,
@@ -584,3 +617,121 @@ def list_job_negotiations(request, job_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )    
+    
+
+@extend_schema(
+    tags=["Customer Jobs"],
+    summary="موافقة العميل على المبلغ الإضافي",
+    description="يقوم العميل بالموافقة على التكلفة الإضافية، ويتم تحديث السعر الكلي للطلب تلقائياً.",
+    responses={200: dict, 400: dict, 403: dict, 404: dict}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def approve_extra_cost(request, progress_id):
+    """
+    العميل يوافق على المبلغ الإضافي ويتم إضافته للمجموع الكلي
+    """
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        if progress.customer != request.user:
+            return Response({
+                "status": False,
+                "message": "عذراً، هذا الطلب لا يخصك."
+            }, status=403)
+
+        if not progress.extra_cost or progress.extra_cost <= 0:
+            return Response({
+                "status": False,
+                "message": "لا يوجد مبلغ إضافي مطلوب للموافقة عليه."
+            }, status=400)
+
+        if progress.extra_cost_approved:
+            return Response({
+                "status": False,
+                "message": "تمت الموافقة على هذا المبلغ مسبقاً."
+            }, status=400)
+
+        progress.extra_cost_approved = True
+        progress.extra_approved_time = timezone.now()
+        current_total = progress.total_cost if progress.total_cost else 0
+        new_total = current_total + progress.extra_cost
+        progress.total_cost = new_total
+        progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تمت الموافقة على المبلغ الإضافي بنجاح.",
+            "data": {
+                "id": progress.id,
+                "extra_cost": progress.extra_cost,
+                "new_total_cost": progress.total_cost,
+                "approved_at": progress.extra_approved_time
+            }
+        }, status=200)
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+    except Exception as e:
+        print(f"Error in approve_extra_cost: {e}")
+        return Response({"status": False, "message": "حدث خطأ غير متوقع"}, status=500)
+
+
+@extend_schema(
+    tags=["Customer Jobs"],
+    summary="رفض العميل للمبلغ الإضافي",
+    description="يقوم العميل برفض التكلفة الإضافية المقترحة من قبل مقدم الخدمة.",
+    responses={200: dict, 400: dict, 403: dict, 404: dict}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reject_extra_cost(request, progress_id):
+    """
+    العميل يرفض المبلغ الإضافي ويتم تسجيل الرفض
+    """
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        if progress.customer != request.user:
+            return Response({
+                "status": False,
+                "message": "عذراً، هذا الطلب لا يخصك."
+            }, status=403)
+
+        if not progress.extra_cost or progress.extra_cost <= 0:
+            return Response({
+                "status": False,
+                "message": "لا يوجد مبلغ إضافي لرفضه."
+            }, status=400)
+
+        if progress.extra_cost_approved is True:
+            return Response({
+                "status": False,
+                "message": "عذراً، لقد قمت بالموافقة على هذا المبلغ مسبقاً ولا يمكن رفضه الآن."
+            }, status=400)
+
+        if progress.extra_cost_approved is False:
+            return Response({
+                "status": False,
+                "message": "تم رفض هذا المبلغ مسبقاً."
+            }, status=400)
+
+        progress.extra_cost_approved = False
+        progress.extra_approved_time = timezone.now() 
+        progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تم رفض المبلغ الإضافي.",
+            "data": {
+                "id": progress.id,
+                "extra_cost": progress.extra_cost,
+                "status": "Rejected"
+            }
+        }, status=200)
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+    except Exception as e:
+        print(f"Error in reject_extra_cost: {e}")
+        return Response({"status": False, "message": "حدث خطأ غير متوقع"}, status=500)

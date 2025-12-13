@@ -2,6 +2,7 @@ from django.urls import path
 
 from api.v1.global_views import fcm_notification_views
 from api.v1.provider.views import provider_auth, provider_home, provider_wallet
+from api.v1.provider.views.notification_views import NotificationDeleteView, NotificationListView
 from api.v1.provider.views.providerchat import *
 from api.v1.provider.views.provider_home import ProviderProfile, ProviderUpdateProfile
 
@@ -68,6 +69,11 @@ urlpatterns = [
     path('chat/list/', Api_provider_Chat_Lists, name='chat-list'),
     path('chat/messages/', Api_provider_Chat_All_Messages, name='chat-messages'),
     path('chat/messages/save/', provider_send_Messages, name='save-chat-message'),
+    path('chat/delete/<uuid:dialog_id>/', provider_delete_specific_chat, name='delete-chat'),
+
+    # ===================== Notification URLs =====================
+    path('notifications/', NotificationListView.as_view(), name='provider-notification-list'),
+    path('notifications/<int:pk>/delete/', NotificationDeleteView.as_view(), name='notification-delete'),
 
 
 # FCM Notification endpoints

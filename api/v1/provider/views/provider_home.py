@@ -17,7 +17,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q, Prefetch
 from user.models import UserProfile
-
+from api.v1.global_serializer.fcm import send_general_notification
 
 @extend_schema(
     tags=["Provider Profile"],
@@ -50,7 +50,7 @@ def retrieveProviderProfile(request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
-    
+
 @extend_schema(
     tags=["Provider Profile"],
     responses={200: ProviderProfileWithReviewsDetailSerializer, 404: 'Not Found Response', 500: 'Error Response'}
@@ -83,7 +83,7 @@ def RetrieveProviderProfileById(request, provider_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
-    
+
 
 @extend_schema(
     tags=["Provider Profile"],
@@ -390,6 +390,7 @@ def GetJobDetails(request, job_id):
             errors={'detail': str(e)}
         )
 
+
 @extend_schema(
     tags=["Job Progress"],
 )
@@ -401,12 +402,11 @@ def AcceptJob(request, job_id):
     - creates a JobOffer (or marks existing offer accepted)
     - sets provider_accepted=True and accepted_at
     - Fix: Updates existing JobProgress if found, otherwise creates one.
+    - Sends Notification to the Customer.
     """
     try:
         provider = get_object_or_404(JobProvider, user=request.user)
         job = get_object_or_404(Job, pk=job_id)
-
-        # If provider already has an offer -> mark it accepted
         existing_offer = JobOffer.objects.filter(job=job, provider=provider).first()
 
         if existing_offer and existing_offer.provider_accepted:
@@ -451,8 +451,29 @@ def AcceptJob(request, job_id):
 
         data = JobOfferSerializer(offer, context={'request': request}).data
 
-        # Optional: create notification for customer (see note below)
-        # notify_customer_job_accepted(job.customer, job, offer)
+        try:
+            customer_user = job.customer
+            provider_name = request.user.get_full_name() or "مقدم خدمة"
+
+            noti_title = "تم قبول طلبك!"
+            noti_body = f"وافق {provider_name} على تنفيذ طلبك '{job.title}' بالسعر المحدد."
+            noti_data = {
+                "type": "job_accepted",
+                "job_id": job.id,
+                "job_slug": job.slug,
+                "progress_id": job_progress.id,
+                "click_action": "FLUTTER_NOTIFICATION_CLICK"
+            }
+
+            send_general_notification(
+                receiver=customer_user,
+                title=noti_title,
+                body=noti_body,
+                notification_type="job_accepted",
+                extra_data=noti_data
+            )
+        except Exception as noti_error:
+            pass
 
         return Response({"isSuccess": True, "message": "تم قبول الطلب بنجاح", "data": data},
                         status=status.HTTP_201_CREATED)
@@ -466,27 +487,9 @@ def AcceptJob(request, job_id):
         return Response({"isSuccess": False, "message": "حدث خطأ.", "errors": str(e)},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 @extend_schema(
     description="Provider finishes a job and marks its progress as Completed.",
-    responses={
-        200: OpenApiResponse(
-            response={
-                "status": True,
-                "message": "تم إنهاء العمل بنجاح.",
-                "progress_status": "Completed",
-                "completed_at": "2025-09-21T15:30:00Z"
-            }
-        ),
-        400: OpenApiResponse(
-            response={"status": False, "message": "تم إنهاء العمل سابقًا."}
-        ),
-        404: OpenApiResponse(
-            response={"status": False, "message": "لا يوجد تقدم مرتبط بهذا الطلب."}
-        ),
-        500: OpenApiResponse(
-            response={"status": False, "message": "حدث خطأ أثناء إنهاء العمل.", "errors": "..."}
-        )
-    },
     tags=["Job Progress"]
 )
 @api_view(['POST'])
@@ -495,6 +498,7 @@ def FinishJob(request, job_id):
     """
     Provider finishes the job:
     - Marks JobProgress as Completed
+    - Sends Notification to Customer to review the job
     """
     try:
         provider = get_object_or_404(JobProvider, user=request.user)
@@ -512,6 +516,30 @@ def FinishJob(request, job_id):
             progress.completed_at = timezone.now()
             progress.save()
 
+            try:
+                customer_user = job.customer
+                provider_name = request.user.get_full_name() or "مقدم الخدمة"
+                
+                noti_title = "تم إنهاء العمل!"
+                noti_body = f"قام {provider_name} بإنهاء العمل على طلبك '{job.title}'. يرجى المراجعة والتقييم."
+                noti_data = {
+                    "type": "job_completed",
+                    "job_id": job.id,
+                    "job_slug": job.slug,
+                    "progress_id": progress.id,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+
+                send_general_notification(
+                    receiver=customer_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="job_completed",
+                    extra_data=noti_data
+                )
+            except Exception as noti_error:
+                pass
+
         return Response({
             "status": True,
             "message": "تم إنهاء العمل بنجاح.",
@@ -527,7 +555,8 @@ def FinishJob(request, job_id):
         import traceback
         traceback.print_exc()
         return Response({"status": False, "message": "حدث خطأ أثناء إنهاء العمل.", "errors": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
+
 @extend_schema(
     tags=["Provider Jobs"],
     request=JobOfferCreateSerializer,
@@ -576,13 +605,32 @@ def SendNewOffer(request):
                         provider_price=price,
                         provider_accepted=False 
                     )
-                  
+                    try:
+                        customer_user = job.customer
+                        provider_name = request.user.get_full_name() or "مقدم خدمة"
+                        noti_title = "عرض سعر جديد!"
+                        noti_body = f"قام {provider_name} بتقديم عرض سعر جديد بقيمة {price} على طلبك: {job.title}"
+                        noti_data = {
+                            "type": "new_offer",
+                            "job_id": job.id,
+                            "job_slug": job.slug,
+                            "offer_id": offer.id,
+                            "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                        }
+
+                        send_general_notification(
+                            receiver=customer_user,
+                            title=noti_title,
+                            body=noti_body,
+                            notification_type="new_offer",
+                            extra_data=noti_data
+                        )
+                    except Exception as noti_error:
+                        pass
+
                     message = "تم تقديم عرضك بنجاح."
                     status_code = status.HTTP_201_CREATED
 
-                # Ensure the Job's progress status is set to Pending for the customer to see
-               # JobProgress.objects.filter(job=job).update(progress_status='Pending')
-                
                 return success_response(
                     message=message,
                     data=JobOfferSerializer(offer).data,
@@ -606,6 +654,7 @@ def SendNewOffer(request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+
 
 @extend_schema(
     tags=["Provider Negotiations"],
@@ -650,15 +699,15 @@ def respondToNegotiation(request, negotiation_id):
                 negotiation.save()
 
                 # Update the main offer and job progress
-                offer = negotiation.offer
-                offer.status = 'Accepted' # Offer is now accepted by both parties
-                offer.save()
+                # offer = negotiation.offer
+                # offer.status = 'Accepted' # Offer is now accepted by both parties
+                # offer.save()
                 
-                job_progress = get_object_or_404(JobProgress, job=negotiation.job)
-                job_progress.offer = offer
-                job_progress.progress_status = JobProgressStatus.IN_PROGRESS  
-                job_progress.total_cost = negotiation.customer_price # The final agreed price
-                job_progress.save()
+                # job_progress = get_object_or_404(JobProgress, job=negotiation.job)
+                # job_progress.offer = offer
+                # job_progress.progress_status = JobProgressStatus.IN_PROGRESS  
+                # job_progress.total_cost = negotiation.customer_price # The final agreed price
+                # job_progress.save()
 
                 # A notification would be sent to the customer here
                 
@@ -762,6 +811,8 @@ def providerNegotiateResponse(request, negotiation_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+
+
 @extend_schema(
     tags=["Provider Jobs"],
     summary="طلب مبلغ إضافي",
@@ -777,22 +828,19 @@ def request_extra_amount(request, progress_id):
     try:
         progress = JobProgress.objects.get(id=progress_id)
 
-        # التأكد أن المستخدم هو المزود
         if not progress.provider or progress.provider.user != request.user:
             return Response({"status": False, "message": "غير مخول لإرسال طلب مبلغ إضافي"}, status=403)
 
-        # البيانات المرسلة
         extra_cost = request.data.get('extra_cost')
         extra_request = request.data.get('extra_request', '')
 
         if not extra_cost:
             return Response({"status": False, "message": "الرجاء إدخال المبلغ"}, status=400)
 
-        # تحديث الـ progress
         progress.extra_cost = extra_cost
         progress.extra_request = extra_request
         progress.extra_request_time = timezone.now()
-        progress.extra_cost_approved = False
+        progress.extra_cost_approved = None
         progress.save()
 
         return Response({
@@ -807,7 +855,8 @@ def request_extra_amount(request, progress_id):
 
     except JobProgress.DoesNotExist:
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
-    
+
+
 @extend_schema(
     tags=["Job Progress"],
     summary="بدء العمل",
@@ -1143,11 +1192,16 @@ def ProviderUpdateProfile(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ProviderJobReviews(request):
-    provider = JobProvider.objects.get(id=request.user.id)
-    job_reviews = JobReview.objects.filter(provider=provider)
+    try:
+        provider = JobProvider.objects.get(user=request.user)
+    except JobProvider.DoesNotExist:
+            return Response({'message': 'Provider profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    ### serializers
-    job_reviews_serializer = JobReviewSerializer(job_reviews, many=True,context={'request': request})
+    job_reviews = JobReview.objects.filter(
+        job__progresses__provider=provider
+    ).prefetch_related('media').order_by('-create_at')
+
+    job_reviews_serializer = JobReviewSerializer(job_reviews, many=True, context={'request': request})
 
     data = {
         "job_reviews": job_reviews_serializer.data,

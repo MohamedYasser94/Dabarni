@@ -1,3 +1,4 @@
+from asyncio.log import logger
 import random
 import json
 import random
@@ -19,11 +20,12 @@ from rest_framework.response import Response
 from rest_framework.status import *
 from drf_spectacular.utils import extend_schema
 from rest_framework_simplejwt.tokens import RefreshToken
+from api.v1.global_serializer.auth_serializer import UpdateFCMTokenSerializer
 from api.v1.response import success_response, error_response
 from api.v1.provider.serializers.auth import ProviderProfileCompletionSerializer, ProviderProfileDetailSerializer
 
 from apps.classified.models.models import JobProvider
-from user.models import OtpCode
+from user.models import OtpCode, UserAddress
 
 User = get_user_model()
 
@@ -509,18 +511,47 @@ def ApiUserDeviceToken(request):
     return JsonResponse({'status': False, 'message': 'Not Post Request'}, status=401)
 
 
+@extend_schema(
+    request=UpdateFCMTokenSerializer, 
+    tags=["Notification"], 
+    summary="Update FCM Token",
+    description="Update the user's FCM token to receive push notifications."
+)
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated]) 
 def update_fcm_token(request):
-    fcm_token = request.data.get('fcm_token')
+    """
+    Update the logged-in user's FCM Token.
+    """
+    fcm_token = request.data.get("fcm_token")
+
     if not fcm_token:
-        return Response({"error": "FCM token not provided"}, status=400)
+        return error_response(
+            message="fcm_token is required",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
 
-    user = request.user
-    user.fcm_token = fcm_token
-    user.save(update_fields=['fcm_token'])
-    return Response({"success": "FCM token updated"}, status=200)
+    try:
+        user = request.user
+        user.fcm_token = fcm_token
+        user.save()
+        logger.info(f"FCM Token updated successfully for user {user.email} (ID: {user.id})")
 
+        return success_response(
+            message="FCM token updated successfully",
+            data={
+                "user_id": user.id,
+                "fcm_token_fragment": fcm_token
+            },
+            status_code=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        logger.error(f"Error updating FCM token for user {request.user.id}: {str(e)}", exc_info=True)
+        return error_response(
+            message="An error occurred while updating the token",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 @csrf_exempt
 def ApiUserAddress(request,token):

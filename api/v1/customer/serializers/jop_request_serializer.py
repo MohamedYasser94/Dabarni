@@ -31,8 +31,9 @@ class JobProgressSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = JobProgress
-        model = JobProgress
-        fields = ['id','slug', 'progress_status','reason','total_cost', 'start_at', 'canceled_at', 'canceled_by']
+        fields = ['id','slug', 'progress_status','reason','total_cost', 'start_at',
+                    'extra_cost','extra_request','extra_cost_approved','extra_request_time','extra_approved_time',
+                    'payment_status','canceled_at', 'canceled_by']
 
 class JobCreateSerializer(serializers.ModelSerializer):
     """
@@ -289,22 +290,23 @@ class JobNegotiateCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("السعر يجب أن يكون أكبر من الصفر.")
         return value
     
-class JobNegotiateListSerializer(serializers.ModelSerializer):
-    provider_name = serializers.CharField(source='provider.first_name', read_only=True) # أو أي حقل للاسم
-    offer_price = serializers.DecimalField(source='offer.price', max_digits=10, decimal_places=2, read_only=True)
+# class JobNegotiateListSerializer(serializers.ModelSerializer):
+#     provider_name = serializers.CharField(source='provider.first_name', read_only=True) # أو أي حقل للاسم
+#     offer_price = serializers.DecimalField(source='offer.price', max_digits=10, decimal_places=2, read_only=True)
 
-    class Meta:
-        model = JobNegotiate
-        fields = [
-            'id', 'offer','provider','provider_name',
-            'offer_price','customer_price','provider_accepted',
-            'customer_accepted','create_at','update_at'
-        ]
+#     class Meta:
+#         model = JobNegotiate
+#         fields = [
+#             'id', 'offer','provider','provider_name',
+#             'offer_price','customer_price','provider_accepted',
+#             'customer_accepted','create_at','update_at'
+#         ]
+
 
 class JobNegotiateListSerializer(serializers.ModelSerializer):
     provider_id = serializers.IntegerField(source='provider.id', read_only=True)
-    provider_name = serializers.CharField(source='provider.first_name', read_only=True) # أو get_full_name()
-    provider_phone = serializers.CharField(source='provider.phone', read_only=True) # تأكد أن حقل الهاتف موجود في موديل المستخدم
+    provider_name = serializers.SerializerMethodField()
+    provider_phone = serializers.CharField(source='provider.phone', read_only=True) 
     provider_image = serializers.SerializerMethodField()
     provider_category = serializers.CharField(source='provider.category', read_only=True) 
     provider_rating = serializers.SerializerMethodField()
@@ -318,13 +320,21 @@ class JobNegotiateListSerializer(serializers.ModelSerializer):
             'job','offer','customer'
         ]
 
+    def get_provider_name(self, obj):
+        if obj.provider and hasattr(obj.provider, 'user') and obj.provider.user:
+            full_name = obj.provider.user.get_full_name()
+            if full_name:
+                return full_name
+            return obj.provider.user.username
+        return "Unknown Provider"
+
     def get_provider_image(self, obj):
         request = self.context.get('request')
-        if obj.provider.user and obj.provider.user.image:
+        if obj.provider and hasattr(obj.provider, 'user') and obj.provider.user and obj.provider.user.image:
             return request.build_absolute_uri(obj.provider.user.image.url) if request else obj.provider.user.image.url
         return None
 
     def get_provider_rating(self, obj):
-        if hasattr(obj.provider, 'average_rating'):
+        if obj.provider and hasattr(obj.provider, 'average_rating'):
             return obj.provider.average_rating
         return 0.0

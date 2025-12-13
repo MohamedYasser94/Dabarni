@@ -8,6 +8,7 @@ from firebase_admin import firestore, messaging, auth as firebase_auth
 from apps.classified.models.models import JobProgress, Job
 from django.core.paginator import Paginator, EmptyPage
 from rest_framework.parsers import MultiPartParser, FormParser
+from api.v1.global_serializer.fcm import send_chat_notification
 try:
     SERVER_TIMESTAMP = firestore.SERVER_TIMESTAMP
 except Exception:
@@ -17,7 +18,7 @@ from rest_framework.decorators import api_view, permission_classes, parser_class
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from core.models.chat import Dialog, Message, UploadedFile
-from django.db.models import Q
+from django.db.models import Q , Count
 from django.utils import timezone
 from django.http import JsonResponse
 
@@ -124,6 +125,8 @@ def customer_start_chat_view(request, job_slug):
             logger.info(f"Existing Dialog retrieved: {dialog.id}")
 
         update_firebase_chat_context(dialog, current_job_progress, provider_user, customer)
+        provider_slug = getattr(provider_user, 'slug', None)
+        customer_slug = getattr(customer, 'slug', None)
 
         return Response({
             'dialog_id': str(dialog.id),
@@ -133,6 +136,10 @@ def customer_start_chat_view(request, job_slug):
             'participant_uids': {
                 'provider': provider_user.firebase_uid,
                 'customer': customer.firebase_uid
+            },
+            'participant_slugs': {
+                'provider': provider_slug,
+                'customer': customer_slug
             },
             'job_context': {
                 'slug': current_job_progress.slug,
@@ -165,9 +172,13 @@ def Api_customer_Chat_Lists(request):
     """
     current_user = request.user
     dialogs = Dialog.objects.filter(
-        Q(provider=current_user) | Q(customer=current_user)
-    ).select_related('provider', 'customer', 'job').prefetch_related('messages')
-
+            Q(provider=current_user) | Q(customer=current_user)
+        ).annotate(
+            unread_count=Count(
+                'messages',
+                filter=Q(messages__read=False) & ~Q(messages__sender=current_user)
+            )
+        ).select_related('provider', 'customer', 'job').prefetch_related('messages')
     chat_seller_lists_data = []
 
     for dialog in dialogs:
@@ -181,7 +192,7 @@ def Api_customer_Chat_Lists(request):
             last_message_content = last_message.content if last_message.content else "Attachment"
         else:
             last_activity_time = dialog.created_at
-            last_message_content = "No messages yet."
+            last_message_content = ""
 
         other_user_image_url = None
         try:
@@ -214,6 +225,7 @@ def Api_customer_Chat_Lists(request):
             "last_message_content": last_message_content,
             "seller_list": seller_list_json,
             "imageUrl": other_user_image_url, 
+            "unread_count": dialog.unread_count,
         }
         chat_seller_lists_data.append(chat_item)
 
@@ -260,7 +272,7 @@ def Api_customer_Chat_All_Messages(request):
 
         if current_user != dialog.provider and current_user != dialog.customer:
             return Response({'error': 'You do not have permission to view this chat.'}, status=status.HTTP_403_FORBIDDEN)
-
+        Message.objects.filter(dialog=dialog, read=False).exclude(sender=current_user).update(read=True)
         other_user = dialog.provider if dialog.customer == current_user else dialog.customer
         messages_queryset = Message.objects.filter(dialog=dialog)\
             .exclude(deleted_by=current_user)\
@@ -427,7 +439,13 @@ def customer_send_Messages(request):
             logger.error(f"Failed to sync message to Firestore: {firestore_error}")
 
         recipient = dialog.provider if sender == dialog.customer else dialog.customer
-        send_fcm_notification(sender, recipient, new_message, dialog)
+        notification_body = text if text else "Sent an attachment"
+        send_chat_notification(
+            sender=sender,
+            receiver=recipient,
+            message_text=notification_body,
+            dialog_id=dialog.id
+        )
 
         return Response({
             "success": True,
@@ -442,32 +460,44 @@ def customer_send_Messages(request):
     except Exception as e:
         logger.error(f"Error in SaveChatMessageAPI: {str(e)}", exc_info=True)
         return Response({"error": "An unexpected server error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+@extend_schema(tags=["customer chat"])
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def customer_delete_specific_chat(request, dialog_id):
+    """
+    API endpoint to delete a specific chat dialog from both Django SQL and Firestore.
+    """
+    user = request.user
+    dialog = get_object_or_404(Dialog, id=dialog_id)
 
-#----------------------------- It will be deleted later. ----------------------------
-def send_fcm_notification(sender, recipient, message_obj, dialog_obj):
-    try:
-        if not recipient.fcm_token:
-            return
-
-        notification_body = message_obj.content if message_obj.content else "Sent an attachment"
-        msg = messaging.Message(
-            notification=messaging.Notification(
-                title=f"{sender.get_full_name()}",
-                body=notification_body,
-            ),
-            token=recipient.fcm_token,
-            data={
-                "type": "chat_message",
-                "sender_id": str(sender.id),
-                "sender_name": sender.get_full_name(),
-                "dialog_id": str(dialog_obj.id),
-                "dialog_slug": dialog_obj.slug or "",
-                "job_slug": dialog_obj.job.slug if dialog_obj.job else "",
-                "message_type": message_obj.message_type,
-                "click_action": "FLUTTER_NOTIFICATION_CLICK"
-            }
+    if dialog.customer != user :
+        return Response(
+            {'error': "You do not have permission to delete this chat."}, 
+            status=status.HTTP_403_FORBIDDEN
         )
-        messaging.send(msg)
-        logger.info(f"FCM notification sent to {recipient.email}")
+
+    try:
+        db = firestore.client()
+        chat_ref = db.collection('chats').document(str(dialog.id))
+        chat_ref.delete()
+        batch = db.batch()
+        messages = chat_ref.collection('messages').limit(500).stream()
+        for msg in messages:
+            batch.delete(msg.reference)
+        batch.commit()
+        dialog.delete()
+
+        logger.info(f"Chat {dialog_id} deleted by user {user.id}")
+
+        return Response({
+            'message': 'Chat deleted successfully from both Database and Firestore.',
+            'dialog_id': dialog_id
+        }, status=status.HTTP_200_OK)
+
     except Exception as e:
-        logger.error(f"FCM Error: {str(e)}")
+        logger.error(f"Error deleting chat {dialog_id}: {str(e)}")
+        return Response(
+            {'error': 'Failed to delete chat.', 'details': str(e)}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
