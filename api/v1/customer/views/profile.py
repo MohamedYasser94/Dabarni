@@ -63,6 +63,37 @@ def save_address(request):
         status_code=400
     )
 
+@extend_schema(request=UserAddressSerializer, tags=["Customer Profile"])
+@api_view(['PATCH'])
+def update_address(request, address_slug):
+    """
+    تعديل عنوان موجود مسبقاً بناءً على الـ Slug
+    """
+    try:
+        address_instance = UserAddress.objects.get(slug=address_slug, user=request.user)
+
+    except UserAddress.DoesNotExist:
+        return error_response(
+            message="العنوان غير موجود أو لا تملك صلاحية تعديله",
+            errors={},
+            status_code=404
+        )
+
+    serializer = UserAddressSerializer(instance=address_instance, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        return success_response(
+            message="تم تعديل العنوان بنجاح",
+            data=serializer.data,
+            status_code=200
+        )
+
+    return error_response(
+        message="خطأ في البيانات المرسلة",
+        errors=serializer.errors,
+        status_code=400
+    )
 
 @extend_schema(tags=["Customer Profile"], responses=UserAddressSerializer(many=True))
 @api_view(['GET'])
