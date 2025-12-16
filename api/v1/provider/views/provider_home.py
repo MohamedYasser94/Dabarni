@@ -489,7 +489,7 @@ def AcceptJob(request, job_id):
 
 
 @extend_schema(
-    description="Provider finishes a job and marks its progress as Completed.",
+    description="Provider finishes a job and marks its progress as On Hold to finishes.",
     tags=["Job Progress"]
 )
 @api_view(['POST'])
@@ -497,7 +497,7 @@ def AcceptJob(request, job_id):
 def FinishJob(request, job_id):
     """
     Provider finishes the job:
-    - Marks JobProgress as Completed
+    - Marks JobProgress as On Hold to finishes
     - Sends Notification to Customer to review the job
     """
     try:
@@ -508,11 +508,11 @@ def FinishJob(request, job_id):
         if not progress:
             return Response({"status": False, "message": "لا يوجد تقدم مرتبط بهذا الطلب."}, status=status.HTTP_404_NOT_FOUND)
 
-        if progress.progress_status == "Completed":
+        if progress.progress_status == "On Hold to finishes":
             return Response({"status": False, "message": "تم إنهاء العمل سابقًا."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            progress.progress_status = "Completed"
+            progress.progress_status = "On Hold to finishes"
             progress.completed_at = timezone.now()
             progress.save()
 
@@ -523,7 +523,7 @@ def FinishJob(request, job_id):
                 noti_title = "تم إنهاء العمل!"
                 noti_body = f"قام {provider_name} بإنهاء العمل على طلبك '{job.title}'. يرجى المراجعة والتقييم."
                 noti_data = {
-                    "type": "job_completed",
+                    "type": "job_On Hold to finishes",
                     "job_id": job.id,
                     "job_slug": job.slug,
                     "progress_id": progress.id,
@@ -534,7 +534,7 @@ def FinishJob(request, job_id):
                     receiver=customer_user,
                     title=noti_title,
                     body=noti_body,
-                    notification_type="job_completed",
+                    notification_type="job_On Hold to finishes",
                     extra_data=noti_data
                 )
             except Exception as noti_error:
@@ -544,7 +544,7 @@ def FinishJob(request, job_id):
             "status": True,
             "message": "تم إنهاء العمل بنجاح.",
             "progress_status": progress.progress_status,
-            "completed_at": progress.completed_at
+            "On Hold to finishes": progress.completed_at
         }, status=status.HTTP_200_OK)
 
     except JobProvider.DoesNotExist:
@@ -873,14 +873,14 @@ def start_work(request, progress_id):
         progress = JobProgress.objects.get(id=progress_id)
 
         # # فقط المزود المخصص يمكنه بدء العمل
-        # if progress.provider.user != request.user:
-        #     return Response({"status": False, "message": "غير مخول للبدء"}, status=403)
+        if progress.provider.user != request.user:
+            return Response({"status": False, "message": "غير مخول للبدء"}, status=403)
 
         if progress.start_at:
             return Response({"status": False, "message": "تم بدء العمل مسبقًا"}, status=400)
 
         progress.start_at = timezone.now()
-        progress.progress_status = "InProgress"
+        progress.progress_status = "On Hold to Start"
         progress.save()
 
         return Response({

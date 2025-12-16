@@ -480,6 +480,70 @@ def CustomerAcceptOffer(request, offer_id):
             errors={'detail': str(e)}
         )
 
+@extend_schema(
+    tags=["Customer Offers"],
+    responses={200: dict, 400: dict, 403: dict, 404: dict}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def start_Customer_work(request, progress_id):
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        if progress.customer != request.user:
+            return Response({"status": False, "message": "غير مخول للبدء"}, status=403)
+
+        if progress.start_at:
+            return Response({"status": False, "message": "تم بدء العمل مسبقًا"}, status=400)
+
+        progress.start_at = timezone.now()
+        progress.progress_status = "InProgress"
+        progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تم بدء العمل بنجاح",
+            "data": {
+                "start_at": progress.start_at,
+                "progress_status": progress.progress_status
+            }
+        })
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+
+@extend_schema(
+    tags=["Customer Offers"],
+    responses={200: dict, 400: dict, 403: dict, 404: dict}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def finish_Customer_work(request, progress_id):
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        if progress.customer != request.user:
+            return Response({"status": False, "message": "غير مخول للانهاء"}, status=403)
+
+        if progress.start_at:
+            return Response({"status": False, "message": "تم انهاء العمل مسبقًا"}, status=400)
+
+        progress.start_at = timezone.now()
+        progress.progress_status = "finish"
+        progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تم انهاء العمل بنجاح",
+            "data": {
+                "start_at": progress.start_at,
+                "progress_status": progress.progress_status
+            }
+        })
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+
 
 @extend_schema(
     tags=["Customer Offers"],

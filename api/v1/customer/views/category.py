@@ -23,7 +23,7 @@ def list_categories(request):
     try:
         # Get all root nodes (categories without a parent) that are active.
         categories = JobCategories.objects.filter(parent__isnull=True, status='Active')
-        serializer = JobCategorySerializer(categories, many=True)
+        serializer = JobCategorySerializer(categories, many=True, context={'request': request})
         return success_response(
             message="Categories retrieved successfully",
             data=serializer.data,
