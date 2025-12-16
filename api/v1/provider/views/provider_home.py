@@ -489,16 +489,17 @@ def AcceptJob(request, job_id):
 
 
 @extend_schema(
-    description="Provider finishes a job and marks its progress as On Hold to finishes.",
+    description="Provider marks the job as finished pending customer approval.",
     tags=["Job Progress"]
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def FinishJob(request, job_id):
     """
-    Provider finishes the job:
-    - Marks JobProgress as On Hold to finishes
-    - Sends Notification to Customer to review the job
+    المزود ينهي العمل من طرفه:
+    - تحديث provider_finished_at
+    - تغيير الحالة إلى On Hold to Finish
+    - إرسال إشعار للعميل
     """
     try:
         provider = get_object_or_404(JobProvider, user=request.user)
@@ -508,24 +509,23 @@ def FinishJob(request, job_id):
         if not progress:
             return Response({"status": False, "message": "لا يوجد تقدم مرتبط بهذا الطلب."}, status=status.HTTP_404_NOT_FOUND)
 
-        if progress.progress_status == "On Hold to finishes":
-            return Response({"status": False, "message": "تم إنهاء العمل سابقًا."}, status=status.HTTP_400_BAD_REQUEST)
+        if progress.provider_finished_at:
+            return Response({"status": False, "message": "تم تقديم طلب إنهاء العمل مسبقًا."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            progress.progress_status = "On Hold to finishes"
-            progress.completed_at = timezone.now()
+            progress.provider_finished_at = timezone.now()
+            progress.progress_status = "On Hold to Finish"
             progress.save()
 
             try:
                 customer_user = job.customer
                 provider_name = request.user.get_full_name() or "مقدم الخدمة"
                 
-                noti_title = "تم إنهاء العمل!"
-                noti_body = f"قام {provider_name} بإنهاء العمل على طلبك '{job.title}'. يرجى المراجعة والتقييم."
+                noti_title = "مقدم الخدمة أنهى العمل!"
+                noti_body = f"قام {provider_name} بإنهاء العمل على طلبك '{job.title}'. يرجى المراجعة والموافقة لإنهاء الطلب."
                 noti_data = {
-                    "type": "job_On Hold to finishes",
+                    "type": "job_review",
                     "job_id": job.id,
-                    "job_slug": job.slug,
                     "progress_id": progress.id,
                     "click_action": "FLUTTER_NOTIFICATION_CLICK"
                 }
@@ -534,7 +534,7 @@ def FinishJob(request, job_id):
                     receiver=customer_user,
                     title=noti_title,
                     body=noti_body,
-                    notification_type="job_On Hold to finishes",
+                    notification_type="job_review",
                     extra_data=noti_data
                 )
             except Exception as noti_error:
@@ -542,20 +542,17 @@ def FinishJob(request, job_id):
 
         return Response({
             "status": True,
-            "message": "تم إنهاء العمل بنجاح.",
-            "progress_status": progress.progress_status,
-            "On Hold to finishes": progress.completed_at
+            "message": "تم إنهاء العمل من طرفك، بانتظار موافقة العميل.",
+            "data": {
+                "progress_status": progress.progress_status,
+                "provider_finished_at": progress.provider_finished_at
+            }
         }, status=status.HTTP_200_OK)
 
     except JobProvider.DoesNotExist:
         return Response({"status": False, "message": "ملف مقدم الخدمة غير موجود."}, status=status.HTTP_404_NOT_FOUND)
-    except Job.DoesNotExist:
-        return Response({"status": False, "message": "الطلب غير موجود."}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         return Response({"status": False, "message": "حدث خطأ أثناء إنهاء العمل.", "errors": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @extend_schema(
     tags=["Provider Jobs"],
@@ -859,43 +856,38 @@ def request_extra_amount(request, progress_id):
 
 @extend_schema(
     tags=["Job Progress"],
-    summary="بدء العمل",
-    description="المزود يبدأ العمل على JobProgress",
+    summary="بدء العمل (جاهزية المزود)",
+    description="المزود يعلن جاهزيته للبدء، وتتغير الحالة إلى On Hold to Start",
     responses={200: dict, 400: dict, 403: dict, 404: dict}
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def start_work(request, progress_id):
-    """
-    المزود يبدأ العمل على JobProgress
-    """
     try:
         progress = JobProgress.objects.get(id=progress_id)
 
-        # # فقط المزود المخصص يمكنه بدء العمل
         if progress.provider.user != request.user:
             return Response({"status": False, "message": "غير مخول للبدء"}, status=403)
 
-        if progress.start_at:
-            return Response({"status": False, "message": "تم بدء العمل مسبقًا"}, status=400)
+        if progress.provider_ready_at:
+            return Response({"status": False, "message": "تم الجاهزية مسبقًا"}, status=400)
 
-        progress.start_at = timezone.now()
+        progress.provider_ready_at = timezone.now()
         progress.progress_status = "On Hold to Start"
         progress.save()
 
         return Response({
             "status": True,
-            "message": "تم بدء العمل بنجاح",
+            "message": "تم الجاهزية للعمل، بانتظار بدء العميل",
             "data": {
-                "start_at": progress.start_at,
+                "provider_ready_at": progress.provider_ready_at,
                 "progress_status": progress.progress_status
             }
         })
 
     except JobProgress.DoesNotExist:
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
-
-#============================================= last edits ============================================= 
+    #============================================= last edits ============================================= 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ProviderJobOfferDetails(request,offer_slug):

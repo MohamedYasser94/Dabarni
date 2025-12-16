@@ -482,6 +482,7 @@ def CustomerAcceptOffer(request, offer_id):
 
 @extend_schema(
     tags=["Customer Offers"],
+    summary="بدء العمل الفعلي من العميل",
     responses={200: dict, 400: dict, 403: dict, 404: dict}
 )
 @api_view(['POST'])
@@ -495,6 +496,9 @@ def start_Customer_work(request, progress_id):
 
         if progress.start_at:
             return Response({"status": False, "message": "تم بدء العمل مسبقًا"}, status=400)
+
+        if not progress.provider_ready_at:
+            return Response({"status": False, "message": "مقدم الخدمة لم يبدأ التجهيز بعد"}, status=400)
 
         progress.start_at = timezone.now()
         progress.progress_status = "InProgress"
@@ -514,6 +518,7 @@ def start_Customer_work(request, progress_id):
 
 @extend_schema(
     tags=["Customer Offers"],
+    summary="إنهاء العمل واعتماده من قبل العميل",
     responses={200: dict, 400: dict, 403: dict, 404: dict}
 )
 @api_view(['POST'])
@@ -523,20 +528,25 @@ def finish_Customer_work(request, progress_id):
         progress = JobProgress.objects.get(id=progress_id)
 
         if progress.customer != request.user:
-            return Response({"status": False, "message": "غير مخول للانهاء"}, status=403)
+            return Response({"status": False, "message": "غير مخول للإنهاء"}, status=403)
 
-        if progress.start_at:
-            return Response({"status": False, "message": "تم انهاء العمل مسبقًا"}, status=400)
+        if progress.completed_at or progress.progress_status == "Completed":
+            return Response({"status": False, "message": "تم إنهاء العمل واعتماده مسبقًا"}, status=400)
 
-        progress.start_at = timezone.now()
-        progress.progress_status = "finish"
+        if not progress.provider_finished_at:
+            return Response({"status": False, "message": "لا يمكن إنهاء العمل قبل أن ينهيه مقدم الخدمة"}, status=400)
+
+        now = timezone.now()
+        progress.completed_at = now
+        progress.end_at = now 
+        progress.progress_status = "Completed"
         progress.save()
 
         return Response({
             "status": True,
-            "message": "تم انهاء العمل بنجاح",
+            "message": "تم اعتماد وإنهاء العمل بنجاح",
             "data": {
-                "start_at": progress.start_at,
+                "completed_at": progress.completed_at,
                 "progress_status": progress.progress_status
             }
         })
