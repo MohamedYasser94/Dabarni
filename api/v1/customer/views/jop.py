@@ -1,14 +1,16 @@
 # D:\Python Projects\Dabarni_fork\Dabarni\api\v1\customer\views\jop_request_views.py
 
+from decimal import Decimal
+from django.utils.crypto import get_random_string
 from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated , AllowAny
 from rest_framework import status
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from django.shortcuts import get_object_or_404
 from api.v1.constants import JobOfferStatus, JobProgressStatus
-from apps.classified.models.models import Job, JobNegotiate, JobOffer, JobProgress
+from apps.classified.models.models import Coupon, CouponUsage, Job, JobNegotiate, JobOffer, JobProgress
 from django.db import transaction
 from django.db.models import Prefetch
 from api.v1.customer.serializers.jop_request_serializer import (
@@ -809,3 +811,143 @@ def reject_extra_cost(request, progress_id):
     except Exception as e:
         print(f"Error in reject_extra_cost: {e}")
         return Response({"status": False, "message": "حدث خطأ غير متوقع"}, status=500)
+
+@extend_schema(
+    tags=["Coupons"],
+    summary="إنشاء كوبون جديد",
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "discount_type": {"type": "string", "enum": ["percentage", "fixed"]},
+                "discount_value": {"type": "number"},
+                "max_usage": {"type": "integer"},
+                "max_usage_per_user": {"type": "integer"},
+                "valid_to": {"type": "string", "format": "date-time"},
+            }
+        }
+    },
+    responses={201: dict, 400: dict}
+)
+@api_view(['POST'])
+@permission_classes([AllowAny]) 
+def create_coupon(request):
+    data = request.data
+    discount_value = data.get('discount_value')
+    valid_to = data.get('valid_to')
+    
+    if not all([discount_value, valid_to]):
+        return Response({"status": False, "message": "يرجى ملء الحقول الإجبارية (value, valid_to)"}, status=400)
+
+    try:
+        new_code = ""
+        while True:
+            random_str = get_random_string(length=8, allowed_chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+            new_code = f"CPN-{random_str}"
+
+            if not Coupon.objects.filter(code=new_code).exists():
+                break
+
+        coupon = Coupon.objects.create(
+            code=new_code,
+            discount_type=data.get('discount_type', 'fixed'),
+            discount_value=discount_value,
+            max_usage=data.get('max_usage', 100),
+            max_usage_per_user=data.get('max_usage_per_user', 1),
+            valid_to=valid_to,
+            active=True
+        )
+
+        return Response({
+            "status": True,
+            "message": "تم إنشاء الكوبون بنجاح",
+            "data": {
+                "id": coupon.id,
+                "code": coupon.code,
+                "discount_value": coupon.discount_value
+            }
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({"status": False, "message": str(e)}, status=400)
+
+
+@extend_schema(
+    tags=["Coupons"],
+    summary="تطبيق كوبون على طلب (مع التحقق من سجل المستخدم)",
+    parameters=[
+        OpenApiParameter("progress_id", OpenApiTypes.INT, location=OpenApiParameter.PATH),
+        OpenApiParameter("code", OpenApiTypes.STR, location=OpenApiParameter.QUERY, description="رمز الكوبون"),
+    ],
+    responses={200: dict, 400: dict}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def apply_coupon(request, progress_id):
+    coupon_code = request.data.get('code') or request.query_params.get('code')
+    
+    if not coupon_code:
+        return Response({"status": False, "message": "يرجى إدخال رمز الكوبون"}, status=400)
+
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        if progress.customer != request.user:
+            return Response({"status": False, "message": "غير مصرح لك"}, status=403)
+
+        if progress.coupon:
+            return Response({"status": False, "message": "تم استخدام كوبون بالفعل لهذا الطلب"}, status=400)
+
+        try:
+            coupon = Coupon.objects.get(code=coupon_code)
+        except Coupon.DoesNotExist:
+            return Response({"status": False, "message": "الكوبون غير صحيح"}, status=404)
+
+        if not coupon.is_valid():
+            return Response({"status": False, "message": "الكوبون منتهي أو تجاوز الحد الأقصى للاستخدام العام"}, status=400)
+
+        user_usage, created = CouponUsage.objects.get_or_create(user=request.user, coupon=coupon)
+        if user_usage.usage_count >= coupon.max_usage_per_user:
+            return Response({
+                "status": False, 
+                "message": f"لقد تجاوزت الحد المسموح لاستخدام هذا الكوبون ({coupon.max_usage_per_user} مرات)"
+            }, status=400)
+
+        original_amount = progress.total_cost or Decimal(0)
+        if original_amount <= 0:
+            return Response({"status": False, "message": "قيمة الطلب غير صالحة للخصم"}, status=400)
+
+        discount_amount = Decimal(0)
+        if coupon.discount_type == 'fixed':
+            discount_amount = coupon.discount_value
+        else:
+            discount_amount = (original_amount * coupon.discount_value) / Decimal(100)
+
+        if discount_amount > original_amount:
+            discount_amount = original_amount
+
+        with transaction.atomic():
+            user_usage.usage_count += 1
+            user_usage.save()
+
+            coupon.used_count += 1
+            coupon.save()
+            progress.coupon = coupon
+            progress.coupon_discount_amount = discount_amount
+            progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تم تطبيق الخصم بنجاح",
+            "data": {
+                "original_total": original_amount,
+                "discount_amount": discount_amount,
+                "new_total": original_amount - discount_amount,
+                "coupon_code": coupon.code
+            }
+        })
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+    except Exception as e:
+        return Response({"status": False, "message": f"حدث خطأ: {str(e)}"}, status=500)
