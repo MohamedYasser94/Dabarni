@@ -319,7 +319,7 @@ class JobNegotiateListSerializer(serializers.ModelSerializer):
     provider_image = serializers.SerializerMethodField()
     provider_category = serializers.CharField(source='provider.category', read_only=True) 
     provider_rating = serializers.SerializerMethodField()
-    provider_price = serializers.DecimalField(source='offer.price', max_digits=10, decimal_places=2, read_only=True)
+    provider_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = JobNegotiate
