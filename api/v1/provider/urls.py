@@ -1,5 +1,6 @@
 from django.urls import path
 
+from api.v1.customer.views import review
 from api.v1.global_views import fcm_notification_views
 from api.v1.provider.views import provider_auth, provider_home, provider_wallet
 from api.v1.provider.views.notification_views import NotificationDeleteView, NotificationListView
@@ -71,10 +72,12 @@ urlpatterns = [
     path('chat/messages/save/', provider_send_Messages, name='save-chat-message'),
     path('chat/delete/<uuid:dialog_id>/', provider_delete_specific_chat, name='delete-chat'),
 
+        #--------------------- Review ----------------------------
+    path("jobs/<int:job_id>/review-customer/", review.createCustomerReview, name="create-customer-review"),
+
     # ===================== Notification URLs =====================
     path('notifications/', NotificationListView.as_view(), name='provider-notification-list'),
     path('notifications/<int:pk>/delete/', NotificationDeleteView.as_view(), name='notification-delete'),
-
 
 # FCM Notification endpoints
     path("notifications/", fcm_notification_views.list_notifications, name="list-notifications"),

@@ -79,7 +79,7 @@ def list_my_jobs(request):
 
         offers_filter = Prefetch(
             'offers',
-            queryset=JobOffer.objects.filter(jobnegotiate__isnull=True)
+            queryset=JobOffer.objects.exclude(status__in=['negotiated', 'Negotiating'])
         )
 
         jobs = Job.objects.filter(customer=request.user)\
@@ -323,7 +323,7 @@ def getOffersByJob(request, job_id):
         job = get_object_or_404(Job, pk=job_id, customer=request.user)
 
         offers = JobOffer.objects.filter(job=job)\
-            .exclude(status='negotiated')\
+            .exclude(status__in=['negotiated', 'Negotiating'])\
             .select_related('provider__user')
 
         serializer = ProviderOfferSerializer(offers, many=True, context={'request': request})
@@ -606,6 +606,7 @@ def NegotiateOffer(request, offer_id):
             customer=request.user,
             defaults={
                 'customer_price': customer_price,
+                'provider_price': offer.price,
                 'customer_accepted': True,
                 'provider_accepted': None
             }
@@ -613,6 +614,7 @@ def NegotiateOffer(request, offer_id):
 
         if not created:
             negotiation_record.customer_price = customer_price
+            negotiation_record.provider_price = offer.price
             negotiation_record.customer_accepted = True
             negotiation_record.provider_accepted = None
             negotiation_record.save()
