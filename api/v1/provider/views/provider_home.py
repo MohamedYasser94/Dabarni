@@ -416,7 +416,7 @@ def AcceptJob(request, job_id):
         if existing_offer:
             existing_offer.provider_accepted = True
             existing_offer.accepted_at = timezone.now()
-            existing_offer.status = 'InProgress'
+            existing_offer.status = 'Pending'
             existing_offer.save()
             offer = existing_offer
         else:
@@ -554,6 +554,7 @@ def FinishJob(request, job_id):
     except Exception as e:
         return Response({"status": False, "message": "حدث خطأ أثناء إنهاء العمل.", "errors": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 @extend_schema(
     tags=["Provider Jobs"],
     request=JobOfferCreateSerializer,
@@ -563,8 +564,8 @@ def FinishJob(request, job_id):
 @permission_classes([IsAuthenticated])
 def SendNewOffer(request):
     """
-    API endpoint for a provider to send a new price offer or update an existing one.
-    This action creates an offer and a negotiation record.
+    API endpoint for a provider to send a new price offer.
+    This action creates an offer ONLY.
     """
     try:
         with transaction.atomic():
@@ -575,8 +576,6 @@ def SendNewOffer(request):
             if serializer.is_valid():
                 job = serializer.validated_data.get('job')
                 price = serializer.validated_data.get('price')
-
-                # Check if an offer from this provider for this job already exists
                 existingOffer = JobOffer.objects.filter(job=job, provider=provider).first()
 
                 if existingOffer:
@@ -593,15 +592,7 @@ def SendNewOffer(request):
                         price=price,
                         status='Pending'
                     )
-                    
-                    JobNegotiate.objects.create(
-                        job=job,
-                        offer=offer,
-                        provider=provider,
-                        customer=job.customer,
-                        provider_price=price,
-                        provider_accepted=False 
-                    )
+
                     try:
                         customer_user = job.customer
                         provider_name = request.user.get_full_name() or "مقدم خدمة"
@@ -652,7 +643,6 @@ def SendNewOffer(request):
             errors={'detail': str(e)}
         )
 
-
 @extend_schema(
     tags=["Provider Negotiations"],
     request={'action': 'string'},
@@ -660,7 +650,7 @@ def SendNewOffer(request):
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def respondToNegotiation(request, negotiation_id):
+def Provider_respond_Negotiation(request, negotiation_id):
     """
     API endpoint for a provider to accept or reject a customer's negotiation offer.
     The request body should contain {'action': 'accept' or 'reject'}.
@@ -674,7 +664,6 @@ def respondToNegotiation(request, negotiation_id):
 
     try:
         with transaction.atomic():
-            # Get the negotiation record, ensuring it belongs to the authenticated provider
             negotiation = get_object_or_404(JobNegotiate.objects.select_related('provider__user', 'job', 'offer'), pk=negotiation_id)
 
             if negotiation.provider.user != request.user:
@@ -683,49 +672,44 @@ def respondToNegotiation(request, negotiation_id):
                     status_code=status.HTTP_403_FORBIDDEN,
                 )
 
-            # A negotiation cannot be accepted/rejected if the provider has already done so
-            if negotiation.provider_accepted or negotiation.customer_accepted:
+            if negotiation.provider_accepted is not None:
                 return error_response(
-                    message="تم بالفعل الرد على هذه المفاوضة.",
+                    message="تم بالفعل الرد على هذه المفاوضة من قبلك.",
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
             if action == 'accept':
-                # The provider accepts the customer's price
+                if not negotiation.customer_accepted:
+                    return error_response(
+                        message="لا يمكن قبول المفاوضة لأن العميل لم يوافق عليها بعد.",
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 negotiation.provider_accepted = True
                 negotiation.save()
 
-                # Update the main offer and job progress
-                # offer = negotiation.offer
-                # offer.status = 'Accepted' # Offer is now accepted by both parties
-                # offer.save()
+                offer = negotiation.offer
+                offer.price = negotiation.customer_price 
+                offer.status = "negotiated" 
+                offer.save()
                 
-                # job_progress = get_object_or_404(JobProgress, job=negotiation.job)
-                # job_progress.offer = offer
-                # job_progress.progress_status = JobProgressStatus.IN_PROGRESS  
-                # job_progress.total_cost = negotiation.customer_price # The final agreed price
-                # job_progress.save()
-
-                # A notification would be sent to the customer here
-                
-                message = "تم قبول عرض التفاوض بنجاح. سيتم إخطار العميل."
+                message = "تم قبول عرض التفاوض وتحديث سعر العرض بنجاح."
             
             elif action == 'reject':
-                # The provider rejects the customer's price
-                negotiation.provider_accepted = False # Optional, but can track a final rejection
+                negotiation.provider_accepted = False 
                 negotiation.save()
 
                 offer = negotiation.offer
-                offer.status = 'New' # Change the status back to new to allow for a new offer
+                offer.status = "negotiated"
                 offer.save()
-
-                message = "تم رفض عرض التفاوض بنجاح. يمكنك تقديم عرض جديد."
+                message = "تم رفض عرض التفاوض بنجاح."
 
         return success_response(
             message=message,
             data=JobNegotiateSerializer(negotiation).data,
             status_code=status.HTTP_200_OK
         )
+
     except JobNegotiate.DoesNotExist:
         return error_response(
             message="سجل المفاوضة غير موجود.",
@@ -737,6 +721,7 @@ def respondToNegotiation(request, negotiation_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+
 
 @extend_schema(
     tags=["Provider Negotiations"],
@@ -752,7 +737,6 @@ def providerNegotiateResponse(request, negotiation_id):
     """
     try:
         with transaction.atomic():
-            # Get the negotiation record, ensuring it belongs to the authenticated provider
             negotiation = get_object_or_404(
                 JobNegotiate.objects.select_related('provider__user', 'job', 'offer'), 
                 pk=negotiation_id
@@ -764,7 +748,6 @@ def providerNegotiateResponse(request, negotiation_id):
                     status_code=status.HTTP_403_FORBIDDEN,
                 )
             
-            # A negotiation cannot be responded to if it's already finalized by both parties
             if negotiation.provider_accepted and negotiation.customer_accepted:
                 return error_response(
                     message="تم بالفعل الرد على هذه المفاوضة من الطرفين.",
@@ -775,15 +758,13 @@ def providerNegotiateResponse(request, negotiation_id):
             if serializer.is_valid():
                 newProviderPrice = serializer.validated_data.get('provider_price')
 
-                # Update the negotiation record with the new provider price
                 negotiation.provider_price = newProviderPrice
-                negotiation.provider_accepted = False  # New price means re-negotiation
-                negotiation.customer_accepted = False
+                negotiation.provider_accepted = True 
+                negotiation.customer_accepted = None
+
                 negotiation.save()
-                
-                # Update the offer status to indicate negotiation is in progress
                 offer = negotiation.offer
-                offer.status = 'Negotiating'
+                offer.status = "Negotiating" 
                 offer.save()
                 
                 return success_response(

@@ -41,6 +41,7 @@ urlpatterns = [
       path("jobs/<int:job_id>/review/", review.createJobReview, name="create-job-review"),
       #--------------------- Job Negotiate ----------------------------
       path('offers/<int:offer_id>/negotiate/', jop.NegotiateOffer, name='customer-negotiate-offer'),
+      path('offers/negotiate-offer/<int:negotiation_id>/', jop.Customer_respond_Negotiation, name='provider-negotiate-offer'),
       path('jobs/<int:job_id>/negotiations/', jop.list_job_negotiations, name='list-job-negotiations'),
 
 

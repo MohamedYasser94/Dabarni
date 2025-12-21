@@ -313,9 +313,9 @@ class JobNegotiateCreateSerializer(serializers.ModelSerializer):
 
 
 class JobNegotiateListSerializer(serializers.ModelSerializer):
-    provider_id = serializers.IntegerField(source='provider.id', read_only=True)
+    provider_id = serializers.IntegerField( read_only=True)
     provider_name = serializers.SerializerMethodField()
-    provider_phone = serializers.CharField(source='provider.phone', read_only=True) 
+    provider_phone = serializers.CharField( read_only=True) 
     provider_image = serializers.SerializerMethodField()
     provider_category = serializers.CharField(source='provider.category', read_only=True) 
     provider_rating = serializers.SerializerMethodField()
