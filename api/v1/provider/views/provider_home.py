@@ -868,6 +868,71 @@ def start_work(request, progress_id):
 
     except JobProgress.DoesNotExist:
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+    
+@extend_schema(
+    tags=["Provider Jobs"], 
+    request=None, 
+    responses={200: JobDetailSerializer, 400: 'Error Response'}
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def cancel_job_provider(request, job_id):
+    """
+    API endpoint for a provider to cancel a job assigned to them.
+    """
+    reason = request.data.get('reason')
+    if not reason:
+        return error_response(
+            message="الرجاء تقديم سبب للإلغاء.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        job_instance = get_object_or_404(
+            Job.objects.prefetch_related('progresses'),
+            pk=job_id,
+            provider=request.user 
+        )
+
+        job_progress = job_instance.progresses.first()
+
+        if not job_progress:
+            return error_response(
+                message="لم يتم العثور على تقدم لهذا الطلب.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        if job_progress.progress_status in ['Completed', 'Cancelled']:
+            return error_response(
+                message="لا يمكن إلغاء هذه الوظيفة لأنها مكتملة أو ملغية بالفعل.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        job_progress.progress_status = 'Cancelled'
+        job_progress.reason = reason
+        job_progress.canceled_at = timezone.now()
+        job_progress.status = 'InActive'
+        job_progress.end_at = timezone.now()
+        job_progress.canceled_by = request.user
+        job_progress.save()
+        job_instance.status = 'Inactive'
+        job_instance.save()
+
+        serializer = JobDetailSerializer(job_instance, context={'request': request})
+        
+        return success_response(
+            message="تم إلغاء الوظيفة بنجاح من قبل مقدم الخدمة",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء إلغاء الوظيفة",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+    
     #============================================= last edits ============================================= 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
