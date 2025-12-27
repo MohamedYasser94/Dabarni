@@ -868,7 +868,7 @@ def start_work(request, progress_id):
 
     except JobProgress.DoesNotExist:
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
-    
+
 @extend_schema(
     tags=["Provider Jobs"], 
     request=None, 
@@ -888,17 +888,24 @@ def cancel_job_provider(request, job_id):
         )
 
     try:
+        if hasattr(request.user, 'job_provider_profile'):
+            current_provider = request.user.job_provider_profile
+        else:
+            return error_response(
+                message="هذا المستخدم ليس مسجلاً كمقدم خدمة (Provider).",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
         job_instance = get_object_or_404(
             Job.objects.prefetch_related('progresses'),
-            pk=job_id,
-            provider=request.user 
+            pk=job_id
         )
 
-        job_progress = job_instance.progresses.first()
+        job_progress = job_instance.progresses.filter(provider=current_provider).first()
 
         if not job_progress:
             return error_response(
-                message="لم يتم العثور على تقدم لهذا الطلب.",
+                message="أنت غير مكلف بهذه الوظيفة أو لم يتم العثور عليها.",
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
@@ -914,6 +921,7 @@ def cancel_job_provider(request, job_id):
         job_progress.status = 'InActive'
         job_progress.end_at = timezone.now()
         job_progress.canceled_by = request.user
+        job_progress.cancel_provider_approved = True 
         job_progress.save()
         job_instance.status = 'Inactive'
         job_instance.save()
@@ -931,8 +939,8 @@ def cancel_job_provider(request, job_id):
             message="حدث خطأ أثناء إلغاء الوظيفة",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
-        )
-    
+        )    
+
     #============================================= last edits ============================================= 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -1233,11 +1241,11 @@ def ProviderJobReviews(request):
     try:
         provider = JobProvider.objects.get(user=request.user)
     except JobProvider.DoesNotExist:
-            return Response({'message': 'Provider profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'Provider profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
     job_reviews = JobReview.objects.filter(
         job__progresses__provider=provider
-    ).prefetch_related('media').order_by('-create_at')
+            ).exclude(user=request.user).prefetch_related('media').order_by('-create_at')
 
     job_reviews_serializer = JobReviewSerializer(job_reviews, many=True, context={'request': request})
 

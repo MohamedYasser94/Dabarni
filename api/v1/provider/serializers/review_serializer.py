@@ -68,10 +68,11 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
     def get_average_rating(self, obj):
         """
         Calculates average rating based on jobs linked via JobProgress.
+        Excludes reviews written by the provider themselves.
         """
         avg = JobReview.objects.filter(
             job__progresses__provider=obj
-        ).aggregate(average=Avg('rating'))
+        ).exclude(user=obj.user).aggregate(average=Avg('rating'))
         
         return round(avg['average'], 2) if avg['average'] else 0.0
     
@@ -79,16 +80,17 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
         count = JobReview.objects.filter(
             job__progresses__provider=obj,
             rating=5
-        ).count()
+        ).exclude(user=obj.user).count()
         return count
 
     def get_reviews(self, obj):
         """
         Fetches the latest 10 reviews for jobs done by this provider.
+        Excludes reviews written by the provider.
         """
         reviews = JobReview.objects.filter(
             job__progresses__provider=obj
-        ).distinct().prefetch_related('media').order_by('-create_at')[:10]
+        ).exclude(user=obj.user).distinct().prefetch_related('media').order_by('-create_at')[:10]
 
         return ProviderReviewSerializer(reviews, many=True, context=self.context).data
 
