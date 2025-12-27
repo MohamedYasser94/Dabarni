@@ -313,6 +313,7 @@ class UserAddress(models.Model):
     code = models.CharField(max_length=100,  null=True, blank=True)
     status = models.CharField(max_length=20, choices=Active_Status, default='Active', null=True, blank=True)
     slug = models.SlugField(unique=True,null=True, blank=True)
+    is_temporary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
 
