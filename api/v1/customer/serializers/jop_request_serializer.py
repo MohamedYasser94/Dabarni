@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from apps.classified.models.models import Job, JobCategories, JobMedia, JobNegotiate, JobOffer, JobProgress
+from apps.classified.models.models import Coupon, Job, JobCategories, JobMedia, JobNegotiate, JobOffer, JobProgress
 from user.models import UserAddress
 from django.utils import timezone
 from django.db import transaction
@@ -157,7 +157,16 @@ class ProviderOfferSerializer(serializers.ModelSerializer):
             return obj.provider.average_rating
         return 0.0
 
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = '__all__'
+        read_only_fields = ['used_count', 'create_at']
 
+    def validate(self, data):
+        if data.get('discount_type') == 'percentage' and data.get('discount_value') > 100:
+            raise serializers.ValidationError("النسبة المئوية لا يمكن أن تكون أكبر من 100.")
+        return data
 
 
 
@@ -304,13 +313,13 @@ class JobNegotiateCreateSerializer(serializers.ModelSerializer):
 
 
 class JobNegotiateListSerializer(serializers.ModelSerializer):
-    provider_id = serializers.IntegerField(source='provider.id', read_only=True)
+    provider_id = serializers.IntegerField( read_only=True)
     provider_name = serializers.SerializerMethodField()
-    provider_phone = serializers.CharField(source='provider.phone', read_only=True) 
+    provider_phone = serializers.CharField( read_only=True) 
     provider_image = serializers.SerializerMethodField()
     provider_category = serializers.CharField(source='provider.category', read_only=True) 
     provider_rating = serializers.SerializerMethodField()
-    provider_price = serializers.DecimalField(source='offer.price', max_digits=10, decimal_places=2, read_only=True)
+    provider_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = JobNegotiate

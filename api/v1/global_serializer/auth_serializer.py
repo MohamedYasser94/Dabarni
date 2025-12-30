@@ -22,18 +22,10 @@ class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAddress
         fields = [
-            "id",
-            "slug",
-            "label",
-            "latitude",
-            "longitude",
-            "address",
-            "building_name",
-            "floor",
-            "apartment_number",
-            "property_type",
-            "note",
+            "id","slug","label","latitude","longitude","address",
+            "building_name","floor","apartment_number","property_type","note","is_temporary",
         ]
+
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 

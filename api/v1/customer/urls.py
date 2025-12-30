@@ -41,13 +41,16 @@ urlpatterns = [
       path("jobs/<int:job_id>/review/", review.createJobReview, name="create-job-review"),
       #--------------------- Job Negotiate ----------------------------
       path('offers/<int:offer_id>/negotiate/', jop.NegotiateOffer, name='customer-negotiate-offer'),
+      path('offers/negotiate-offer/<int:negotiation_id>/', jop.Customer_respond_Negotiation, name='provider-negotiate-offer'),
       path('jobs/<int:job_id>/negotiations/', jop.list_job_negotiations, name='list-job-negotiations'),
 
 
 
     #------------------- Progress ----------------
   path('jobs/progress/<int:progress_id>/', jop.get_job_progress, name='get_job_progress'),
-
+  #------------------- Coupons ----------------
+  path('jobs/progress/<int:progress_id>/apply-coupon/', jop.apply_coupon, name='apply-coupon'),
+  path('coupons/create/', jop.create_coupon, name='create-coupon'),
     # ===================== Chat URLs =====================
     path('chat/start/<slug:job_slug>/', customer_start_chat_view, name='start-chat'),
     path('chat/list/', Api_customer_Chat_Lists, name='chat-list'),

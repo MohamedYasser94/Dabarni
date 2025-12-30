@@ -1,5 +1,6 @@
 from django.urls import path, include
 
+from api.v1.customer.views import review
 from api.v1.global_views import fcm_notification_views
 from api.v1.provider.views import provider_auth, provider_home, provider_wallet
 from api.v1.provider.views.notification_views import NotificationDeleteView, NotificationListView
@@ -30,7 +31,7 @@ urlpatterns = [
     path('jobs/available/', provider_home.RetrieveAvailableJobs, name='provider-available-jobs'),
     path('jobs/<int:job_id>/details/', provider_home.GetJobDetails, name='provider-job-details'),
     path('jobs/make-request/', provider_home.SendNewOffer, name='providerSendOffer'),
-    path('jobs/negotiate-offer/<int:negotiation_id>/', provider_home.respondToNegotiation, name='provider-negotiate-offer'),
+    path('jobs/negotiate-offer/<int:negotiation_id>/', provider_home.Provider_respond_Negotiation, name='provider-negotiate-offer'),
     path('negotiations/<int:negotiation_id>/respond/', provider_home.providerNegotiateResponse, name='provider-negotiate-response'),
     path('jobs/<int:job_id>/accept/', provider_home.AcceptJob, name='providerAcceptJob'),
     path('jobs/<int:job_id>/finish/', provider_home.FinishJob, name='providerFinishtJob'),
@@ -55,6 +56,7 @@ urlpatterns = [
 
     path('jobs/progress/<int:progress_id>/extra-request/', provider_home.request_extra_amount, name='request_extra_amount'),
     path('jobs/progress/<int:progress_id>/start/', provider_home.start_work, name='start_job'),
+    path('jobs/<int:job_id>/cancel/', provider_home.cancel_job_provider, name='provider-job-cancel'),
     # ===================== Wallet & Payout URLs =====================
     path("wallet/", provider_wallet.ProviderWallet, name="ProviderWallet"),
     path("wallet/payouts/", provider_wallet.ProviderPayoutRequestList, name="ProviderPayoutRequestList"),
@@ -70,6 +72,9 @@ urlpatterns = [
     path('chat/messages/', Api_provider_Chat_All_Messages, name='chat-messages'),
     path('chat/messages/save/', provider_send_Messages, name='save-chat-message'),
     path('chat/delete/<uuid:dialog_id>/', provider_delete_specific_chat, name='delete-chat'),
+
+        #--------------------- Review ----------------------------
+    path("jobs/<int:job_id>/review-customer/", review.createCustomerReview, name="create-customer-review"),
 
     # ===================== Notification URLs (FCM) =====================
     path("fcm-notifications/", include([

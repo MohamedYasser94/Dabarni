@@ -416,7 +416,7 @@ def AcceptJob(request, job_id):
         if existing_offer:
             existing_offer.provider_accepted = True
             existing_offer.accepted_at = timezone.now()
-            existing_offer.status = 'InProgress'
+            existing_offer.status = 'Pending'
             existing_offer.save()
             offer = existing_offer
         else:
@@ -489,16 +489,17 @@ def AcceptJob(request, job_id):
 
 
 @extend_schema(
-    description="Provider finishes a job and marks its progress as On Hold to finishes.",
+    description="Provider marks the job as finished pending customer approval.",
     tags=["Job Progress"]
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def FinishJob(request, job_id):
     """
-    Provider finishes the job:
-    - Marks JobProgress as On Hold to finishes
-    - Sends Notification to Customer to review the job
+    المزود ينهي العمل من طرفه:
+    - تحديث provider_finished_at
+    - تغيير الحالة إلى On Hold to Finish
+    - إرسال إشعار للعميل
     """
     try:
         provider = get_object_or_404(JobProvider, user=request.user)
@@ -508,24 +509,23 @@ def FinishJob(request, job_id):
         if not progress:
             return Response({"status": False, "message": "لا يوجد تقدم مرتبط بهذا الطلب."}, status=status.HTTP_404_NOT_FOUND)
 
-        if progress.progress_status == "On Hold to finishes":
-            return Response({"status": False, "message": "تم إنهاء العمل سابقًا."}, status=status.HTTP_400_BAD_REQUEST)
+        if progress.provider_finished_at:
+            return Response({"status": False, "message": "تم تقديم طلب إنهاء العمل مسبقًا."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            progress.progress_status = "On Hold to finishes"
-            progress.completed_at = timezone.now()
+            progress.provider_finished_at = timezone.now()
+            progress.progress_status = "On Hold to Finish"
             progress.save()
 
             try:
                 customer_user = job.customer
                 provider_name = request.user.get_full_name() or "مقدم الخدمة"
                 
-                noti_title = "تم إنهاء العمل!"
-                noti_body = f"قام {provider_name} بإنهاء العمل على طلبك '{job.title}'. يرجى المراجعة والتقييم."
+                noti_title = "مقدم الخدمة أنهى العمل!"
+                noti_body = f"قام {provider_name} بإنهاء العمل على طلبك '{job.title}'. يرجى المراجعة والموافقة لإنهاء الطلب."
                 noti_data = {
-                    "type": "job_On Hold to finishes",
+                    "type": "job_review",
                     "job_id": job.id,
-                    "job_slug": job.slug,
                     "progress_id": progress.id,
                     "click_action": "FLUTTER_NOTIFICATION_CLICK"
                 }
@@ -534,7 +534,7 @@ def FinishJob(request, job_id):
                     receiver=customer_user,
                     title=noti_title,
                     body=noti_body,
-                    notification_type="job_On Hold to finishes",
+                    notification_type="job_review",
                     extra_data=noti_data
                 )
             except Exception as noti_error:
@@ -542,18 +542,16 @@ def FinishJob(request, job_id):
 
         return Response({
             "status": True,
-            "message": "تم إنهاء العمل بنجاح.",
-            "progress_status": progress.progress_status,
-            "On Hold to finishes": progress.completed_at
+            "message": "تم إنهاء العمل من طرفك، بانتظار موافقة العميل.",
+            "data": {
+                "progress_status": progress.progress_status,
+                "provider_finished_at": progress.provider_finished_at
+            }
         }, status=status.HTTP_200_OK)
 
     except JobProvider.DoesNotExist:
         return Response({"status": False, "message": "ملف مقدم الخدمة غير موجود."}, status=status.HTTP_404_NOT_FOUND)
-    except Job.DoesNotExist:
-        return Response({"status": False, "message": "الطلب غير موجود."}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         return Response({"status": False, "message": "حدث خطأ أثناء إنهاء العمل.", "errors": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -566,8 +564,8 @@ def FinishJob(request, job_id):
 @permission_classes([IsAuthenticated])
 def SendNewOffer(request):
     """
-    API endpoint for a provider to send a new price offer or update an existing one.
-    This action creates an offer and a negotiation record.
+    API endpoint for a provider to send a new price offer.
+    This action creates an offer ONLY.
     """
     try:
         with transaction.atomic():
@@ -578,8 +576,6 @@ def SendNewOffer(request):
             if serializer.is_valid():
                 job = serializer.validated_data.get('job')
                 price = serializer.validated_data.get('price')
-
-                # Check if an offer from this provider for this job already exists
                 existingOffer = JobOffer.objects.filter(job=job, provider=provider).first()
 
                 if existingOffer:
@@ -596,15 +592,7 @@ def SendNewOffer(request):
                         price=price,
                         status='Pending'
                     )
-                    
-                    JobNegotiate.objects.create(
-                        job=job,
-                        offer=offer,
-                        provider=provider,
-                        customer=job.customer,
-                        provider_price=price,
-                        provider_accepted=False 
-                    )
+
                     try:
                         customer_user = job.customer
                         provider_name = request.user.get_full_name() or "مقدم خدمة"
@@ -655,7 +643,6 @@ def SendNewOffer(request):
             errors={'detail': str(e)}
         )
 
-
 @extend_schema(
     tags=["Provider Negotiations"],
     request={'action': 'string'},
@@ -663,7 +650,7 @@ def SendNewOffer(request):
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def respondToNegotiation(request, negotiation_id):
+def Provider_respond_Negotiation(request, negotiation_id):
     """
     API endpoint for a provider to accept or reject a customer's negotiation offer.
     The request body should contain {'action': 'accept' or 'reject'}.
@@ -677,7 +664,6 @@ def respondToNegotiation(request, negotiation_id):
 
     try:
         with transaction.atomic():
-            # Get the negotiation record, ensuring it belongs to the authenticated provider
             negotiation = get_object_or_404(JobNegotiate.objects.select_related('provider__user', 'job', 'offer'), pk=negotiation_id)
 
             if negotiation.provider.user != request.user:
@@ -686,49 +672,44 @@ def respondToNegotiation(request, negotiation_id):
                     status_code=status.HTTP_403_FORBIDDEN,
                 )
 
-            # A negotiation cannot be accepted/rejected if the provider has already done so
-            if negotiation.provider_accepted or negotiation.customer_accepted:
+            if negotiation.provider_accepted is not None:
                 return error_response(
-                    message="تم بالفعل الرد على هذه المفاوضة.",
+                    message="تم بالفعل الرد على هذه المفاوضة من قبلك.",
                     status_code=status.HTTP_400_BAD_REQUEST,
                 )
 
             if action == 'accept':
-                # The provider accepts the customer's price
+                if not negotiation.customer_accepted:
+                    return error_response(
+                        message="لا يمكن قبول المفاوضة لأن العميل لم يوافق عليها بعد.",
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 negotiation.provider_accepted = True
                 negotiation.save()
 
-                # Update the main offer and job progress
-                # offer = negotiation.offer
-                # offer.status = 'Accepted' # Offer is now accepted by both parties
-                # offer.save()
+                offer = negotiation.offer
+                offer.price = negotiation.customer_price 
+                offer.status = "negotiated" 
+                offer.save()
                 
-                # job_progress = get_object_or_404(JobProgress, job=negotiation.job)
-                # job_progress.offer = offer
-                # job_progress.progress_status = JobProgressStatus.IN_PROGRESS  
-                # job_progress.total_cost = negotiation.customer_price # The final agreed price
-                # job_progress.save()
-
-                # A notification would be sent to the customer here
-                
-                message = "تم قبول عرض التفاوض بنجاح. سيتم إخطار العميل."
+                message = "تم قبول عرض التفاوض وتحديث سعر العرض بنجاح."
             
             elif action == 'reject':
-                # The provider rejects the customer's price
-                negotiation.provider_accepted = False # Optional, but can track a final rejection
+                negotiation.provider_accepted = False 
                 negotiation.save()
 
                 offer = negotiation.offer
-                offer.status = 'New' # Change the status back to new to allow for a new offer
+                offer.status = "negotiated"
                 offer.save()
-
-                message = "تم رفض عرض التفاوض بنجاح. يمكنك تقديم عرض جديد."
+                message = "تم رفض عرض التفاوض بنجاح."
 
         return success_response(
             message=message,
             data=JobNegotiateSerializer(negotiation).data,
             status_code=status.HTTP_200_OK
         )
+
     except JobNegotiate.DoesNotExist:
         return error_response(
             message="سجل المفاوضة غير موجود.",
@@ -740,6 +721,7 @@ def respondToNegotiation(request, negotiation_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
+
 
 @extend_schema(
     tags=["Provider Negotiations"],
@@ -755,7 +737,6 @@ def providerNegotiateResponse(request, negotiation_id):
     """
     try:
         with transaction.atomic():
-            # Get the negotiation record, ensuring it belongs to the authenticated provider
             negotiation = get_object_or_404(
                 JobNegotiate.objects.select_related('provider__user', 'job', 'offer'), 
                 pk=negotiation_id
@@ -767,7 +748,6 @@ def providerNegotiateResponse(request, negotiation_id):
                     status_code=status.HTTP_403_FORBIDDEN,
                 )
             
-            # A negotiation cannot be responded to if it's already finalized by both parties
             if negotiation.provider_accepted and negotiation.customer_accepted:
                 return error_response(
                     message="تم بالفعل الرد على هذه المفاوضة من الطرفين.",
@@ -778,15 +758,13 @@ def providerNegotiateResponse(request, negotiation_id):
             if serializer.is_valid():
                 newProviderPrice = serializer.validated_data.get('provider_price')
 
-                # Update the negotiation record with the new provider price
                 negotiation.provider_price = newProviderPrice
-                negotiation.provider_accepted = False  # New price means re-negotiation
-                negotiation.customer_accepted = False
+                negotiation.provider_accepted = True 
+                negotiation.customer_accepted = None
+
                 negotiation.save()
-                
-                # Update the offer status to indicate negotiation is in progress
                 offer = negotiation.offer
-                offer.status = 'Negotiating'
+                offer.status = "Negotiating" 
                 offer.save()
                 
                 return success_response(
@@ -859,35 +837,31 @@ def request_extra_amount(request, progress_id):
 
 @extend_schema(
     tags=["Job Progress"],
-    summary="بدء العمل",
-    description="المزود يبدأ العمل على JobProgress",
+    summary="بدء العمل (جاهزية المزود)",
+    description="المزود يعلن جاهزيته للبدء، وتتغير الحالة إلى On Hold to Start",
     responses={200: dict, 400: dict, 403: dict, 404: dict}
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def start_work(request, progress_id):
-    """
-    المزود يبدأ العمل على JobProgress
-    """
     try:
         progress = JobProgress.objects.get(id=progress_id)
 
-        # # فقط المزود المخصص يمكنه بدء العمل
         if progress.provider.user != request.user:
             return Response({"status": False, "message": "غير مخول للبدء"}, status=403)
 
-        if progress.start_at:
-            return Response({"status": False, "message": "تم بدء العمل مسبقًا"}, status=400)
+        if progress.provider_ready_at:
+            return Response({"status": False, "message": "تم الجاهزية مسبقًا"}, status=400)
 
-        progress.start_at = timezone.now()
+        progress.provider_ready_at = timezone.now()
         progress.progress_status = "On Hold to Start"
         progress.save()
 
         return Response({
             "status": True,
-            "message": "تم بدء العمل بنجاح",
+            "message": "تم الجاهزية للعمل، بانتظار بدء العميل",
             "data": {
-                "start_at": progress.start_at,
+                "provider_ready_at": progress.provider_ready_at,
                 "progress_status": progress.progress_status
             }
         })
@@ -895,7 +869,79 @@ def start_work(request, progress_id):
     except JobProgress.DoesNotExist:
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
 
-#============================================= last edits ============================================= 
+@extend_schema(
+    tags=["Provider Jobs"], 
+    request=None, 
+    responses={200: JobDetailSerializer, 400: 'Error Response'}
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def cancel_job_provider(request, job_id):
+    """
+    API endpoint for a provider to cancel a job assigned to them.
+    """
+    reason = request.data.get('reason')
+    if not reason:
+        return error_response(
+            message="الرجاء تقديم سبب للإلغاء.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        if hasattr(request.user, 'job_provider_profile'):
+            current_provider = request.user.job_provider_profile
+        else:
+            return error_response(
+                message="هذا المستخدم ليس مسجلاً كمقدم خدمة (Provider).",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        job_instance = get_object_or_404(
+            Job.objects.prefetch_related('progresses'),
+            pk=job_id
+        )
+
+        job_progress = job_instance.progresses.filter(provider=current_provider).first()
+
+        if not job_progress:
+            return error_response(
+                message="أنت غير مكلف بهذه الوظيفة أو لم يتم العثور عليها.",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        if job_progress.progress_status in ['Completed', 'Cancelled']:
+            return error_response(
+                message="لا يمكن إلغاء هذه الوظيفة لأنها مكتملة أو ملغية بالفعل.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        job_progress.progress_status = 'Cancelled'
+        job_progress.reason = reason
+        job_progress.canceled_at = timezone.now()
+        job_progress.status = 'InActive'
+        job_progress.end_at = timezone.now()
+        job_progress.canceled_by = request.user
+        job_progress.cancel_provider_approved = True 
+        job_progress.save()
+        job_instance.status = 'Inactive'
+        job_instance.save()
+
+        serializer = JobDetailSerializer(job_instance, context={'request': request})
+        
+        return success_response(
+            message="تم إلغاء الوظيفة بنجاح من قبل مقدم الخدمة",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        return error_response(
+            message="حدث خطأ أثناء إلغاء الوظيفة",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )    
+
+    #============================================= last edits ============================================= 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ProviderJobOfferDetails(request,offer_slug):
@@ -1195,11 +1241,11 @@ def ProviderJobReviews(request):
     try:
         provider = JobProvider.objects.get(user=request.user)
     except JobProvider.DoesNotExist:
-            return Response({'message': 'Provider profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'Provider profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
     job_reviews = JobReview.objects.filter(
         job__progresses__provider=provider
-    ).prefetch_related('media').order_by('-create_at')
+            ).exclude(user=request.user).prefetch_related('media').order_by('-create_at')
 
     job_reviews_serializer = JobReviewSerializer(job_reviews, many=True, context={'request': request})
 

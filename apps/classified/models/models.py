@@ -6,8 +6,7 @@ from django.utils.crypto import get_random_string
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 from slugify import slugify
-
-
+from django.utils import timezone
 from helper.modelHelper import *
 from helper.viewHelper import get_file_path
 from user.models import UserAddress
@@ -16,11 +15,8 @@ from PIL import Image
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 
-# Create your models here.
-
 
 User = get_user_model()
-
 
 class JobCategories(MPTTModel):
     parent = TreeForeignKey('self', blank=True, null=True, related_name='children', on_delete=models.CASCADE)
@@ -396,8 +392,8 @@ class JobNegotiate(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='negotiations')
     provider_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     customer_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    provider_accepted = models.BooleanField(default=False)
-    customer_accepted = models.BooleanField(default=False)
+    provider_accepted = models.BooleanField(null=True, blank=True, default=None)
+    customer_accepted = models.BooleanField(null=True, blank=True, default=None)
     code = models.CharField(max_length=50, null=True, blank=True)
     slug = models.SlugField(null=True, blank=True, max_length=128, unique=True)
     create_at = models.DateTimeField(auto_now_add=True)
@@ -429,6 +425,62 @@ class JobNegotiate(models.Model):
             self.slug = slugify(code)
         super().save(*args, **kwargs)
 
+class Coupon(models.Model):
+    DISCOUNT_TYPES = (('percentage', 'نسبة مئوية (%)'),('fixed', 'مبلغ ثابت'))
+    code = models.CharField(max_length=50, unique=True)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES, default='fixed')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    max_usage = models.PositiveIntegerField(default=1)
+    used_count = models.PositiveIntegerField(default=0)
+    valid_from = models.DateTimeField(default=timezone.now)
+    valid_to = models.DateTimeField()
+    active = models.BooleanField(default=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.code} - {self.get_discount_type_display()} ({self.discount_value})"
+
+    def is_valid(self):
+        now = timezone.now()
+        return (
+            self.active and
+            self.valid_from <= now <= self.valid_to and
+            self.used_count < self.max_usage
+        )
+
+class Coupon(models.Model):
+    DISCOUNT_TYPES = (('percentage', 'نسبة مئوية (%)'),('fixed', 'مبلغ ثابت'))
+    code = models.CharField(max_length=50, unique=True, help_text="رمز الكوبون")
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES, default='fixed')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, help_text="قيمة الخصم")
+    max_usage = models.PositiveIntegerField(default=100, help_text="الحد الأقصى لاستخدام الكوبون للجميع")
+    used_count = models.PositiveIntegerField(default=0, help_text="كم مرة تم استخدامه كلياً")
+    max_usage_per_user = models.PositiveIntegerField(default=1, help_text="كم مرة يمكن لنفس المستخدم استخدام الكوبون")
+    valid_from = models.DateTimeField(default=timezone.now)
+    valid_to = models.DateTimeField()
+    active = models.BooleanField(default=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.code
+
+    def is_valid(self):
+        now = timezone.now()
+        return (
+            self.active and
+            self.valid_from <= now <= self.valid_to and
+            self.used_count < self.max_usage
+        )
+
+class CouponUsage(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='coupon_usages')
+    coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE, related_name='user_usages')
+    usage_count = models.PositiveIntegerField(default=0)
+    last_used_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'coupon')
+
 class JobProgress(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='progresses')
     offer = models.ForeignKey(JobOffer, on_delete=models.CASCADE, related_name='progresses', blank=True, null=True)
@@ -439,11 +491,15 @@ class JobProgress(models.Model):
     extra_approved_time = models.DateTimeField(blank=True, null=True)
     extra_request = models.TextField(blank=True, null=True)
     extra_cost_approved = models.BooleanField(null=True, default=None)
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, related_name='job_progresses', blank=True, null=True)
+    coupon_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     progress_status = models.CharField(max_length=20, choices=Job_Progress_Status, default='Pending', null=True, blank=True)
     provider_progress = models.TextField(blank=True, null=True)
     customer_progress = models.TextField(blank=True, null=True)
+    provider_ready_at = models.DateTimeField(blank=True, null=True)
     start_at = models.DateTimeField(blank=True, null=True)
+    provider_finished_at = models.DateTimeField(blank=True, null=True)
     end_at = models.DateTimeField(blank=True, null=True)
     completed_at = models.DateTimeField(blank=True, null=True)
     canceled_at = models.DateTimeField(blank=True, null=True)

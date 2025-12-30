@@ -1,14 +1,17 @@
 # D:\Python Projects\Dabarni_fork\Dabarni\api\v1\customer\views\jop_request_views.py
 
+from decimal import Decimal
+from django.utils.crypto import get_random_string
 from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated , AllowAny
 from rest_framework import status
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from django.shortcuts import get_object_or_404
 from api.v1.constants import JobOfferStatus, JobProgressStatus
-from apps.classified.models.models import Job, JobNegotiate, JobOffer, JobProgress
+from api.v1.provider.serializers.classified import JobNegotiateSerializer
+from apps.classified.models.models import Coupon, CouponUsage, Job, JobNegotiate, JobOffer, JobProgress
 from django.db import transaction
 from django.db.models import Prefetch
 from api.v1.customer.serializers.jop_request_serializer import (
@@ -66,21 +69,25 @@ def create_job(request):
 def list_my_jobs(request):
     """
     API endpoint to list jobs for the current authenticated user.
-    Shows negotiations ONLY if both customer_price and provider_price are set.
+    Excludes offers that have moved to the negotiation stage.
     """
     try:
         negotiations_filter = Prefetch(
             'negotiates',
-            queryset=JobNegotiate.objects.filter(
-                customer_price__isnull=False, 
-                provider_price__isnull=False
-            )
+            queryset=JobNegotiate.objects.all() 
+        )
+
+        offers_filter = Prefetch(
+            'offers',
+            queryset=JobOffer.objects.exclude(status__in=['negotiated', 'Negotiating'])
         )
 
         jobs = Job.objects.filter(customer=request.user)\
             .select_related('customer', 'category')\
-            .prefetch_related(negotiations_filter) 
+            .prefetch_related(negotiations_filter, offers_filter)
+
         serializer = JobDetailSerializer(jobs, many=True, context={'request': request})
+        
         return success_response(
             message="تم جلب قائمة الوظائف بنجاح",
             data=serializer.data,
@@ -92,7 +99,6 @@ def list_my_jobs(request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
-
 
 @extend_schema(
     tags=["Customer Jobs"],
@@ -301,7 +307,7 @@ def CancelJobWithFee(request, job_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
-    
+
 @extend_schema(
     tags=["Customer Offers"],
     responses={200: ProviderOfferSerializer(many=True), 404: 'Not Found Response', 500: 'Error Response'}
@@ -311,15 +317,15 @@ def CancelJobWithFee(request, job_id):
 def getOffersByJob(request, job_id):
     """
     API endpoint for a customer to view all offers for a specific job.
+    Excludes offers with status 'negotiated'.
     """
     try:
-        # Get the job, ensuring it belongs to the authenticated user
         job = get_object_or_404(Job, pk=job_id, customer=request.user)
 
-        # Corrected line: Use select_related to get the provider and its user in one query
-        offers = JobOffer.objects.filter(job=job).select_related('provider__user')
+        offers = JobOffer.objects.filter(job=job)\
+            .exclude(status__in=['negotiated', 'Negotiating'])\
+            .select_related('provider__user')
 
-        # Serialize the offers
         serializer = ProviderOfferSerializer(offers, many=True, context={'request': request})
         return success_response(
             message="تم جلب العروض بنجاح.",
@@ -482,6 +488,7 @@ def CustomerAcceptOffer(request, offer_id):
 
 @extend_schema(
     tags=["Customer Offers"],
+    summary="بدء العمل الفعلي من العميل",
     responses={200: dict, 400: dict, 403: dict, 404: dict}
 )
 @api_view(['POST'])
@@ -495,6 +502,9 @@ def start_Customer_work(request, progress_id):
 
         if progress.start_at:
             return Response({"status": False, "message": "تم بدء العمل مسبقًا"}, status=400)
+
+        if not progress.provider_ready_at:
+            return Response({"status": False, "message": "مقدم الخدمة لم يبدأ التجهيز بعد"}, status=400)
 
         progress.start_at = timezone.now()
         progress.progress_status = "InProgress"
@@ -514,6 +524,7 @@ def start_Customer_work(request, progress_id):
 
 @extend_schema(
     tags=["Customer Offers"],
+    summary="إنهاء العمل واعتماده من قبل العميل",
     responses={200: dict, 400: dict, 403: dict, 404: dict}
 )
 @api_view(['POST'])
@@ -523,20 +534,25 @@ def finish_Customer_work(request, progress_id):
         progress = JobProgress.objects.get(id=progress_id)
 
         if progress.customer != request.user:
-            return Response({"status": False, "message": "غير مخول للانهاء"}, status=403)
+            return Response({"status": False, "message": "غير مخول للإنهاء"}, status=403)
 
-        if progress.start_at:
-            return Response({"status": False, "message": "تم انهاء العمل مسبقًا"}, status=400)
+        if progress.completed_at or progress.progress_status == "Completed":
+            return Response({"status": False, "message": "تم إنهاء العمل واعتماده مسبقًا"}, status=400)
 
-        progress.start_at = timezone.now()
-        progress.progress_status = "finish"
+        if not progress.provider_finished_at:
+            return Response({"status": False, "message": "لا يمكن إنهاء العمل قبل أن ينهيه مقدم الخدمة"}, status=400)
+
+        now = timezone.now()
+        progress.completed_at = now
+        progress.end_at = now 
+        progress.progress_status = "Completed"
         progress.save()
 
         return Response({
             "status": True,
-            "message": "تم انهاء العمل بنجاح",
+            "message": "تم اعتماد وإنهاء العمل بنجاح",
             "data": {
-                "start_at": progress.start_at,
+                "completed_at": progress.completed_at,
                 "progress_status": progress.progress_status
             }
         })
@@ -561,14 +577,12 @@ def NegotiateOffer(request, offer_id):
     try:
         offer = get_object_or_404(JobOffer.objects.select_related('job__customer', 'provider'), pk=offer_id)
 
-        # only job owner (customer) can negotiate
         if offer.job.customer != request.user:
             return error_response(
                 message="ليس لديك صلاحية للتفاوض على هذا العرض.",
                 status_code=status.HTTP_403_FORBIDDEN,
             )
 
-        # can't negotiate on accepted/rejected offers
         if str(offer.status).lower() in ['accepted', 'rejected']:
             return error_response(
                 message="لا يمكن التفاوض على هذا العرض. لقد تم قبوله أو رفضه بالفعل.",
@@ -585,7 +599,6 @@ def NegotiateOffer(request, offer_id):
 
         customer_price = serializer.validated_data.get('customer_price')
 
-        # حاول الحصول على السجل أو إنشاؤه — لكن لا ترفض لو موجود: قم بالتحديث بدلاً من ذلك
         negotiation_record, created = JobNegotiate.objects.get_or_create(
             job=offer.job,
             offer=offer,
@@ -593,21 +606,22 @@ def NegotiateOffer(request, offer_id):
             customer=request.user,
             defaults={
                 'customer_price': customer_price,
-                # ممكن تملأ حقول افتراضية أخرى هنا لو تحتاج
+                'provider_price': offer.price,
+                'customer_accepted': True,
+                'provider_accepted': None
             }
         )
 
         if not created:
-            # حدث التفاوض الموجود: حدّث السعر وارجع حالة القبول للمزود لـ False لأن السعر تغيّر
             negotiation_record.customer_price = customer_price
-            negotiation_record.provider_accepted = False
-            negotiation_record.customer_accepted = False
+            negotiation_record.provider_price = offer.price
+            negotiation_record.customer_accepted = True
+            negotiation_record.provider_accepted = None
             negotiation_record.save()
             message = "تم تحديث عرض التفاوض بنجاح."
         else:
             message = "تم إرسال عرض التفاوض بنجاح."
 
-        # تأكد أن حالة الـ offer تشير إلى التفاوض
         offer.status = JobOfferStatus.NEGOTIATING
         offer.save()
 
@@ -628,7 +642,88 @@ def NegotiateOffer(request, offer_id):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             errors={'detail': str(e)}
         )
-    
+
+@extend_schema(
+    tags=["Customer Offers"],
+    request={'action': 'string'},
+    responses={200: JobNegotiateSerializer, 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def Customer_respond_Negotiation(request, negotiation_id):
+    """
+    API endpoint for a customer to accept or reject a provider's negotiation offer.
+    The request body should contain {'action': 'accept' or 'reject'}.
+    """
+    action = request.data.get('action')
+    if action not in ['accept', 'reject']:
+        return error_response(
+            message="الإجراء غير صالح. يجب أن يكون 'accept' أو 'reject'.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        with transaction.atomic():
+            negotiation = get_object_or_404(
+                JobNegotiate.objects.select_related('job__customer', 'offer'), 
+                pk=negotiation_id
+            )
+
+            if negotiation.job.customer != request.user:
+                return error_response(
+                    message="ليس لديك صلاحية للرد على هذه المفاوضة.",
+                    status_code=status.HTTP_403_FORBIDDEN,
+                )
+
+            if negotiation.customer_accepted is not None:
+                return error_response(
+                    message="تم بالفعل الرد على هذه المفاوضة من قبلك.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if action == 'accept':
+                if not negotiation.provider_accepted:
+                    return error_response(
+                        message="لا يمكن قبول المفاوضة لأن مقدم الخدمة لم يوافق عليها بعد.",
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                negotiation.customer_accepted = True
+                negotiation.save()
+
+                offer = negotiation.offer
+                offer.price = negotiation.provider_price 
+                offer.status = "negotiated" 
+                offer.save()
+                message = "تم قبول عرض التفاوض وتحديث سعر العرض بنجاح."
+            
+            elif action == 'reject':
+                negotiation.customer_accepted = False 
+                negotiation.save()
+
+                offer = negotiation.offer
+                offer.status = "negotiated"
+                offer.save()
+                message = "تم رفض عرض التفاوض بنجاح."
+
+        return success_response(
+            message=message,
+            data=JobNegotiateSerializer(negotiation).data,
+            status_code=status.HTTP_200_OK
+        )
+
+    except JobNegotiate.DoesNotExist:
+        return error_response(
+            message="سجل المفاوضة غير موجود.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return error_response(
+            message=f"حدث خطأ أثناء الرد على المفاوضة: {str(e)}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_job_progress(request, progress_id):
@@ -799,3 +894,143 @@ def reject_extra_cost(request, progress_id):
     except Exception as e:
         print(f"Error in reject_extra_cost: {e}")
         return Response({"status": False, "message": "حدث خطأ غير متوقع"}, status=500)
+
+@extend_schema(
+    tags=["Coupons"],
+    summary="إنشاء كوبون جديد",
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "discount_type": {"type": "string", "enum": ["percentage", "fixed"]},
+                "discount_value": {"type": "number"},
+                "max_usage": {"type": "integer"},
+                "max_usage_per_user": {"type": "integer"},
+                "valid_to": {"type": "string", "format": "date-time"},
+            }
+        }
+    },
+    responses={201: dict, 400: dict}
+)
+@api_view(['POST'])
+@permission_classes([AllowAny]) 
+def create_coupon(request):
+    data = request.data
+    discount_value = data.get('discount_value')
+    valid_to = data.get('valid_to')
+    
+    if not all([discount_value, valid_to]):
+        return Response({"status": False, "message": "يرجى ملء الحقول الإجبارية (value, valid_to)"}, status=400)
+
+    try:
+        new_code = ""
+        while True:
+            random_str = get_random_string(length=8, allowed_chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+            new_code = f"CPN-{random_str}"
+
+            if not Coupon.objects.filter(code=new_code).exists():
+                break
+
+        coupon = Coupon.objects.create(
+            code=new_code,
+            discount_type=data.get('discount_type', 'fixed'),
+            discount_value=discount_value,
+            max_usage=data.get('max_usage', 100),
+            max_usage_per_user=data.get('max_usage_per_user', 1),
+            valid_to=valid_to,
+            active=True
+        )
+
+        return Response({
+            "status": True,
+            "message": "تم إنشاء الكوبون بنجاح",
+            "data": {
+                "id": coupon.id,
+                "code": coupon.code,
+                "discount_value": coupon.discount_value
+            }
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({"status": False, "message": str(e)}, status=400)
+
+
+@extend_schema(
+    tags=["Coupons"],
+    summary="تطبيق كوبون على طلب (مع التحقق من سجل المستخدم)",
+    parameters=[
+        OpenApiParameter("progress_id", OpenApiTypes.INT, location=OpenApiParameter.PATH),
+        OpenApiParameter("code", OpenApiTypes.STR, location=OpenApiParameter.QUERY, description="رمز الكوبون"),
+    ],
+    responses={200: dict, 400: dict}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def apply_coupon(request, progress_id):
+    coupon_code = request.data.get('code') or request.query_params.get('code')
+    
+    if not coupon_code:
+        return Response({"status": False, "message": "يرجى إدخال رمز الكوبون"}, status=400)
+
+    try:
+        progress = JobProgress.objects.get(id=progress_id)
+
+        if progress.customer != request.user:
+            return Response({"status": False, "message": "غير مصرح لك"}, status=403)
+
+        if progress.coupon:
+            return Response({"status": False, "message": "تم استخدام كوبون بالفعل لهذا الطلب"}, status=400)
+
+        try:
+            coupon = Coupon.objects.get(code=coupon_code)
+        except Coupon.DoesNotExist:
+            return Response({"status": False, "message": "الكوبون غير صحيح"}, status=404)
+
+        if not coupon.is_valid():
+            return Response({"status": False, "message": "الكوبون منتهي أو تجاوز الحد الأقصى للاستخدام العام"}, status=400)
+
+        user_usage, created = CouponUsage.objects.get_or_create(user=request.user, coupon=coupon)
+        if user_usage.usage_count >= coupon.max_usage_per_user:
+            return Response({
+                "status": False, 
+                "message": f"لقد تجاوزت الحد المسموح لاستخدام هذا الكوبون ({coupon.max_usage_per_user} مرات)"
+            }, status=400)
+
+        original_amount = progress.total_cost or Decimal(0)
+        if original_amount <= 0:
+            return Response({"status": False, "message": "قيمة الطلب غير صالحة للخصم"}, status=400)
+
+        discount_amount = Decimal(0)
+        if coupon.discount_type == 'fixed':
+            discount_amount = coupon.discount_value
+        else:
+            discount_amount = (original_amount * coupon.discount_value) / Decimal(100)
+
+        if discount_amount > original_amount:
+            discount_amount = original_amount
+
+        with transaction.atomic():
+            user_usage.usage_count += 1
+            user_usage.save()
+
+            coupon.used_count += 1
+            coupon.save()
+            progress.coupon = coupon
+            progress.coupon_discount_amount = discount_amount
+            progress.save()
+
+        return Response({
+            "status": True,
+            "message": "تم تطبيق الخصم بنجاح",
+            "data": {
+                "original_total": original_amount,
+                "discount_amount": discount_amount,
+                "new_total": original_amount - discount_amount,
+                "coupon_code": coupon.code
+            }
+        })
+
+    except JobProgress.DoesNotExist:
+        return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
+    except Exception as e:
+        return Response({"status": False, "message": f"حدث خطأ: {str(e)}"}, status=500)

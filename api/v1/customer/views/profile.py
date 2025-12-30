@@ -98,7 +98,7 @@ def update_address(request, address_slug):
 @extend_schema(tags=["Customer Profile"], responses=UserAddressSerializer(many=True))
 @api_view(['GET'])
 def list_addresses(request):
-    addresses = UserAddress.objects.filter(user=request.user).order_by("-created_at")
+    addresses = UserAddress.objects.filter(user=request.user, is_temporary=False).order_by("-created_at")
     serializer = UserAddressSerializer(addresses, many=True)
     return success_response(
         message="تم جلب العناوين بنجاح",
