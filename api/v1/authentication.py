@@ -158,23 +158,54 @@ def verify_otp(request):
     
     try:
         if not user.firebase_uid:
+            # Ensure phone number is in E.164 format (e.g., +201060074850)
+            formatted_phone = user.phone if user.phone.startswith('+') else f'+{user.phone}'
+
             try:
-                existing_firebase_user = firebase_auth.get_user_by_phone_number(user.phone)
+                # Try to get existing Firebase user by phone number
+                existing_firebase_user = firebase_auth.get_user_by_phone_number(formatted_phone)
                 user.firebase_uid = existing_firebase_user.uid
                 user.save()
-                logger.info(f"Linked existing Firebase user for {user.phone}")
-            
+                logger.info(f"Linked existing Firebase user for {formatted_phone}")
+
             except firebase_auth.UserNotFoundError:
+                # Create new Firebase user if not found
                 try:
                     firebase_user = firebase_auth.create_user(
-                        phone_number=user.phone,
+                        phone_number=formatted_phone,
                         display_name=f"{user.first_name} {user.last_name}" if user.first_name else "New User"
                     )
                     user.firebase_uid = firebase_user.uid
                     user.save()
-                    logger.info(f"Created new Firebase user for {user.phone}")
+                    logger.info(f"Created new Firebase user for {formatted_phone}")
+                except firebase_auth.PhoneNumberAlreadyExistsError:
+                    logger.warning(f"Phone number {formatted_phone} already exists in Firebase")
+                    # Try to get the user again
+                    existing_firebase_user = firebase_auth.get_user_by_phone_number(formatted_phone)
+                    user.firebase_uid = existing_firebase_user.uid
+                    user.save()
                 except Exception as create_error:
-                    logger.error(f"Error creating Firebase user: {str(create_error)}")
+                    error_msg = str(create_error)
+                    logger.error(f"Error creating Firebase user: {error_msg}")
+
+                    # Check if it's a configuration error
+                    if "CONFIGURATION_NOT_FOUND" in error_msg or "auth provider" in error_msg.lower():
+                        logger.error(
+                            "Firebase Phone Authentication is not enabled. "
+                            "Please enable it in Firebase Console: "
+                            "Authentication > Sign-in method > Phone"
+                        )
+            except Exception as lookup_error:
+                error_msg = str(lookup_error)
+                logger.error(f"Error looking up Firebase user: {error_msg}")
+
+                if "CONFIGURATION_NOT_FOUND" in error_msg or "auth provider" in error_msg.lower():
+                    logger.error(
+                        "Firebase Phone Authentication is not enabled. "
+                        "Please enable it in Firebase Console: "
+                        "Authentication > Sign-in method > Phone"
+                    )
+
         if user.firebase_uid:
             additional_claims = {
                 'django_user_id': user.id,

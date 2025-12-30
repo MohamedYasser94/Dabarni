@@ -1,101 +1,299 @@
-# FCM Notification API - Quick Reference
+# Quick Reference Guide - Notification System
 
-## Endpoints Summary
+## 🚀 Quick Start
 
-| Method | Endpoint | Purpose | Auth | Status |
-|--------|----------|---------|------|--------|
-| GET | `/api/v1/notifications/` | List all notifications | ✓ | 200 |
-| GET | `/api/v1/notifications/?is_read=false` | List unread only | ✓ | 200 |
-| GET | `/api/v1/notifications/<id>/` | Get detail + mark read | ✓ | 200 |
-| POST | `/api/v1/notifications/create/` | Create new | ✓ | 201 |
-| PATCH | `/api/v1/notifications/<id>/mark-as-read/` | Mark single as read | ✓ | 200 |
-| PATCH | `/api/v1/notifications/mark-all-as-read/` | Mark all as read | ✓ | 200 |
-| DELETE | `/api/v1/notifications/<id>/delete/` | Delete notification | ✓ | 204 |
+### 1. Authentication
+First, get a JWT token:
 
-## Quick Test Examples
-
-### List Notifications
 ```bash
-curl -X GET "http://localhost:8000/api/v1/notifications/" \
-  -H "Authorization: Bearer TOKEN"
+# Step 1: Register
+curl -X POST "http://127.0.0.1:8000/auth/register/" \
+  -H "Content-Type: application/json" \
+  -d '{"phone": "+201060074850", "access_level": "Client"}'
+
+# Step 2: Verify OTP (use the OTP from response or SMS)
+curl -X POST "http://127.0.0.1:8000/auth/verify-otp/" \
+  -H "Content-Type: application/json" \
+  -d '{"phone": "+201060074850", "otp": "123456", "access_level": "Client"}'
+
+# Copy the "access" token from the response
 ```
+
+### 2. Use Notifications
+
+```bash
+# Set your token
+TOKEN="your_jwt_token_here"
+
+# List notifications
+curl -X GET "http://127.0.0.1:8000/notifications/" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Create notification
+curl -X POST "http://127.0.0.1:8000/notifications/create/" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Test", "message": "Hello World"}'
+
+# Mark all as read
+curl -X PATCH "http://127.0.0.1:8000/notifications/mark-all-as-read/" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+## 📍 API Endpoints
+
+### Base URLs
+- **General:** `/notifications/`
+- **Customer:** `/api/v1/customer/fcm-notifications/`
+- **Provider:** `/api/v1/provider/fcm-notifications/`
+
+### Endpoints
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | List all notifications |
+| GET | `/?is_read=false` | List unread notifications |
+| POST | `/create/` | Create new notification |
+| GET | `/<id>/` | Get detail (auto-marks as read) |
+| PATCH | `/<id>/mark-as-read/` | Mark specific as read |
+| PATCH | `/mark-all-as-read/` | Mark all as read |
+| DELETE | `/<id>/delete/` | Delete notification |
+
+---
+
+## 🔑 Request/Response Examples
 
 ### Create Notification
-```bash
-curl -X POST "http://localhost:8000/api/v1/notifications/create/" \
-  -H "Authorization: Bearer TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Test","message":"Test message"}'
+**Request:**
+```json
+POST /notifications/create/
+{
+  "title": "New Order",
+  "message": "You have a new order #12345"
+}
 ```
 
-### Mark as Read
-```bash
-curl -X PATCH "http://localhost:8000/api/v1/notifications/1/mark-as-read/" \
-  -H "Authorization: Bearer TOKEN"
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Notification created successfully",
+  "data": {
+    "id": 1,
+    "user": 123,
+    "title": "New Order",
+    "message": "You have a new order #12345",
+    "is_read": false,
+    "create_at": "2025-12-30T12:00:00Z",
+    "update_at": "2025-12-30T12:00:00Z"
+  }
+}
 ```
 
-### Delete
-```bash
-curl -X DELETE "http://localhost:8000/api/v1/notifications/1/delete/" \
-  -H "Authorization: Bearer TOKEN"
+### List Notifications
+**Request:**
+```
+GET /notifications/
 ```
 
-## Database Schema
-
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Notifications retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "user": 123,
+      "title": "New Order",
+      "message": "You have a new order #12345",
+      "is_read": false,
+      "create_at": "2025-12-30T12:00:00Z",
+      "update_at": "2025-12-30T12:00:00Z"
+    }
+  ]
+}
 ```
-FcmNotification (Model)
-├── id (PrimaryKey, auto-generated)
-├── user (ForeignKey → User)
-├── title (CharField, max_length=255)
-├── message (TextField)
-├── is_read (BooleanField, default=False)
-├── create_at (DateTimeField, auto_now_add=True)
-└── update_at (DateTimeField, auto_now=True)
+
+---
+
+## 🐛 Common Issues & Solutions
+
+### Issue 1: 404 Not Found
+**Problem:** Getting 404 on `/notifications/notifications/`
+**Solution:** ✅ Fixed! Use `/notifications/` instead
+
+### Issue 2: User ID not saving
+**Problem:** Notifications created without user association
+**Solution:** ✅ Fixed! User is now automatically assigned
+
+### Issue 3: Firebase CONFIGURATION_NOT_FOUND
+**Problem:** Firebase authentication error
+**Solution:** Enable Phone Auth in Firebase Console (see FIREBASE_AUTH_FIX.md)
+
+---
+
+## 🎨 Frontend Integration (React/Vue/Angular)
+
+### JavaScript Constants
+```javascript
+const API_BASE = "http://127.0.0.1:8000";
+const API_NOTIFICATION = {
+  LIST: "/notifications/",
+  CREATE: "/notifications/create/",
+  DETAIL: (id) => `/notifications/${id}/`,
+  MARK_READ: (id) => `/notifications/${id}/mark-as-read/`,
+  MARK_ALL_READ: "/notifications/mark-all-as-read/",
+  DELETE: (id) => `/notifications/${id}/delete/`,
+};
 ```
 
-## Files Modified/Created
+### Axios Example
+```javascript
+import axios from 'axios';
 
-1. ✅ `/api/v1/global_serializer/common_serializer.py` (UPDATED)
-2. ✅ `/api/v1/global_views/fcm_notification_views.py` (CREATED)
-3. ✅ `/api/v1/urls.py` (UPDATED)
+const api = axios.create({
+  baseURL: 'http://127.0.0.1:8000',
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+    'Content-Type': 'application/json'
+  }
+});
 
-## View Functions (6 Total)
+// List notifications
+const getNotifications = async () => {
+  const response = await api.get('/notifications/');
+  return response.data;
+};
 
-1. `list_notifications()` - GET all notifications
-2. `get_notification_detail()` - GET single + auto-read
-3. `create_notification()` - POST new notification
-4. `mark_as_read()` - PATCH single notification
-5. `mark_all_as_read()` - PATCH all unread
-6. `delete_notification()` - DELETE notification
+// Create notification
+const createNotification = async (title, message) => {
+  const response = await api.post('/notifications/create/', {
+    title,
+    message
+  });
+  return response.data;
+};
 
-## Features
+// Mark all as read
+const markAllAsRead = async () => {
+  const response = await api.patch('/notifications/mark-all-as-read/');
+  return response.data;
+};
+```
 
-- ✅ List/filter notifications
-- ✅ Create & save to DB
-- ✅ Retrieve single with auto-read
-- ✅ Mark as read (single/all)
-- ✅ Delete notifications
-- ✅ JWT authentication
-- ✅ User isolation
-- ✅ Error handling
-- ✅ Logging
+### Fetch API Example
+```javascript
+const token = localStorage.getItem('token');
 
-## Common Response Codes
+// List notifications
+fetch('http://127.0.0.1:8000/notifications/', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+.then(res => res.json())
+.then(data => console.log(data));
 
-- `200 OK` - List, detail, mark as read
-- `201 CREATED` - Create notification
-- `204 NO CONTENT` - Delete successful
-- `400 BAD REQUEST` - Validation error
-- `401 UNAUTHORIZED` - Missing/invalid token
-- `404 NOT FOUND` - Notification doesn't exist
-- `500 INTERNAL ERROR` - Server error
+// Create notification
+fetch('http://127.0.0.1:8000/notifications/create/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    title: 'Test',
+    message: 'Test message'
+  })
+})
+.then(res => res.json())
+.then(data => console.log(data));
+```
 
-## How to Use
+---
 
-1. **Get your JWT token** (from auth endpoints)
-2. **Include token** in Authorization header
-3. **Make requests** to the endpoints
-4. **Parse responses** using the standard format
+## 📱 Mobile Integration (React Native/Flutter)
 
-All endpoints are production-ready! 🎉
+### React Native Example
+```javascript
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const getToken = async () => {
+  return await AsyncStorage.getItem('jwt_token');
+};
+
+const fetchNotifications = async () => {
+  const token = await getToken();
+  const response = await fetch('http://YOUR_IP:8000/notifications/', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return await response.json();
+};
+```
+
+### Flutter/Dart Example
+```dart
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+Future<List<Notification>> getNotifications(String token) async {
+  final response = await http.get(
+    Uri.parse('http://YOUR_IP:8000/notifications/'),
+    headers: {
+      'Authorization': 'Bearer $token',
+    },
+  );
+  
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return data['data'].map((n) => Notification.fromJson(n)).toList();
+  } else {
+    throw Exception('Failed to load notifications');
+  }
+}
+```
+
+---
+
+## ✅ Testing Checklist
+
+- [ ] Django server running without errors
+- [ ] Can list notifications
+- [ ] Can create notifications
+- [ ] Notifications have user_id assigned
+- [ ] Can mark notifications as read
+- [ ] Can delete notifications
+- [ ] 404 errors resolved
+- [ ] Firebase Phone Auth enabled (optional)
+- [ ] Frontend integrated and tested
+
+---
+
+## 📞 Support Files
+
+- **Full API Docs:** `NOTIFICATION_API_ENDPOINTS.md`
+- **Firebase Fix:** `FIREBASE_AUTH_FIX.md`
+- **Changes Summary:** `CHANGES_SUMMARY.md`
+- **Test Script:** `test_notifications_api.py`
+
+---
+
+## 🎯 Production Deployment
+
+Before deploying:
+1. Update `DEBUG=False` in settings
+2. Configure production database
+3. Set up proper CORS headers
+4. Enable Firebase Phone Auth
+5. Update frontend API base URLs
+6. Set up SSL/HTTPS
+7. Configure proper error logging
+
+---
+
+**Last Updated:** December 30, 2025
 

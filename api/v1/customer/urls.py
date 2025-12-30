@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from api.v1.customer.views.customer_chat import *
 from api.v1.global_views import fcm_notification_views
 from apps.front.views import views, blocks 
@@ -58,16 +58,15 @@ urlpatterns = [
     path('chat/messages/save/', customer_send_Messages, name='save-chat-message'),
     path('chat/delete/<uuid:dialog_id>/', customer_delete_specific_chat, name='delete-chat'),
 
-
-
-# FCM Notification endpoints
-    path("", fcm_notification_views.list_notifications, name="list-notifications"),
-    path("create/", fcm_notification_views.create_notification, name="create-notification"),
-    path("notifications/<int:notification_id>/", fcm_notification_views.get_notification_detail, name="notification-detail"),
-    path("notifications/<int:notification_id>/mark-as-read/", fcm_notification_views.mark_as_read, name="mark-as-read"),
-    path("notifications/mark-all-as-read/", fcm_notification_views.mark_all_as_read, name="mark-all-as-read"),
-    path("notifications/<int:notification_id>/delete/", fcm_notification_views.delete_notification, name="delete-notification"),
-
+    # ===================== FCM Notification endpoints =====================
+    path("fcm-notifications/", include([
+        path("", fcm_notification_views.list_notifications, name="customer-fcm-list-notifications"),
+        path("create/", fcm_notification_views.create_notification, name="customer-fcm-create-notification"),
+        path("<int:notification_id>/", fcm_notification_views.get_notification_detail, name="customer-fcm-notification-detail"),
+        path("<int:notification_id>/mark-as-read/", fcm_notification_views.mark_as_read, name="customer-fcm-mark-as-read"),
+        path("mark-all-as-read/", fcm_notification_views.mark_all_as_read, name="customer-fcm-mark-all-as-read"),
+        path("<int:notification_id>/delete/", fcm_notification_views.delete_notification, name="customer-fcm-delete-notification"),
+    ])),
 
 #---------------------- Customer Wallet ---------------------------
      path('wallet/create/', customer_wallet.create_wallet, name='create_wallet'),
