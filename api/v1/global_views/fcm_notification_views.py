@@ -112,24 +112,34 @@ def create_notification(request):
     Only superusers/admins can create notifications for other users.
     """
     try:
-        user = request.user
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        current_user = request.user
         data = request.data.copy()
 
         # Determine target user: default to current user
-        target_user = user
+        target_user = current_user
         provided_user_id = data.get('user')
-        if provided_user_id and user.is_superuser:
-            # Superusers may create notifications for other users
-            target_user = provided_user_id  # pass id; serializer.save(user_id) expects instance or id depending on serializer
 
-        # Remove user from payload to avoid conflicting assignment
+        if provided_user_id and current_user.is_superuser:
+            # Superusers may create notifications for other users
+            try:
+                target_user = User.objects.get(id=provided_user_id)
+            except User.DoesNotExist:
+                return error_response(
+                    message="Target user not found",
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+
+        # Remove user from payload to avoid validation errors
         if 'user' in data:
             data.pop('user')
 
         serializer = FcmNotificationSerializer(data=data)
 
         if serializer.is_valid():
-            # Explicitly assign the user
+            # Explicitly assign the user instance
             serializer.save(user=target_user)
 
             return success_response(
