@@ -50,7 +50,7 @@ def ProviderPayoutRequest(request):
     except JobProvider.DoesNotExist:
         return Response({
             "status": False,
-            "message": "Provider profile not found for this user",
+            "message": "Provider profile not found",
             "data": {}
         }, status=status.HTTP_404_NOT_FOUND)
 
@@ -58,41 +58,37 @@ def ProviderPayoutRequest(request):
     if serializer.is_valid():
         try:
             amount = Decimal(str(serializer.validated_data.get("amount")))
+            bank_slug = serializer.validated_data.get("bank_account_slug")
         except:
-            return Response({
-                "status": False,
-                "message": "Invalid amount format",
-                "data": {}
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({"status": False, "message": "Invalid data", "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
         if amount <= 0:
+            return Response({"status": False, "message": "Amount must be greater than 0", "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            target_bank_account = BankAccount.objects.get(slug=bank_slug, user=request.user)
+        except BankAccount.DoesNotExist:
             return Response({
                 "status": False,
-                "message": "Amount must be greater than 0",
+                "message": "Bank account not found or does not belong to this user",
                 "data": {}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_404_NOT_FOUND)
 
         try:
             with transaction.atomic():
                 wallet = WalletMoney.objects.select_for_update().filter(user=request.user).first()
 
-                if not wallet:
+                if not wallet or wallet.actual_balance < amount:
                     return Response({
                         "status": False,
-                        "message": "Wallet not found",
-                        "data": {}
-                    }, status=status.HTTP_404_NOT_FOUND)
-
-                if wallet.actual_balance < amount:
-                    return Response({
-                        "status": False,
-                        "message": "Insufficient balance",
+                        "message": "Insufficient balance or wallet not found",
                         "data": {}
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 wallet.actual_balance -= amount
                 wallet.save()
-                payout_request = serializer.save(user=request.user, status="PENDING")
+
+                payout_request = serializer.save(user=request.user, bank_account=target_bank_account, status="PENDING")
 
                 return Response({
                     "status": True,
@@ -101,17 +97,9 @@ def ProviderPayoutRequest(request):
                 }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({
-                "status": False,
-                "message": f"Transaction failed: {str(e)}",
-                "data": {}
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"status": False, "message": f"Transaction failed: {str(e)}", "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
-    return Response({
-        "status": False,
-        "message": "Validation error",
-        "data": serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
+    return Response({"status": False, "message": "Validation error", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
     tags=["Provider Wallet"]
@@ -197,6 +185,9 @@ def PaymentGatewayList(request):
         "data": serializer.data
     }, status=status.HTTP_200_OK)
 
+@extend_schema(
+    tags=["Provider Wallet"]
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ProviderBankAccount(request):
@@ -236,9 +227,7 @@ def ProviderBankAccount(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def AddProviderBankAccount(request):
-    # 1. التحقق من أن المستخدم هو مقدم خدمة
     try:
-        # نستخدم get فقط لأننا لا نريد إنشاء بروفايدر جديد بالخطأ هنا
         provider = JobProvider.objects.get(user=request.user)
     except JobProvider.DoesNotExist:
         return Response({
@@ -251,20 +240,15 @@ def AddProviderBankAccount(request):
     
     if serializer.is_valid():
         try:
-            # 2. بدء معاملة آمنة (Transaction)
             with transaction.atomic():
                 is_default = serializer.validated_data.get("default_account", False)
 
-                # 3. إذا كان الحساب الجديد محدداً كافتراضي
                 if is_default:
-                    # نقوم بتحديث جميع حسابات المستخدم الأخرى لتصبح غير افتراضية
                     BankAccount.objects.filter(user=request.user, default_account=True).update(default_account=False)
                 
-                # ملاحظة إضافية: إذا كان هذا أول حساب يضيفه المستخدم، نجعله افتراضياً تلقائياً (اختياري)
                 elif not BankAccount.objects.filter(user=request.user).exists():
-                     serializer.validated_data['default_account'] = True
+                    serializer.validated_data['default_account'] = True
 
-                # 4. حفظ الحساب الجديد وربطه بالمستخدم
                 bank_account = serializer.save(user=request.user)
 
                 return Response({
@@ -272,6 +256,64 @@ def AddProviderBankAccount(request):
                     "message": "Bank account added successfully",
                     "data": BankAccountSerializer(bank_account).data
                 }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": f"An error occurred: {str(e)}",
+                "data": {}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({
+        "status": False,
+        "message": "Validation error",
+        "data": serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema(
+    tags=["Provider Wallet"],
+    description="Update existing provider bank account",
+    request=BankAccountSerializer,
+    responses={200: BankAccountSerializer}
+)
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def UpdateProviderBankAccount(request, slug):
+    try:
+        JobProvider.objects.get(user=request.user)
+    except JobProvider.DoesNotExist:
+        return Response({
+            "status": False,
+            "message": "Provider profile not found",
+            "data": {}
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        bank_account = BankAccount.objects.get(slug=slug, user=request.user)
+    except BankAccount.DoesNotExist:
+        return Response({
+            "status": False,
+            "message": "Bank account not found",
+            "data": {}
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = BankAccountSerializer(instance=bank_account, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        try:
+            with transaction.atomic():
+                is_default_new_value = serializer.validated_data.get("default_account")
+                
+                if is_default_new_value is True:
+                    BankAccount.objects.filter(user=request.user, default_account=True).exclude(id=bank_account.id).update(default_account=False)
+
+                updated_account = serializer.save()
+
+                return Response({
+                    "status": True,
+                    "message": "Bank account updated successfully",
+                    "data": BankAccountSerializer(updated_account).data
+                }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({

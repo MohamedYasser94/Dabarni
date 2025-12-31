@@ -254,7 +254,6 @@ class JobDetailSerializer(serializers.ModelSerializer):
     category = JobCategorySerializer(read_only=True)
     location = UserAddressSerializer(read_only=True)
     title = serializers.CharField(allow_blank=True, default="بدون عنوان")
-    # The updated serializer is used here
     media = JobMediaSerializer(many=True, read_only=True)
     progresses = JobProgressSerializer(many=True, read_only=True)
     offers = ProviderOfferSerializer(many=True, read_only=True) 
@@ -275,7 +274,7 @@ class JobDetailSerializer(serializers.ModelSerializer):
         if obj.customer:
             if obj.customer.first_name or obj.customer.last_name:
                 return f'{obj.customer.first_name or ""} {obj.customer.last_name or ""}'.strip()
-            return obj.customer.email
+            return str(obj.customer.id)
         return "مستخدم غير معروف"
 
     def get_customer_image(self, obj):

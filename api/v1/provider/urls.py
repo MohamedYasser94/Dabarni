@@ -65,6 +65,7 @@ urlpatterns = [
     path("wallet/payment-gateways/", provider_wallet.PaymentGatewayList, name="PaymentGatewayList"),
     path("wallet/bank-account/", provider_wallet.ProviderBankAccount, name="ProviderBankAccount"),
     path("wallet/bank-account/add/", provider_wallet.AddProviderBankAccount, name="AddProviderBankAccount"),
+    path('wallet/bank-accounts/update/<str:slug>/', provider_wallet.UpdateProviderBankAccount, name='update-provider-bank-account'),
 
     # ===================== Chat URLs =====================
     path('chat/start/<slug:job_slug>/', provider_start_chat_view, name='start-chat'),

@@ -8,12 +8,14 @@ from slugify import slugify
 from apps.wallet.models.models import Wallet, SystemWallet
 from helper.modelHelper import Transaction_Money_Type, Transaction_Money_Status, Transaction_Money_Category, \
     Transaction_Money_Mode,  Active_Status
+from apps.wallet.models.payment import BankAccount
 
 User = get_user_model()
 
 
 class PayoutRequest(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payout_requests')
+    bank_account = models.ForeignKey(BankAccount, on_delete=models.SET_NULL, null=True, blank=True, related_name='payout_requests')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=[
         ('PENDING', 'Pending'),

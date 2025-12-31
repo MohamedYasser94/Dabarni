@@ -56,8 +56,9 @@ class BankAccountSerializer(serializers.ModelSerializer):
             "iban",
             "swift_code",
             "default_account",
-            "created_at",
+            "created_at","slug", "code"
         ]
+        read_only_fields = ["id", "user", "created_at", "slug", "code"]
 
 
 class ProviderMoneyTransactionSerializer(serializers.ModelSerializer):
@@ -66,8 +67,10 @@ class ProviderMoneyTransactionSerializer(serializers.ModelSerializer):
         fields = ["id", "wallet", "amount", "transaction_type", "status", "created_at"]
         
 class PayoutRequestSerializer(serializers.ModelSerializer):
+    bank_account_slug = serializers.SlugField(write_only=True, required=True)
+    bank_details = BankAccountSerializer(source='bank_account', read_only=True)
+
     class Meta:
         model = PayoutRequest
-        # قمنا بتغيير provider إلى user ليطابق الموديل
-        fields = ["id", "user", "amount", "status", "created_at", "processed_at"]
-        read_only_fields = ["id", "user", "status", "created_at", "processed_at"]
+        fields = ["id", "user", "amount", "status", "created_at", "processed_at", "bank_account_slug", "bank_details"]
+        read_only_fields = ["id", "user", "status", "created_at", "processed_at", "bank_details"]
