@@ -197,29 +197,38 @@ def PaymentGatewayList(request):
         "data": serializer.data
     }, status=status.HTTP_200_OK)
 
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ProviderBankAccount(request):
-    provider = JobProvider.objects.get(user=request.user)
-    bank_account = BankAccount.objects.filter(user=request.user).first()
-
-    if bank_account:
-        bank_account_serializer = BankAccountSerializer(bank_account)
-        return Response({
-            "status": True,
-            "message": "Bank account fetched successfully",
-            "data": bank_account_serializer.data
-        }, status=status.HTTP_200_OK)
-    else:
+    try:
+        JobProvider.objects.get(user=request.user)
+    except JobProvider.DoesNotExist:
         return Response({
             "status": False,
-            "message": "Bank account not found",
-            "data": {}
+            "message": "Provider profile not found",
+            "data": []
         }, status=status.HTTP_404_NOT_FOUND)
 
+    bank_accounts = BankAccount.objects.filter(user=request.user).order_by('-created_at')
+
+    if bank_accounts.exists():
+        serializer = BankAccountSerializer(bank_accounts, many=True)
+
+        return Response({
+            "status": True,
+            "message": "Bank accounts fetched successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
+    else:
+        return Response({
+            "status": True,
+            "message": "No bank accounts found",
+            "data": [] 
+        }, status=status.HTTP_200_OK)
+
 @extend_schema(
+    tags=["Provider Wallet"],
     description="Add new provider bank account",
     request=BankAccountSerializer,
     responses={201: BankAccountSerializer}
@@ -227,8 +236,10 @@ def ProviderBankAccount(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def AddProviderBankAccount(request):
+    # 1. التحقق من أن المستخدم هو مقدم خدمة
     try:
-         provider, _ = JobProvider.objects.get_or_create(user=request.user)  # ✅ تعديل 
+        # نستخدم get فقط لأننا لا نريد إنشاء بروفايدر جديد بالخطأ هنا
+        provider = JobProvider.objects.get(user=request.user)
     except JobProvider.DoesNotExist:
         return Response({
             "status": False,
@@ -237,19 +248,37 @@ def AddProviderBankAccount(request):
         }, status=status.HTTP_404_NOT_FOUND)
 
     serializer = BankAccountSerializer(data=request.data)
+    
     if serializer.is_valid():
-        default_account = serializer.validated_data.get("default_account", False)
+        try:
+            # 2. بدء معاملة آمنة (Transaction)
+            with transaction.atomic():
+                is_default = serializer.validated_data.get("default_account", False)
 
-        if default_account:
-            BankAccount.objects.filter(user=request.user, default_account=True).update(default_account=False)
+                # 3. إذا كان الحساب الجديد محدداً كافتراضي
+                if is_default:
+                    # نقوم بتحديث جميع حسابات المستخدم الأخرى لتصبح غير افتراضية
+                    BankAccount.objects.filter(user=request.user, default_account=True).update(default_account=False)
+                
+                # ملاحظة إضافية: إذا كان هذا أول حساب يضيفه المستخدم، نجعله افتراضياً تلقائياً (اختياري)
+                elif not BankAccount.objects.filter(user=request.user).exists():
+                     serializer.validated_data['default_account'] = True
 
-        bank_account = serializer.save(user=request.user)
+                # 4. حفظ الحساب الجديد وربطه بالمستخدم
+                bank_account = serializer.save(user=request.user)
 
-        return Response({
-            "status": True,
-            "message": "Bank account added successfully",
-            "data": BankAccountSerializer(bank_account).data
-        }, status=status.HTTP_201_CREATED)
+                return Response({
+                    "status": True,
+                    "message": "Bank account added successfully",
+                    "data": BankAccountSerializer(bank_account).data
+                }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": f"An error occurred: {str(e)}",
+                "data": {}
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({
         "status": False,
