@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -12,55 +13,99 @@ from apps.classified.models.models import *
 from apps.wallet.models.payment import PaymentGateway, BankAccount
 from apps.wallet.models.models import WalletMoney
 from apps.wallet.models.transaction import PayoutRequest
+from django.db import transaction
 
+@extend_schema(
+    tags=["Provider Wallet"]
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ProviderWallet(request):
-    wallet = WalletMoney.objects.filter(user=request.user).first()
-
-    if wallet:
+    try:
+        wallet, created = WalletMoney.objects.get_or_create(user=request.user)
         serializer = ProviderWalletMoneySerializer(wallet)
+        message = "Wallet created successfully" if created else "Wallet fetched successfully"
+
         return Response({
             "status": True,
-            "message": "Wallet fetched successfully",
+            "message": message,
             "data": serializer.data
         }, status=status.HTTP_200_OK)
-    return Response({
-        "status": False,
-        "message": "Wallet not found",
-        "data": {}
-    }, status=status.HTTP_404_NOT_FOUND)
 
+    except Exception as e:
+        return Response({
+            "status": False,
+            "message": f"An error occurred: {str(e)}",
+            "data": {}
+        }, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema(
+    tags=["Provider Wallet"]
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def ProviderPayoutRequest(request):
-    provider = JobProvider.objects.get(id=request.user.id)
+    try:
+        provider = JobProvider.objects.get(user=request.user)
+    except JobProvider.DoesNotExist:
+        return Response({
+            "status": False,
+            "message": "Provider profile not found for this user",
+            "data": {}
+        }, status=status.HTTP_404_NOT_FOUND)
 
     serializer = PayoutRequestSerializer(data=request.data)
     if serializer.is_valid():
-        amount = serializer.validated_data.get("amount")
-
-        wallet = WalletMoney.objects.filter(user=request.user).first()
-        if not wallet or wallet.actual_balance < float(amount):
+        try:
+            amount = Decimal(str(serializer.validated_data.get("amount")))
+        except:
             return Response({
                 "status": False,
-                "message": "Insufficient balance",
+                "message": "Invalid amount format",
+                "data": {}
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if amount <= 0:
+            return Response({
+                "status": False,
+                "message": "Amount must be greater than 0",
                 "data": {}
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # خصم الرصيد
-        wallet.actual_balance -= float(amount)
-        wallet.save()
+        try:
+            with transaction.atomic():
+                wallet = WalletMoney.objects.select_for_update().filter(user=request.user).first()
 
-        # إنشاء payout مرتبط بالمزود
-        payout_request = serializer.save(provider=provider, status="PENDING")
+                if not wallet:
+                    return Response({
+                        "status": False,
+                        "message": "Wallet not found",
+                        "data": {}
+                    }, status=status.HTTP_404_NOT_FOUND)
 
-        return Response({
-            "status": True,
-            "message": "Payout request created successfully",
-            "data": PayoutRequestSerializer(payout_request).data
-        }, status=status.HTTP_201_CREATED)
+                if wallet.actual_balance < amount:
+                    return Response({
+                        "status": False,
+                        "message": "Insufficient balance",
+                        "data": {}
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                wallet.actual_balance -= amount
+                wallet.save()
+                payout_request = serializer.save(user=request.user, status="PENDING")
+
+                return Response({
+                    "status": True,
+                    "message": "Payout request created successfully",
+                    "data": PayoutRequestSerializer(payout_request).data
+                }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": f"Transaction failed: {str(e)}",
+                "data": {}
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({
         "status": False,
@@ -68,12 +113,22 @@ def ProviderPayoutRequest(request):
         "data": serializer.errors
     }, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema(
+    tags=["Provider Wallet"]
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def ProviderPayoutRequestList(request):
-    provider = JobProvider.objects.get(id=request.user.id)
-    payout_requests = PayoutRequest.objects.filter(provider=provider).order_by('-created_at')
+    try:
+        provider = JobProvider.objects.get(user=request.user)
+    except JobProvider.DoesNotExist:
+        return Response({
+            "status": False,
+            "message": "Provider profile not found",
+            "data": []
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    payout_requests = PayoutRequest.objects.filter(user=request.user).order_by('-created_at')
     serializer = PayoutRequestSerializer(payout_requests, many=True)
 
     return Response({
@@ -163,7 +218,7 @@ def ProviderBankAccount(request):
             "message": "Bank account not found",
             "data": {}
         }, status=status.HTTP_404_NOT_FOUND)
-    
+
 @extend_schema(
     description="Add new provider bank account",
     request=BankAccountSerializer,

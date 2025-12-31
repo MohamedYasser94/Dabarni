@@ -24,7 +24,7 @@ class ProviderBillingListSerializer(serializers.ModelSerializer):
 class ProviderWalletMoneySerializer(serializers.ModelSerializer):
     class Meta:
         model = WalletMoney
-        fields = ["id", "user", "actual_balance", "created_at", "updated_at"]
+        fields = ["id", "user", "actual_balance", "reversed_balance","code", "create_at", "update_at"]
 
 
 class PaymentGatewaySerializer(serializers.ModelSerializer):
@@ -68,5 +68,6 @@ class ProviderMoneyTransactionSerializer(serializers.ModelSerializer):
 class PayoutRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = PayoutRequest
-        fields = ["id", "provider", "amount", "status", "created_at", "processed_at"]
-        read_only_fields = ["id", "provider", "status", "created_at", "processed_at"]
+        # قمنا بتغيير provider إلى user ليطابق الموديل
+        fields = ["id", "user", "amount", "status", "created_at", "processed_at"]
+        read_only_fields = ["id", "user", "status", "created_at", "processed_at"]

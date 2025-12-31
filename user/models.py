@@ -71,20 +71,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     Description:This is going to be the main User Model
     """
     email = models.EmailField(verbose_name='email address', max_length=50, validators=[Email_Validator], unique=True,
-                              error_messages={
-                                  'unique': "This email has already been registered."},blank=True, null=True)
-
+                                error_messages={'unique': "This email has already been registered."},blank=True, null=True)
     first_name = models.CharField(max_length=25, blank=True, null=True)
     middle_name = models.CharField(max_length=25,  blank=True, null=True)
     last_name = models.CharField(max_length=25,  blank=True, null=True)
-    position = models.CharField(max_length=30,  blank=True, null=True,
-                                default='Client')
+    position = models.CharField(max_length=30,  blank=True, null=True,default='Client')
     phone = models.CharField(max_length=20, validators=[validate_integer], unique=True, blank=True, null=True,
-     error_messages={  'unique': "This Phone has already been registered."})
+                                error_messages={  'unique': "This Phone has already been registered."})
     image = models.ImageField(upload_to=get_file_path, blank=True, null=True)
-    auth_provider = models.CharField(
-        max_length=50, blank=False,
-        null=False,  default='email')
+    auth_provider = models.CharField(max_length=50, blank=False,null=False,  default='email')
     is_superuser = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     admin =models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     is_staff = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
@@ -175,7 +170,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.first_name or self.last_name:
             return f'{self.first_name} {self.last_name} (Email: {self.email})'
         else:
-            return self.email
+            return str(self.id)
 
     def save(self, *args, **kwargs):
         if not self.code and not self.slug:
@@ -194,11 +189,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         }
 
     def get_full_name(self):
-        full_name = None
         if self.first_name or self.last_name:
             return f'{self.first_name} {self.last_name}'
         else:
-            return self.email
+            return str(self.id)
 
     def get_short_name(self):
         # The user is identified by their email address
