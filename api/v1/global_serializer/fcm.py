@@ -5,30 +5,19 @@ from core.models.notifications import MobileNotification
 
 logger = logging.getLogger(__name__)
 
-def send_fcm_notification(user, title, body, data=None, notification_type="general", save_to_db=True):
-    """
-    يقوم بإرسال إشعار FCM ويحفظ نسخة منه في جدول MobileNotification
-    """
-    if save_to_db:
-        try:
-            MobileNotification.objects.create(
-                recipient=user,
-                title=title,
-                message=body,
-                status='unread',
-                notification_type=notification_type
-            )
-        except Exception as e:
-            logger.error(f"DB: Failed to save MobileNotification for user {user.id}. Error: {e}")
-
+def send_fcm_notification(user, title, body, data=None, notification_type="general"):
     fcm_token = getattr(user, 'fcm_token', None)
-    
+
     if not fcm_token or str(fcm_token).strip() == '':
-        logger.warning(f"FCM: User {user.email} (ID: {user.id}) has no FCM token. Notification saved to DB only.")
+        logger.warning(f"FCM: User {user.email} (ID: {user.id}) has no FCM token. Notification NOT sent.")
         return False
 
     if data is None:
         data = {}
+
+    if 'type' not in data:
+        data['type'] = notification_type
+
     clean_data = {}
     for k, v in data.items():
         if v is not None:
@@ -47,13 +36,12 @@ def send_fcm_notification(user, title, body, data=None, notification_type="gener
         )
 
         response = messaging.send(message)
-        logger.info(f"FCM: Sent successfully to {user.email}. Message ID: {response}")
+        logger.info(f"FCM: Sent successfully to {user.email}. Type: {clean_data.get('type')}")
         return True
 
     except Exception as e:
         logger.error(f"FCM: Failed to send to {user.email}. Error: {e}", exc_info=True)
         return False
-
 
 def send_chat_notification(sender, receiver, message_text, dialog_id=None):
     sender_name = sender.get_full_name() or "User"

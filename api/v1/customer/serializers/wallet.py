@@ -1,16 +1,13 @@
-# api/v1/customer/serializers/wallet.py
 from decimal import Decimal
 from rest_framework import serializers
 from apps.wallet.models.models import Wallet, WalletMoney, WalletLocked
-from apps.wallet.models.transaction import TreasuryTransactions
-
+from apps.wallet.models.transaction import MoneyTransaction, TreasuryTransactions
 
 class WalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wallet
         fields = ["id", "user", "wallet_locked", "user_nuc", "code", "amount", "status", "create_at", "update_at"]
         read_only_fields = ["id", "user", "wallet_locked", "code", "status", "create_at", "update_at"]
-
 
 class WalletMoneySerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,7 +19,6 @@ class WalletMoneySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "wallet", "user", "actual_balance", "reversed_balance", "earning",
                             "paid", "due", "receive", "send", "code", "create_at", "update_at"]
-
 
 class CreateWalletSerializer(serializers.Serializer):
     password = serializers.CharField(required=False, default="123456", allow_blank=True)
@@ -36,7 +32,6 @@ class CreateWalletSerializer(serializers.Serializer):
             raise serializers.ValidationError("amount must be >= 0")
         return value
 
-
 class DepositSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=50, decimal_places=2)
 
@@ -44,7 +39,6 @@ class DepositSerializer(serializers.Serializer):
         if value <= Decimal("0.00"):
             raise serializers.ValidationError("amount must be greater than 0")
         return value
-
 
 class WithdrawSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=50, decimal_places=2)
@@ -54,37 +48,24 @@ class WithdrawSerializer(serializers.Serializer):
             raise serializers.ValidationError("amount must be greater than 0")
         return value
 
-
 class TreasuryTransactionSerializer(serializers.ModelSerializer):
     """Serializer for TreasuryTransactions - returns list of user payment transactions"""
 
     class Meta:
         model = TreasuryTransactions
         fields = [
-            "id",
-            "wallet",
-            "transaction_type",
-            "transaction_mode",
-            "transaction_status",
-            "transaction_category",
-            "amount",
-            "receive",
-            "send",
-            "note",
-            "month",
-            "year",
-            "code",
-            "slug",
-            "status",
-            "create_at",
-            "update_at"
+            "id","wallet","transaction_type","transaction_mode","transaction_status","transaction_category",
+            "amount","receive","send","note","month","year","code","slug","status","create_at","update_at"
         ]
         read_only_fields = [
-            "id",
-            "wallet",
-            "code",
-            "slug",
-            "create_at",
-            "update_at"
+            "id","wallet","code","slug","create_at","update_at"
+        ]
+
+class MoneyTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MoneyTransaction
+        fields = [
+            'id', 'code', 'serial_no', 'booking_ref', 'amount', 'service_fee', 'discount_amount', 'vat_amount', 
+            'total_amount', 'description', 'status', 'created_at'
         ]
 

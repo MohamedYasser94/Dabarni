@@ -74,3 +74,7 @@ class PayoutRequestSerializer(serializers.ModelSerializer):
         model = PayoutRequest
         fields = ["id", "user", "amount", "status", "created_at", "processed_at", "bank_account_slug", "bank_details"]
         read_only_fields = ["id", "user", "status", "created_at", "processed_at", "bank_details"]
+
+    def create(self, validated_data):
+        validated_data.pop('bank_account_slug', None)
+        return super().create(validated_data)

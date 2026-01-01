@@ -87,7 +87,6 @@ def ProviderPayoutRequest(request):
 
                 wallet.actual_balance -= amount
                 wallet.save()
-
                 payout_request = serializer.save(user=request.user, bank_account=target_bank_account, status="PENDING")
 
                 return Response({
