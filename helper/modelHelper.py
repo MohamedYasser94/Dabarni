@@ -715,3 +715,7 @@ Cost_Type = (('Fixed', 'Fixed'), ('Variable', 'Variable'), ('Once', 'Once'), ('M
 Project_Type = (('Programming', 'Programming'), ('Design', 'Design'), ('Marketing', 'Marketing'),
                 ('Management', 'Management'), ('Project', 'Project'), ('Task', 'Task'), ('Event', 'Event'),
                 ('Other', 'Other'),)
+
+VERIFICATION_STATUS_CHOICES = (('unverified', 'غير موثق'),('pending_review', 'تحت المراجعة'),
+                                ('verified', 'موثق'),('rejected', 'مرفوض'),
+    )

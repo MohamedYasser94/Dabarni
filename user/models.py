@@ -19,7 +19,7 @@ from PIL import Image
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.models.localization import Language
-from helper.modelHelper import Active_Status, User_Position, Email_Validator, Access_Level, User_Status, Country_List, \
+from helper.modelHelper import VERIFICATION_STATUS_CHOICES, Active_Status, User_Position, Email_Validator, Access_Level, User_Status, Country_List, \
     Governorates_List, SAUDI_CITIES_BY_GOVERNORATE, Public_Status
 
 from helper.viewHelper import get_file_path
@@ -108,6 +108,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     hide_email = models.CharField(max_length=20, choices=User_Status, default='Inactive' , blank=True, null=True)
     country = models.CharField(max_length=100, choices=Country_List, default='Egypt', null=True, blank=True)
     governorates = models.CharField(max_length=100, choices=Governorates_List, default='Cairo', null=True, blank=True)
+    verification_status = models.CharField(max_length=20, choices=VERIFICATION_STATUS_CHOICES, default='unverified', null=True, blank=True)
+    verification_rejection_reason = models.TextField(blank=True, null=True, help_text="سبب الرفض من الأدمن")
+    admin_verified_at = models.DateTimeField(blank=True, null=True, help_text="وقت الموافقة أو الرفض")
+    admin_verified_by = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True, related_name='verified_users', help_text="الأدمن الذي وافق أو رفض")
+    
     code = models.CharField(max_length=100, unique=True, null=True, blank=True)
     slug = models.SlugField(default=uuid.uuid4, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -232,6 +237,35 @@ class User(AbstractBaseUser, PermissionsMixin):
             # then for some users there may not be any information about the visit, we will return information that the last visit is unknown
         return _('Unknown')
 
+    def get_verification_status(self):
+        """
+        Calculate verification status dynamically based on:
+        - Profile completion percentage
+        - Admin approval/rejection
+        """
+        if self.verification_status == 'verified':
+            return 'verified'
+        if self.verification_status == 'rejected':
+            return 'rejected'
+        completion_percentage = 0
+        if hasattr(self, 'job_provider_profile'):
+            try:
+                provider = self.job_provider_profile
+                completion_percentage = provider.profile_completion_percentage
+            except Exception:
+                completion_percentage = 0
+        elif hasattr(self, 'profile'):
+            try:
+                profile = self.profile
+                completion_percentage = profile.profile_completion_percentage
+            except Exception:
+                completion_percentage = 0
+        if completion_percentage >= 100:
+            return 'pending_review'
+        
+        # Otherwise, unverified
+        return 'unverified'
+
 
 class UserProfile(models.Model):
     # --- RELATIONSHIP ---
@@ -278,6 +312,28 @@ class UserProfile(models.Model):
         if self.user and (self.user.first_name or self.user.last_name):
             return f"{self.user.first_name} {self.user.last_name}"
         return f"UserProfile #{self.pk}"
+
+    @property
+    def profile_completion_percentage(self):
+        """
+        Calculate profile completion percentage for customers.
+        Required fields: first_name, last_name, email, phone, id_image_front, id_image_back
+        """
+        total_fields = 6
+        filled_count = 0
+        user = self.user
+        user_checks = [user.first_name, user.last_name, user.email, user.phone]
+        for field in user_checks:
+            if field:
+                filled_count += 1
+        profile_checks = [self.id_image_front, self.id_image_back]
+        for field in profile_checks:
+            if field:
+                filled_count += 1
+        if total_fields == 0:
+            return 0
+        percentage = (filled_count / total_fields) * 100
+        return int(percentage)
 
     def save(self, *args, **kwargs):
         super(UserProfile, self).save(*args, **kwargs)

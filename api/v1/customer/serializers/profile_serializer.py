@@ -10,12 +10,24 @@ class UserProfileSerializer(serializers.ModelSerializer):
     nationality = serializers.CharField(required=False, allow_null=True)
     id_image_front = serializers.ImageField(required=False, allow_null=True)
     id_image_back = serializers.ImageField(required=False, allow_null=True)
+    verification_status = serializers.SerializerMethodField()
+    profile_completion_percentage = serializers.SerializerMethodField()
+    
     class Meta:
         model = UserProfile
         fields = [
             "image","first_name", "last_name", "email", "phone","nationality",
             "dob", "id_number",  "id_image_front", "id_image_back", "gender",
+            "verification_status", "profile_completion_percentage",
         ]
+    
+    def get_verification_status(self, obj):
+        """Get the verification status for the customer"""
+        return obj.user.get_verification_status()
+    
+    def get_profile_completion_percentage(self, obj):
+        """Get the profile completion percentage for the customer"""
+        return obj.profile_completion_percentage
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})

@@ -254,6 +254,8 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     # إضافة rating
     average_rating = serializers.SerializerMethodField()
     five_star_reviews_count = serializers.SerializerMethodField()
+    # Verification status
+    verification_status = serializers.SerializerMethodField()
 
     class Meta:
         model = JobProvider
@@ -270,6 +272,7 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
             'address', 'latitude', 'longitude',
             'commercial_image','commercial_number', 'vat_image', 'license_image',
             'profile_completion_percentage', 'average_rating' ,'five_star_reviews_count',
+            'verification_status',
         ]
 
     def get_average_rating(self, obj):
@@ -288,6 +291,10 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
             rating=5
         ).count()
         return count
+    
+    def get_verification_status(self, obj):
+        """Get the verification status for the provider"""
+        return obj.user.get_verification_status()
 
 class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     """
