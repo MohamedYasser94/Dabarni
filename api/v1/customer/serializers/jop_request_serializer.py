@@ -117,6 +117,7 @@ class ProviderOfferSerializer(serializers.ModelSerializer):
     provider_image = serializers.SerializerMethodField()
     provider_category = serializers.SerializerMethodField()
     provider_rating = serializers.SerializerMethodField()
+    provider_verification_status = serializers.SerializerMethodField()
 
     class Meta:
         model = JobOffer
@@ -127,6 +128,7 @@ class ProviderOfferSerializer(serializers.ModelSerializer):
             'provider_image',
             'provider_category',
             'provider_rating',
+            'provider_verification_status',
             'providerPhone',
             'price',
             'status',
@@ -156,6 +158,12 @@ class ProviderOfferSerializer(serializers.ModelSerializer):
         if hasattr(obj.provider, 'average_rating'):
             return obj.provider.average_rating
         return 0.0
+    
+    def get_provider_verification_status(self, obj):
+        """Get the verification status for the provider"""
+        if obj.provider and obj.provider.user:
+            return obj.provider.user.get_verification_status()
+        return 'unverified'
 
 class CouponSerializer(serializers.ModelSerializer):
     class Meta:
@@ -180,12 +188,14 @@ class JobNegotiateSerializer(serializers.ModelSerializer):
     provider_image = serializers.SerializerMethodField()
     provider_category = serializers.SerializerMethodField()
     provider_rating = serializers.SerializerMethodField()
+    provider_verification_status = serializers.SerializerMethodField()
 
     class Meta:
         model = JobNegotiate
         fields = [
             'id',
             'provider_id','provider_name','provider_phone','provider_image','provider_category','provider_rating',
+            'provider_verification_status',
             'provider_price','customer_price', 'provider_accepted','customer_accepted',
             'code','slug','create_at','update_at','job','offer','customer',
         ]
@@ -206,6 +216,12 @@ class JobNegotiateSerializer(serializers.ModelSerializer):
             return obj.provider.average_rating
         return 0.0
     
+    def get_provider_verification_status(self, obj):
+        """Get the verification status for the provider"""
+        if obj.provider and obj.provider.user:
+            return obj.provider.user.get_verification_status()
+        return 'unverified'
+
 
 class JobCategorySerializer(serializers.ModelSerializer):
     """
@@ -260,11 +276,13 @@ class JobDetailSerializer(serializers.ModelSerializer):
     negotiations = JobNegotiateSerializer(many=True, read_only=True, source='negotiates')
     customer_name = serializers.SerializerMethodField()
     customer_image = serializers.SerializerMethodField()
+    customer_verification_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
         fields = [
             "id","title","description","customer_name", "customer_image",
+            "customer_verification_status",
             "quantity","price", "category","location","media","scheduled_at",
             "progresses","offers","negotiations","views",
             "code","slug","create_at" ,
@@ -282,6 +300,12 @@ class JobDetailSerializer(serializers.ModelSerializer):
         if obj.customer and obj.customer.image:
             return request.build_absolute_uri(obj.customer.image.url) if request else obj.customer.image.url
         return None
+    
+    def get_customer_verification_status(self, obj):
+        """Get the verification status for the customer"""
+        if obj.customer:
+            return obj.customer.get_verification_status()
+        return 'unverified'
 
 
 

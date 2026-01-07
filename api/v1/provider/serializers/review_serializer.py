@@ -54,6 +54,9 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
     commercial_image = serializers.SerializerMethodField()
     vat_image = serializers.SerializerMethodField()
     license_image = serializers.SerializerMethodField()
+    
+    # Verification status
+    verification_status = serializers.SerializerMethodField()
 
     class Meta:
         model = JobProvider
@@ -62,7 +65,8 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
             'category_title', 'experience_years', 'company', 'bio',
             'address', 'latitude', 'longitude',
             'commercial_image', 'vat_image', 'license_image',
-            'profile_completion_percentage', 'average_rating','five_star_reviews_count', 'reviews'
+            'profile_completion_percentage', 'average_rating','five_star_reviews_count', 'reviews',
+            'verification_status',
         ]
 
     def get_average_rating(self, obj):
@@ -114,3 +118,7 @@ class ProviderProfileWithReviewsDetailSerializer(serializers.ModelSerializer):
 
     def get_license_image(self, obj):
         return self._get_image_url(obj.license_image)
+    
+    def get_verification_status(self, obj):
+        """Get the verification status for the provider"""
+        return obj.user.get_verification_status()

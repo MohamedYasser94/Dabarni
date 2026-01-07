@@ -42,6 +42,39 @@ def create_job(request):
             job_instance = serializer.save()
             # هنا أضفنا الـ context
             response_data = JobDetailSerializer(job_instance, context={'request': request}).data
+            
+            # Send notification to all providers in the same category
+            try:
+                from apps.classified.models.models import JobProvider
+                providers_in_category = JobProvider.objects.filter(
+                    category=job_instance.category,
+                    status='Active'
+                ).select_related('user')
+                
+                customer_name = request.user.get_full_name() or "عميل"
+                noti_title = "وظيفة جديدة في تخصصك!"
+                noti_body = f"تم نشر وظيفة جديدة: {job_instance.title or 'وظيفة'} - الكمية: {job_instance.quantity}"
+                noti_data = {
+                    "job_id": job_instance.id,
+                    "job_slug": job_instance.slug,
+                    "category_id": job_instance.category.id,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+                
+                for provider in providers_in_category:
+                    try:
+                        send_general_notification(
+                            receiver=provider.user,
+                            title=noti_title,
+                            body=noti_body,
+                            notification_type="new_job",
+                            extra_data=noti_data
+                        )
+                    except Exception:
+                        continue
+            except Exception as noti_error:
+                pass
+            
             return success_response(
                 message="تم نشر الطلب بنجاح",
                 data=response_data,
@@ -216,6 +249,35 @@ def cancel_job(request, job_id):
         # Update the main Job's status field as well for consistency
         job_instance.status = 'Inactive'
         job_instance.save()
+        
+        # Send notification to provider if assigned
+        try:
+            if job_progress.provider and job_progress.provider.user:
+                provider_user = job_progress.provider.user
+                customer_name = request.user.get_full_name() or "العميل"
+                job_title = job_instance.title or "الوظيفة"
+                
+                noti_title = "تم إلغاء الوظيفة"
+                noti_body = f"قام {customer_name} بإلغاء الوظيفة: {job_title}. السبب: {reason[:50]}..."
+                noti_data = {
+                    "job_id": job_instance.id,
+                    "job_slug": job_instance.slug,
+                    "progress_id": job_progress.id,
+                    "reason": reason,
+                    "cancelled_at": str(job_progress.canceled_at),
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+                
+                send_general_notification(
+                    receiver=provider_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="job_cancelled",
+                    extra_data=noti_data
+                )
+        except Exception as noti_error:
+            pass
+        
         serializer = JobDetailSerializer(job_instance, context={'request': request})
         return success_response(
             message="تم إلغاء الوظيفة بنجاح",
@@ -509,6 +571,34 @@ def start_Customer_work(request, progress_id):
         progress.start_at = timezone.now()
         progress.progress_status = "InProgress"
         progress.save()
+        
+        # Send notification to provider
+        try:
+            if progress.provider and progress.provider.user:
+                provider_user = progress.provider.user
+                customer_name = request.user.get_full_name() or "العميل"
+                job_title = progress.job.title or "الوظيفة"
+                
+                noti_title = "بدأ العميل العمل!"
+                noti_body = f"بدأ {customer_name} العمل على الوظيفة: {job_title}. يمكنك الآن البدء بالتنفيذ."
+                noti_data = {
+                    "job_id": progress.job.id,
+                    "job_slug": progress.job.slug,
+                    "progress_id": progress.id,
+                    "start_at": str(progress.start_at),
+                    "progress_status": progress.progress_status,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+                
+                send_general_notification(
+                    receiver=provider_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="work_started",
+                    extra_data=noti_data
+                )
+        except Exception as noti_error:
+            pass
 
         return Response({
             "status": True,
@@ -547,6 +637,34 @@ def finish_Customer_work(request, progress_id):
         progress.end_at = now 
         progress.progress_status = "Completed"
         progress.save()
+        
+        # Send notification to provider
+        try:
+            if progress.provider and progress.provider.user:
+                provider_user = progress.provider.user
+                customer_name = request.user.get_full_name() or "العميل"
+                job_title = progress.job.title or "الوظيفة"
+                
+                noti_title = "تم اعتماد إنهاء العمل!"
+                noti_body = f"اعتمد {customer_name} إنهاء العمل على الوظيفة: {job_title}. تم إكمال الوظيفة بنجاح!"
+                noti_data = {
+                    "job_id": progress.job.id,
+                    "job_slug": progress.job.slug,
+                    "progress_id": progress.id,
+                    "completed_at": str(progress.completed_at),
+                    "progress_status": progress.progress_status,
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+                
+                send_general_notification(
+                    receiver=provider_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="work_completed",
+                    extra_data=noti_data
+                )
+        except Exception as noti_error:
+            pass
 
         return Response({
             "status": True,
@@ -817,6 +935,34 @@ def approve_extra_cost(request, progress_id):
         new_total = current_total + progress.extra_cost
         progress.total_cost = new_total
         progress.save()
+        
+        # Send notification to provider
+        try:
+            if progress.provider and progress.provider.user:
+                provider_user = progress.provider.user
+                customer_name = request.user.get_full_name() or "العميل"
+                job_title = progress.job.title or "الوظيفة"
+                
+                noti_title = "تمت الموافقة على المبلغ الإضافي!"
+                noti_body = f"وافق {customer_name} على المبلغ الإضافي {progress.extra_cost} ريال للوظيفة: {job_title}"
+                noti_data = {
+                    "job_id": progress.job.id,
+                    "job_slug": progress.job.slug,
+                    "progress_id": progress.id,
+                    "extra_cost": str(progress.extra_cost),
+                    "new_total": str(progress.total_cost),
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+                
+                send_general_notification(
+                    receiver=provider_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="extra_cost_approved",
+                    extra_data=noti_data
+                )
+        except Exception as noti_error:
+            pass
 
         return Response({
             "status": True,
@@ -878,6 +1024,33 @@ def reject_extra_cost(request, progress_id):
         progress.extra_cost_approved = False
         progress.extra_approved_time = timezone.now() 
         progress.save()
+        
+        # Send notification to provider
+        try:
+            if progress.provider and progress.provider.user:
+                provider_user = progress.provider.user
+                customer_name = request.user.get_full_name() or "العميل"
+                job_title = progress.job.title or "الوظيفة"
+                
+                noti_title = "تم رفض المبلغ الإضافي"
+                noti_body = f"رفض {customer_name} المبلغ الإضافي {progress.extra_cost} ريال للوظيفة: {job_title}"
+                noti_data = {
+                    "job_id": progress.job.id,
+                    "job_slug": progress.job.slug,
+                    "progress_id": progress.id,
+                    "extra_cost": str(progress.extra_cost),
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+                
+                send_general_notification(
+                    receiver=provider_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="extra_cost_rejected",
+                    extra_data=noti_data
+                )
+        except Exception as noti_error:
+            pass
 
         return Response({
             "status": True,
