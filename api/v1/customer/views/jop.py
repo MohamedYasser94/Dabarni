@@ -263,6 +263,7 @@ def cancel_job(request, job_id):
                     "job_id": job_instance.id,
                     "job_slug": job_instance.slug,
                     "progress_id": job_progress.id,
+                    "progress_status": job_progress.progress_status,
                     "reason": reason,
                     "cancelled_at": str(job_progress.canceled_at),
                     "click_action": "FLUTTER_NOTIFICATION_CLICK"
@@ -496,6 +497,7 @@ def CustomerAcceptOffer(request, offer_id):
                     "job_slug": job.slug,
                     "offer_id": offer.id,
                     "progress_id": job_progress.id,
+                    "progress_status": job_progress.progress_status,
                     "click_action": "FLUTTER_NOTIFICATION_CLICK"
                 }
 
@@ -742,6 +744,42 @@ def NegotiateOffer(request, offer_id):
 
         offer.status = JobOfferStatus.NEGOTIATING
         offer.save()
+        
+        # Send notification to provider
+        try:
+            if offer.provider and offer.provider.user:
+                provider_user = offer.provider.user
+                customer_name = request.user.get_full_name() or "العميل"
+                job_title = offer.job.title or "الوظيفة"
+                
+                # Try to get job_progress if exists
+                job_progress = JobProgress.objects.filter(job=offer.job).first()
+                
+                noti_title = "عرض تفاوض جديد!"
+                noti_body = f"أرسل {customer_name} عرض تفاوض بسعر {customer_price} ريال للوظيفة: {job_title}"
+                noti_data = {
+                    "job_id": offer.job.id,
+                    "job_slug": offer.job.slug,
+                    "offer_id": offer.id,
+                    "negotiation_id": negotiation_record.id,
+                    "customer_price": str(customer_price),
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
+                
+                # Add progress_status if job_progress exists
+                if job_progress:
+                    noti_data["progress_id"] = job_progress.id
+                    noti_data["progress_status"] = job_progress.progress_status
+                
+                send_general_notification(
+                    receiver=provider_user,
+                    title=noti_title,
+                    body=noti_body,
+                    notification_type="negotiation_offer",
+                    extra_data=noti_data
+                )
+        except Exception as noti_error:
+            pass
 
         return success_response(
             message=message,
@@ -814,6 +852,42 @@ def Customer_respond_Negotiation(request, negotiation_id):
                 offer.status = "negotiated" 
                 offer.save()
                 message = "تم قبول عرض التفاوض وتحديث سعر العرض بنجاح."
+                
+                # Send notification to provider on accept
+                try:
+                    if negotiation.provider and negotiation.provider.user:
+                        provider_user = negotiation.provider.user
+                        customer_name = request.user.get_full_name() or "العميل"
+                        job_title = negotiation.job.title or "الوظيفة"
+                        
+                        # Try to get job_progress if exists
+                        job_progress = JobProgress.objects.filter(job=negotiation.job).first()
+                        
+                        noti_title = "تم قبول عرض التفاوض!"
+                        noti_body = f"وافق {customer_name} على عرض التفاوض بسعر {negotiation.provider_price} ريال للوظيفة: {job_title}"
+                        noti_data = {
+                            "job_id": negotiation.job.id,
+                            "job_slug": negotiation.job.slug,
+                            "offer_id": offer.id,
+                            "negotiation_id": negotiation.id,
+                            "final_price": str(negotiation.provider_price),
+                            "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                        }
+                        
+                        # Add progress_status if job_progress exists
+                        if job_progress:
+                            noti_data["progress_id"] = job_progress.id
+                            noti_data["progress_status"] = job_progress.progress_status
+                        
+                        send_general_notification(
+                            receiver=provider_user,
+                            title=noti_title,
+                            body=noti_body,
+                            notification_type="negotiation_accepted",
+                            extra_data=noti_data
+                        )
+                except Exception as noti_error:
+                    pass
             
             elif action == 'reject':
                 negotiation.customer_accepted = False 
@@ -823,6 +897,41 @@ def Customer_respond_Negotiation(request, negotiation_id):
                 offer.status = "negotiated"
                 offer.save()
                 message = "تم رفض عرض التفاوض بنجاح."
+                
+                # Send notification to provider on reject
+                try:
+                    if negotiation.provider and negotiation.provider.user:
+                        provider_user = negotiation.provider.user
+                        customer_name = request.user.get_full_name() or "العميل"
+                        job_title = negotiation.job.title or "الوظيفة"
+                        
+                        # Try to get job_progress if exists
+                        job_progress = JobProgress.objects.filter(job=negotiation.job).first()
+                        
+                        noti_title = "تم رفض عرض التفاوض"
+                        noti_body = f"رفض {customer_name} عرض التفاوض للوظيفة: {job_title}"
+                        noti_data = {
+                            "job_id": negotiation.job.id,
+                            "job_slug": negotiation.job.slug,
+                            "offer_id": offer.id,
+                            "negotiation_id": negotiation.id,
+                            "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                        }
+                        
+                        # Add progress_status if job_progress exists
+                        if job_progress:
+                            noti_data["progress_id"] = job_progress.id
+                            noti_data["progress_status"] = job_progress.progress_status
+                        
+                        send_general_notification(
+                            receiver=provider_user,
+                            title=noti_title,
+                            body=noti_body,
+                            notification_type="negotiation_rejected",
+                            extra_data=noti_data
+                        )
+                except Exception as noti_error:
+                    pass
 
         return success_response(
             message=message,
@@ -949,6 +1058,7 @@ def approve_extra_cost(request, progress_id):
                     "job_id": progress.job.id,
                     "job_slug": progress.job.slug,
                     "progress_id": progress.id,
+                    "progress_status": progress.progress_status,
                     "extra_cost": str(progress.extra_cost),
                     "new_total": str(progress.total_cost),
                     "click_action": "FLUTTER_NOTIFICATION_CLICK"
@@ -1038,6 +1148,7 @@ def reject_extra_cost(request, progress_id):
                     "job_id": progress.job.id,
                     "job_slug": progress.job.slug,
                     "progress_id": progress.id,
+                    "progress_status": progress.progress_status,
                     "extra_cost": str(progress.extra_cost),
                     "click_action": "FLUTTER_NOTIFICATION_CLICK"
                 }

@@ -462,6 +462,7 @@ def AcceptJob(request, job_id):
                 "job_id": job.id,
                 "job_slug": job.slug,
                 "progress_id": job_progress.id,
+                "progress_status": job_progress.progress_status,
                 "click_action": "FLUTTER_NOTIFICATION_CLICK"
             }
 
@@ -527,6 +528,7 @@ def FinishJob(request, job_id):
                     "type": "job_review",
                     "job_id": job.id,
                     "progress_id": progress.id,
+                    "progress_status": progress.progress_status,
                     "click_action": "FLUTTER_NOTIFICATION_CLICK"
                 }
 
@@ -605,6 +607,12 @@ def SendNewOffer(request):
                             "offer_id": offer.id,
                             "click_action": "FLUTTER_NOTIFICATION_CLICK"
                         }
+                        
+                        # Try to get job_progress to include progress_status if exists
+                        job_progress = JobProgress.objects.filter(job=job).first()
+                        if job_progress:
+                            noti_data["progress_id"] = job_progress.id
+                            noti_data["progress_status"] = job_progress.progress_status
 
                         send_general_notification(
                             receiver=customer_user,
@@ -710,6 +718,12 @@ def Provider_respond_Negotiation(request, negotiation_id):
                         "click_action": "FLUTTER_NOTIFICATION_CLICK"
                     }
                     
+                    # Try to get job_progress to include progress_status if exists
+                    job_progress = JobProgress.objects.filter(job=negotiation.job).first()
+                    if job_progress:
+                        noti_data["progress_id"] = job_progress.id
+                        noti_data["progress_status"] = job_progress.progress_status
+                    
                     send_general_notification(
                         receiver=customer_user,
                         title=noti_title,
@@ -745,6 +759,12 @@ def Provider_respond_Negotiation(request, negotiation_id):
                         "offer_id": offer.id,
                         "click_action": "FLUTTER_NOTIFICATION_CLICK"
                     }
+                    
+                    # Try to get job_progress to include progress_status if exists
+                    job_progress = JobProgress.objects.filter(job=negotiation.job).first()
+                    if job_progress:
+                        noti_data["progress_id"] = job_progress.id
+                        noti_data["progress_status"] = job_progress.progress_status
                     
                     send_general_notification(
                         receiver=customer_user,
@@ -838,6 +858,12 @@ def providerNegotiateResponse(request, negotiation_id):
                         "click_action": "FLUTTER_NOTIFICATION_CLICK"
                     }
                     
+                    # Try to get job_progress to include progress_status if exists
+                    job_progress = JobProgress.objects.filter(job=negotiation.job).first()
+                    if job_progress:
+                        noti_data["progress_id"] = job_progress.id
+                        noti_data["progress_status"] = job_progress.progress_status
+                    
                     send_general_notification(
                         receiver=customer_user,
                         title=noti_title,
@@ -917,6 +943,7 @@ def request_extra_amount(request, progress_id):
                 "job_id": progress.job.id,
                 "job_slug": progress.job.slug,
                 "progress_id": progress.id,
+                "progress_status": progress.progress_status,
                 "extra_cost": str(extra_cost),
                 "extra_request": extra_request,
                 "click_action": "FLUTTER_NOTIFICATION_CLICK"
@@ -1076,6 +1103,7 @@ def cancel_job_provider(request, job_id):
                 "job_id": job_instance.id,
                 "job_slug": job_instance.slug,
                 "progress_id": job_progress.id,
+                "progress_status": job_progress.progress_status,
                 "reason": reason,
                 "cancelled_at": str(job_progress.canceled_at),
                 "click_action": "FLUTTER_NOTIFICATION_CLICK"
@@ -1272,6 +1300,7 @@ def jobRequestExtraMoney(request,progress_slug):
             "job_id": job_progress.job.id,
             "job_slug": job_progress.job.slug,
             "progress_id": job_progress.id,
+            "progress_status": job_progress.progress_status,
             "extra_amount": str(extra_amount),
             "reason": reason,
             "click_action": "FLUTTER_NOTIFICATION_CLICK"
@@ -1323,6 +1352,7 @@ def ProviderJobCancelRequest(request,progress_slug):
             "job_id": job_progress.job.id,
             "job_slug": job_progress.job.slug,
             "progress_id": job_progress.id,
+            "progress_status": job_progress.progress_status,
             "click_action": "FLUTTER_NOTIFICATION_CLICK"
         }
         
@@ -1371,6 +1401,7 @@ def ProviderJobCompleteRequest(request,progress_slug):
             "job_id": job_progress.job.id,
             "job_slug": job_progress.job.slug,
             "progress_id": job_progress.id,
+            "progress_status": job_progress.progress_status,
             "click_action": "FLUTTER_NOTIFICATION_CLICK"
         }
         

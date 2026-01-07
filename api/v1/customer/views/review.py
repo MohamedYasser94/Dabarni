@@ -45,6 +45,7 @@ def createJobReview(request, job_id):
                     "job_id": job.id,
                     "review_id": review.id,
                     "provider_id": job_progress.provider.id,
+                    "progress_status": job_progress.progress_status,
                     "click_action": "FLUTTER_NOTIFICATION_CLICK"
                 }
 
