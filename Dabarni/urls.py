@@ -24,7 +24,7 @@ from rest_framework import permissions
 from rest_framework_simplejwt import views as jwt_views
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from api.v1 import authentication
-from api.v1.global_views import fcm_notification_views
+from api.v1.global_views import email_verification, fcm_notification_views
 
 from home.views.chat import dialog_list_view
 
@@ -62,6 +62,8 @@ urlpatterns = [path('i18n/', include('django.conf.urls.i18n')),
         path('<int:notification_id>/delete/', fcm_notification_views.delete_notification, name='delete-notification'),
     ]), name='notifications_api'),
 
+    path("request-email-verification/", email_verification.request_email_verification, name="request-email-verification"),
+    path('verify-email/', email_verification.verify_email_otp, name='verify-email'),
 ]
 
 urlpatterns += i18n_patterns(

@@ -1,0 +1,101 @@
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from django.utils import timezone
+from api.v1.global_serializer.auth_serializer import EmailVerificationRequestSerializer, EmailVerifySerializer
+from api.v1.utils import Util, handle_email_otp_sending
+from user.models import User
+from datetime import timedelta
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def request_email_verification(request):
+    """
+    Step 1: Request Email Verification OTP.
+    Body: {"email": "user@example.com"}
+    """
+    serializer = EmailVerificationRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    email = serializer.validated_data['email']
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({
+            'success': True, 
+            'message': 'If an account exists with this email, a verification OTP has been sent.'
+        }, status=status.HTTP_200_OK)
+
+    if user.is_verified == 'Active':
+        return Response({
+            'error': 'Account is already verified.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    success, otp_code = handle_email_otp_sending(user)
+
+    if not success:
+        return Response({'error': otp_code}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+    email_body = (
+        f'Hello {user.first_name or "User"},\n\n'
+        f'Your Email Verification Code is: {otp_code}\n\n'
+        f'This code is valid for 10 minutes.\n'
+    )
+
+    data = {
+        'email_subject': 'Verify Your Email Address',
+        'email_body': email_body,
+        'to_email': user.email
+    }
+
+    try:
+        Util.send_email(data)
+        return Response({
+            'success': True,
+            'message': 'A verification OTP has been sent to your email.'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as exc:
+        return Response({
+            'error': 'Failed to send verification email.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_email_otp(request):
+    """
+    Step 2: Verify the OTP and activate the account.
+    Body: {"email": "user@example.com", "otp": "123456"}
+    """
+    serializer = EmailVerifySerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    email = serializer.validated_data['email']
+    otp_input = serializer.validated_data['otp']
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if not user.email_verification_otp or user.email_verification_otp != otp_input:
+        return Response({'error': 'Invalid OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if user.email_verification_otp_created_at:
+        expiration_time = user.email_verification_otp_created_at + timedelta(minutes=10)
+        if timezone.now() > expiration_time:
+            return Response({'error': 'OTP has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.is_verified = 'Active'
+    user.email_verification_otp = None
+    user.email_verification_otp_created_at = None
+    user.save()
+
+    return Response({
+        'success': True,
+        'message': 'Email verified successfully. You can now login.'
+    }, status=status.HTTP_200_OK)

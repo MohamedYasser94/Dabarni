@@ -31,3 +31,10 @@ class LogoutSerializer(serializers.Serializer):
 
 class UpdateFCMTokenSerializer(serializers.Serializer):
     fcm_token = serializers.CharField(required=True, help_text="The Firebase Cloud Messaging token from Flutter")
+
+class EmailVerificationRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class EmailVerifySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)

@@ -113,6 +113,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     admin_verified_at = models.DateTimeField(blank=True, null=True, help_text="وقت الموافقة أو الرفض")
     admin_verified_by = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True, related_name='verified_users', help_text="الأدمن الذي وافق أو رفض")
     
+    # Email Verification OTP
+    email_verification_otp = models.CharField(max_length=6, blank=True, null=True, verbose_name='Email Verification OTP')
+    email_verification_otp_created_at = models.DateTimeField(null=True, blank=True)
+    
     code = models.CharField(max_length=100, unique=True, null=True, blank=True)
     slug = models.SlugField(default=uuid.uuid4, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
