@@ -28,10 +28,6 @@ def request_email_verification(request):
         return Response({
             'error': 'This email is already associated with another account.'
         }, status=status.HTTP_400_BAD_REQUEST)
-
-    if user.email != new_email:
-        user.email = new_email
-        user.save()
     
     success, otp_code = handle_email_otp_sending(user)
 
@@ -67,20 +63,16 @@ def request_email_verification(request):
 @authentication_classes([JWTAuthentication])
 def verify_email_otp(request):
     """
-    Step 2: Verify the OTP and activate the account.
+    Step 2: Verify the OTP and update the email.
     Body: {"email": "user@example.com", "otp": "123456"}
     """
     serializer = EmailVerifySerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    email = serializer.validated_data['email']
+    new_email = serializer.validated_data['email']
     otp_input = serializer.validated_data['otp']
-
-    try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+    user = request.user
 
     if not user.email_verification_otp or user.email_verification_otp != otp_input:
         return Response({'error': 'Invalid OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -90,6 +82,9 @@ def verify_email_otp(request):
         if timezone.now() > expiration_time:
             return Response({'error': 'OTP has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    if user.email != new_email:
+        user.email = new_email
+    
     user.is_verified = 'Active'
     user.email_verification_otp = None
     user.email_verification_otp_created_at = None
