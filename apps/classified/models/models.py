@@ -493,6 +493,8 @@ class JobProgress(models.Model):
     extra_cost_approved = models.BooleanField(null=True, default=None)
     coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, related_name='job_progresses', blank=True, null=True)
     coupon_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True, null=True)
+    added_tax = models.DecimalField(max_digits=10, decimal_places=2, default=2.00, blank=True, null=True)
+    added_value = models.DecimalField(max_digits=10, decimal_places=2, default=10.00, blank=True, null=True)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     progress_status = models.CharField(max_length=20, choices=Job_Progress_Status, default='Pending', null=True, blank=True)
     provider_progress = models.TextField(blank=True, null=True)
