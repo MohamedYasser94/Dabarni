@@ -46,14 +46,8 @@ def register(request):
     user = None
     created = False
     try:
-        user = User.objects.get(phone=phone)
-        
-        if user.access_level != access_level:
-            return error_response(
-                message="This phone is already registered with a different role. Please use another phone number.",
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
-        
+        user = User.objects.get(phone=phone, access_level=access_level)
+
     except User.DoesNotExist:
         try:
             user = User.objects.create(phone=phone, access_level=access_level, position=access_level)
@@ -69,7 +63,6 @@ def register(request):
             JobProvider.objects.create(
                 user=user,
                 business_phone=phone
-                # Category is not set here, as it's now nullable
             )
         except Exception as e:
             user.delete()

@@ -18,6 +18,7 @@ from django.utils import timezone
 from django.db.models import Q, Prefetch
 from user.models import UserProfile
 from api.v1.global_serializer.fcm import send_general_notification
+from api.v1.utils import get_display_name
 
 @extend_schema(
     tags=["Provider Profile"],
@@ -453,10 +454,10 @@ def AcceptJob(request, job_id):
 
         try:
             customer_user = job.customer
-            provider_name = request.user.get_full_name() or "مقدم خدمة"
+            provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
 
             noti_title = "تم قبول طلبك!"
-            noti_body = f"وافق {provider_name} على تنفيذ طلبك '{job.title}' بالسعر المحدد."
+            noti_body = f"وافق {provider_name} على تنفيذ طلبك بالسعر المحدد."
             noti_data = {
                 "type": "job_accepted",
                 "job_id": job.id,
@@ -520,10 +521,10 @@ def FinishJob(request, job_id):
 
             try:
                 customer_user = job.customer
-                provider_name = request.user.get_full_name() or "مقدم الخدمة"
+                provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
                 
                 noti_title = "مقدم الخدمة أنهى العمل!"
-                noti_body = f"قام {provider_name} بإنهاء العمل على طلبك '{job.title}'. يرجى المراجعة والموافقة لإنهاء الطلب."
+                noti_body = f"قام {provider_name} بإنهاء العمل. يرجى المراجعة والموافقة لإنهاء الطلب."
                 noti_data = {
                     "type": "job_review",
                     "job_id": job.id,
@@ -597,9 +598,9 @@ def SendNewOffer(request):
 
                     try:
                         customer_user = job.customer
-                        provider_name = request.user.get_full_name() or "مقدم خدمة"
+                        provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
                         noti_title = "عرض سعر جديد!"
-                        noti_body = f"قام {provider_name} بتقديم عرض سعر جديد بقيمة {price} على طلبك: {job.title}"
+                        noti_body = f"قام {provider_name} بتقديم عرض سعر جديد بقيمة {price}"
                         noti_data = {
                             "type": "new_offer",
                             "job_id": job.id,
@@ -624,13 +625,10 @@ def SendNewOffer(request):
                     except Exception as noti_error:
                         pass
 
-                    message = "تم تقديم عرضك بنجاح."
-                    status_code = status.HTTP_201_CREATED
-
                 return success_response(
-                    message=message,
+                    message="تم تقديم عرضك بنجاح.",
                     data=JobOfferSerializer(offer).data,
-                    status_code=status_code
+                    status_code=status.HTTP_201_CREATED
                 )
             else:
                 return error_response(
@@ -704,11 +702,10 @@ def Provider_respond_Negotiation(request, negotiation_id):
                 # Send notification to customer
                 try:
                     customer_user = negotiation.job.customer
-                    provider_name = request.user.get_full_name() or "مقدم الخدمة"
-                    job_title = negotiation.job.title or "الوظيفة"
+                    provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
                     
                     noti_title = "وافق مقدم الخدمة على سعرك!"
-                    noti_body = f"وافق {provider_name} على سعرك المقترح {negotiation.customer_price} ريال للوظيفة: {job_title}"
+                    noti_body = f"وافق {provider_name} على سعرك المقترح {negotiation.customer_price} ريال"
                     noti_data = {
                         "job_id": negotiation.job.id,
                         "job_slug": negotiation.job.slug,
@@ -747,11 +744,10 @@ def Provider_respond_Negotiation(request, negotiation_id):
                 # Send notification to customer
                 try:
                     customer_user = negotiation.job.customer
-                    provider_name = request.user.get_full_name() or "مقدم الخدمة"
-                    job_title = negotiation.job.title or "الوظيفة"
+                    provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
                     
                     noti_title = "رفض مقدم الخدمة سعرك"
-                    noti_body = f"رفض {provider_name} سعرك المقترح للوظيفة: {job_title}"
+                    noti_body = f"رفض {provider_name} سعرك المقترح"
                     noti_data = {
                         "job_id": negotiation.job.id,
                         "job_slug": negotiation.job.slug,
@@ -844,11 +840,10 @@ def providerNegotiateResponse(request, negotiation_id):
                 # Send notification to customer
                 try:
                     customer_user = negotiation.job.customer
-                    provider_name = request.user.get_full_name() or "مقدم الخدمة"
-                    job_title = negotiation.job.title or "الوظيفة"
+                    provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
                     
                     noti_title = "عرض سعر مضاد جديد!"
-                    noti_body = f"اقترح {provider_name} سعراً جديداً {newProviderPrice} ريال للوظيفة: {job_title}"
+                    noti_body = f"اقترح {provider_name} سعراً جديداً {newProviderPrice} ريال"
                     noti_data = {
                         "job_id": negotiation.job.id,
                         "job_slug": negotiation.job.slug,
@@ -931,11 +926,10 @@ def request_extra_amount(request, progress_id):
         # Send notification to customer
         try:
             customer_user = progress.customer
-            provider_name = request.user.get_full_name() or "مقدم الخدمة"
-            job_title = progress.job.title or "الوظيفة"
+            provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
             
             noti_title = "طلب مبلغ إضافي"
-            noti_body = f"طلب {provider_name} مبلغاً إضافياً {extra_cost} ريال للوظيفة: {job_title}"
+            noti_body = f"طلب {provider_name} مبلغاً إضافياً {extra_cost} ريال"
             if extra_request:
                 noti_body += f". السبب: {extra_request[:50]}"
             
@@ -998,11 +992,10 @@ def start_work(request, progress_id):
         # Send notification to customer
         try:
             customer_user = progress.customer
-            provider_name = request.user.get_full_name() or "مقدم الخدمة"
-            job_title = progress.job.title or "الوظيفة"
+            provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
             
             noti_title = "مقدم الخدمة جاهز للبدء!"
-            noti_body = f"أعلن {provider_name} جاهزيته للبدء بالعمل على وظيفتك: {job_title}. يمكنك بدء العمل الآن."
+            noti_body = f"أعلن {provider_name} جاهزيته للبدء بالعمل. يمكنك بدء العمل الآن."
             noti_data = {
                 "job_id": progress.job.id,
                 "job_slug": progress.job.slug,
@@ -1094,11 +1087,10 @@ def cancel_job_provider(request, job_id):
         # Send notification to customer
         try:
             customer_user = job_instance.customer
-            provider_name = request.user.get_full_name() or "مقدم الخدمة"
-            job_title = job_instance.title or "الوظيفة"
+            provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
             
             noti_title = "ألغى مقدم الخدمة الوظيفة"
-            noti_body = f"قام {provider_name} بإلغاء الوظيفة: {job_title}. السبب: {reason[:50]}"
+            noti_body = f"قام {provider_name} بإلغاء الوظيفة. السبب: {reason[:50]}"
             noti_data = {
                 "job_id": job_instance.id,
                 "job_slug": job_instance.slug,
@@ -1288,11 +1280,10 @@ def jobRequestExtraMoney(request,progress_slug):
     # Send notification to customer
     try:
         customer_user = job_progress.customer
-        provider_name = request.user.get_full_name() or "مقدم الخدمة"
-        job_title = job_progress.job.title or "الوظيفة"
+        provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
         
         noti_title = "طلب مبلغ إضافي"
-        noti_body = f"طلب {provider_name} مبلغاً إضافياً {extra_amount} ريال للوظيفة: {job_title}"
+        noti_body = f"طلب {provider_name} مبلغاً إضافياً {extra_amount} ريال"
         if reason:
             noti_body += f". السبب: {reason[:50]}"
         
@@ -1343,11 +1334,10 @@ def ProviderJobCancelRequest(request,progress_slug):
     # Send notification to customer
     try:
         customer_user = job_progress.customer
-        provider_name = request.user.get_full_name() or "مقدم الخدمة"
-        job_title = job_progress.job.title or "الوظيفة"
+        provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
         
         noti_title = "ألغى مقدم الخدمة الوظيفة"
-        noti_body = f"قام {provider_name} بإلغاء الوظيفة: {job_title}"
+        noti_body = f"قام {provider_name} بإلغاء الوظيفة"
         noti_data = {
             "job_id": job_progress.job.id,
             "job_slug": job_progress.job.slug,
@@ -1392,11 +1382,10 @@ def ProviderJobCompleteRequest(request,progress_slug):
     # Send notification to customer
     try:
         customer_user = job_progress.customer
-        provider_name = request.user.get_full_name() or "مقدم الخدمة"
-        job_title = job_progress.job.title or "الوظيفة"
+        provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
         
         noti_title = "أكمل مقدم الخدمة العمل!"
-        noti_body = f"أكمل {provider_name} العمل على وظيفتك: {job_title}. يرجى المراجعة والاعتماد."
+        noti_body = f"أكمل {provider_name} العمل. يرجى المراجعة والاعتماد."
         noti_data = {
             "job_id": job_progress.job.id,
             "job_slug": job_progress.job.slug,

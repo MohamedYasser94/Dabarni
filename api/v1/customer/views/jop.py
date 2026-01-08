@@ -24,6 +24,7 @@ from api.v1.customer.serializers.jop_request_serializer import (
 from api.v1.response import success_response, error_response
 from apps.wallet.models.models import Wallet
 from api.v1.global_serializer.fcm import send_general_notification
+from api.v1.utils import get_display_name
 
 @extend_schema(
     tags=["Customer Jobs"],
@@ -254,11 +255,10 @@ def cancel_job(request, job_id):
         try:
             if job_progress.provider and job_progress.provider.user:
                 provider_user = job_progress.provider.user
-                customer_name = request.user.get_full_name() or "العميل"
-                job_title = job_instance.title or "الوظيفة"
+                customer_name = get_display_name(request.user.get_full_name(), "العميل")
                 
                 noti_title = "تم إلغاء الوظيفة"
-                noti_body = f"قام {customer_name} بإلغاء الوظيفة: {job_title}. السبب: {reason[:50]}..."
+                noti_body = f"قام {customer_name} بإلغاء الوظيفة. السبب: {reason[:50]}..."
                 noti_data = {
                     "job_id": job_instance.id,
                     "job_slug": job_instance.slug,
@@ -488,10 +488,10 @@ def CustomerAcceptOffer(request, offer_id):
 
             try:
                 provider_user = offer.provider.user 
-                customer_name = request.user.get_full_name() or "Customer"
+                customer_name = get_display_name(request.user.get_full_name(), "العميل")
                 
                 noti_title = "تم قبول عرضك!"
-                noti_body = f"وافق {customer_name} على عرضك المقدم للوظيفة: {job.title}"
+                noti_body = f"وافق {customer_name} على عرضك المقدم"
                 noti_data = {
                     "job_id": job.id,
                     "job_slug": job.slug,
@@ -578,11 +578,10 @@ def start_Customer_work(request, progress_id):
         try:
             if progress.provider and progress.provider.user:
                 provider_user = progress.provider.user
-                customer_name = request.user.get_full_name() or "العميل"
-                job_title = progress.job.title or "الوظيفة"
+                customer_name = get_display_name(request.user.get_full_name(), "العميل")
                 
                 noti_title = "بدأ العميل العمل!"
-                noti_body = f"بدأ {customer_name} العمل على الوظيفة: {job_title}. يمكنك الآن البدء بالتنفيذ."
+                noti_body = f"بدأ {customer_name} العمل. يمكنك الآن البدء بالتنفيذ."
                 noti_data = {
                     "job_id": progress.job.id,
                     "job_slug": progress.job.slug,
@@ -644,11 +643,10 @@ def finish_Customer_work(request, progress_id):
         try:
             if progress.provider and progress.provider.user:
                 provider_user = progress.provider.user
-                customer_name = request.user.get_full_name() or "العميل"
-                job_title = progress.job.title or "الوظيفة"
+                customer_name = get_display_name(request.user.get_full_name(), "العميل")
                 
                 noti_title = "تم اعتماد إنهاء العمل!"
-                noti_body = f"اعتمد {customer_name} إنهاء العمل على الوظيفة: {job_title}. تم إكمال الوظيفة بنجاح!"
+                noti_body = f"اعتمد {customer_name} إنهاء العمل. تم إكمال الوظيفة بنجاح!"
                 noti_data = {
                     "job_id": progress.job.id,
                     "job_slug": progress.job.slug,
@@ -749,14 +747,13 @@ def NegotiateOffer(request, offer_id):
         try:
             if offer.provider and offer.provider.user:
                 provider_user = offer.provider.user
-                customer_name = request.user.get_full_name() or "العميل"
-                job_title = offer.job.title or "الوظيفة"
+                customer_name = get_display_name(request.user.get_full_name(), "العميل")
                 
                 # Try to get job_progress if exists
                 job_progress = JobProgress.objects.filter(job=offer.job).first()
                 
                 noti_title = "عرض تفاوض جديد!"
-                noti_body = f"أرسل {customer_name} عرض تفاوض بسعر {customer_price} ريال للوظيفة: {job_title}"
+                noti_body = f"أرسل {customer_name} عرض تفاوض بسعر {customer_price} ريال"
                 noti_data = {
                     "job_id": offer.job.id,
                     "job_slug": offer.job.slug,
@@ -857,14 +854,13 @@ def Customer_respond_Negotiation(request, negotiation_id):
                 try:
                     if negotiation.provider and negotiation.provider.user:
                         provider_user = negotiation.provider.user
-                        customer_name = request.user.get_full_name() or "العميل"
-                        job_title = negotiation.job.title or "الوظيفة"
+                        customer_name = get_display_name(request.user.get_full_name(), "العميل")
                         
                         # Try to get job_progress if exists
                         job_progress = JobProgress.objects.filter(job=negotiation.job).first()
                         
                         noti_title = "تم قبول عرض التفاوض!"
-                        noti_body = f"وافق {customer_name} على عرض التفاوض بسعر {negotiation.provider_price} ريال للوظيفة: {job_title}"
+                        noti_body = f"وافق {customer_name} على عرض التفاوض بسعر {negotiation.provider_price} ريال"
                         noti_data = {
                             "job_id": negotiation.job.id,
                             "job_slug": negotiation.job.slug,
@@ -902,14 +898,13 @@ def Customer_respond_Negotiation(request, negotiation_id):
                 try:
                     if negotiation.provider and negotiation.provider.user:
                         provider_user = negotiation.provider.user
-                        customer_name = request.user.get_full_name() or "العميل"
-                        job_title = negotiation.job.title or "الوظيفة"
+                        customer_name = get_display_name(request.user.get_full_name(), "العميل")
                         
                         # Try to get job_progress if exists
                         job_progress = JobProgress.objects.filter(job=negotiation.job).first()
                         
                         noti_title = "تم رفض عرض التفاوض"
-                        noti_body = f"رفض {customer_name} عرض التفاوض للوظيفة: {job_title}"
+                        noti_body = f"رفض {customer_name} عرض التفاوض"
                         noti_data = {
                             "job_id": negotiation.job.id,
                             "job_slug": negotiation.job.slug,
@@ -1049,11 +1044,10 @@ def approve_extra_cost(request, progress_id):
         try:
             if progress.provider and progress.provider.user:
                 provider_user = progress.provider.user
-                customer_name = request.user.get_full_name() or "العميل"
-                job_title = progress.job.title or "الوظيفة"
+                customer_name = get_display_name(request.user.get_full_name(), "العميل")
                 
                 noti_title = "تمت الموافقة على المبلغ الإضافي!"
-                noti_body = f"وافق {customer_name} على المبلغ الإضافي {progress.extra_cost} ريال للوظيفة: {job_title}"
+                noti_body = f"وافق {customer_name} على المبلغ الإضافي {progress.extra_cost} ريال"
                 noti_data = {
                     "job_id": progress.job.id,
                     "job_slug": progress.job.slug,
@@ -1139,11 +1133,10 @@ def reject_extra_cost(request, progress_id):
         try:
             if progress.provider and progress.provider.user:
                 provider_user = progress.provider.user
-                customer_name = request.user.get_full_name() or "العميل"
-                job_title = progress.job.title or "الوظيفة"
+                customer_name = get_display_name(request.user.get_full_name(), "العميل")
                 
                 noti_title = "تم رفض المبلغ الإضافي"
-                noti_body = f"رفض {customer_name} المبلغ الإضافي {progress.extra_cost} ريال للوظيفة: {job_title}"
+                noti_body = f"رفض {customer_name} المبلغ الإضافي {progress.extra_cost} ريال"
                 noti_data = {
                     "job_id": progress.job.id,
                     "job_slug": progress.job.slug,

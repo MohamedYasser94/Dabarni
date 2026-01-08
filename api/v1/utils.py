@@ -32,3 +32,17 @@ def handle_email_otp_sending(user):
     user.save(update_fields=['email_verification_otp', 'email_verification_otp_created_at'])
 
     return True, otp_code
+
+def get_display_name(full_name, default_name):
+    """
+    Helper function to check display name in notifications.
+    """
+    if not full_name or full_name.strip() == "":
+        return default_name
+
+    stripped_name = full_name.strip()
+
+    if stripped_name.isdigit():
+        return default_name
+    
+    return full_name

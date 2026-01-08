@@ -7,6 +7,7 @@ from apps.classified.models.models import Job, JobReview, JobProgress
 from api.v1.customer.serializers.JobReviewCreateSerializer import JobReviewCreateSerializer
 from api.v1.response import success_response, error_response
 from api.v1.global_serializer.fcm import send_general_notification
+from api.v1.utils import get_display_name
 
 @extend_schema(
     tags=["Customer Review"],
@@ -36,10 +37,10 @@ def createJobReview(request, job_id):
 
             try:
                 provider_user = job_progress.provider.user
-                customer_name = request.user.get_full_name() or "Client"
+                customer_name = get_display_name(request.user.get_full_name(), "العميل")
                 rating_value = getattr(review, 'rating')
                 noti_title = "تقييم جديد!"
-                noti_body = f"قام {customer_name} بتقييمك بـ {rating_value} نجوم على وظيفة: {job.title}"
+                noti_body = f"قام {customer_name} بتقييمك بـ {rating_value} نجوم"
                 noti_data = {
                     "type": "new_review",
                     "job_id": job.id,
@@ -119,11 +120,11 @@ def createCustomerReview(request, job_id):
 
             try:
                 customer_user = job.customer
-                provider_name = request.user.get_full_name() or "مقدم خدمة"
+                provider_name = get_display_name(request.user.get_full_name(), "مقدم خدمة")
                 rating_value = getattr(review, 'rating')
                 
                 noti_title = "تقييم جديد!"
-                noti_body = f"قام {provider_name} بتقييم تجربته معك بـ {rating_value} نجوم بخصوص وظيفة: {job.title}"
+                noti_body = f"قام {provider_name} بتقييم تجربته معك بـ {rating_value} نجوم"
                 
                 noti_data = {
                     "type": "new_review_from_provider",
