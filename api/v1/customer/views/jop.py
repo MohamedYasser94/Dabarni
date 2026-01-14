@@ -1294,6 +1294,7 @@ def apply_coupon(request, progress_id):
             coupon.save()
             progress.coupon = coupon
             progress.coupon_discount_amount = discount_amount
+            progress.total_cost = progress.total_cost - progress.coupon_discount_amount
             progress.save()
 
         return Response({

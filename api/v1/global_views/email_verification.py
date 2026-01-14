@@ -43,14 +43,14 @@ def request_email_verification(request):
     data = {
         'email_subject': 'Verify Your Email Address',
         'email_body': email_body,
-        'to_email': user.email
+        'to_email': new_email
     }
 
     try:
         Util.send_email(data)
         return Response({
             'success': True,
-            'message': 'Email updated and verification OTP has been sent.'
+            'message': f'Email verification OTP sent to {new_email}'
         }, status=status.HTTP_200_OK)
         
     except Exception as exc:
