@@ -1,5 +1,6 @@
 # D:\Python Projects\Dabarni_fork\Dabarni\api\v1\customer\views\jop_request_views.py
 
+from django.contrib.contenttypes.models import ContentType
 from decimal import Decimal
 from django.utils.crypto import get_random_string
 from django.utils import timezone
@@ -22,7 +23,7 @@ from api.v1.customer.serializers.jop_request_serializer import (
     ProviderOfferSerializer,
 )
 from api.v1.response import success_response, error_response
-from apps.wallet.models.models import Wallet
+from apps.wallet.models.models import Wallet, WalletMoney
 from api.v1.global_serializer.fcm import send_general_notification
 from api.v1.utils import get_display_name
 
@@ -638,7 +639,27 @@ def finish_Customer_work(request, progress_id):
         progress.end_at = now 
         progress.progress_status = "Completed"
         progress.save()
-        
+
+        try:
+            if progress.provider and progress.provider.user:
+                provider_user = progress.provider.user
+                job_content_type = ContentType.objects.get_for_model(Job)
+                wallet_money, created = WalletMoney.objects.get_or_create(
+                    user=provider_user,
+                    owner_model=job_content_type,
+                    owner_id=progress.job.id,
+                    defaults={
+                        'reversed_balance': progress.total_cost or 0,
+                    }
+                )
+
+                if not created:
+                    wallet_money.reversed_balance = progress.total_cost or 0
+                    wallet_money.save()
+        except Exception as e:
+            print(f"Error updating wallet money: {e}")
+            pass
+
         # Send notification to provider
         try:
             if progress.provider and progress.provider.user:
