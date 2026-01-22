@@ -73,6 +73,7 @@ def verify_email_otp(request):
     new_email = serializer.validated_data['email']
     otp_input = serializer.validated_data['otp']
     user = request.user
+    user.refresh_from_db()
 
     if not user.email_verification_otp or user.email_verification_otp != otp_input:
         return Response({'error': 'Invalid OTP code.'}, status=status.HTTP_400_BAD_REQUEST)

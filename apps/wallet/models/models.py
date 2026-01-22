@@ -191,4 +191,29 @@ class SystemWallet(models.Model):
         super(SystemWallet, self).save(*args, **kwargs)
 
 
+class PendingBalanceTransfer(models.Model):
+    TRANSFER_STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Completed', 'Completed'),
+        ('Cancelled', 'Cancelled'),
+    ]
+    
+    wallet_money = models.ForeignKey(WalletMoney, on_delete=models.CASCADE, related_name='pending_transfers')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pending_balance_transfers')
+    amount = models.DecimalField(max_digits=50, decimal_places=2)
+    job_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
+    job_id = models.PositiveIntegerField(null=True, blank=True)
+    job = GenericForeignKey('job_content_type', 'job_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+    transfer_at = models.DateTimeField(help_text="Date when the amount will be transferred to actual_balance")
+    transferred_at = models.DateTimeField(null=True, blank=True, help_text="Actual date when transfer was processed")
+    status = models.CharField(max_length=20, choices=TRANSFER_STATUS_CHOICES, default='Pending')
+    notes = models.TextField(null=True, blank=True)
 
+    class Meta:
+        verbose_name = 'Pending Balance Transfer'
+        verbose_name_plural = 'Pending Balance Transfers'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Transfer {self.amount} for {self.user} - {self.status}"
