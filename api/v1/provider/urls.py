@@ -57,6 +57,7 @@ urlpatterns = [
     path('jobs/progress/<int:progress_id>/extra-request/', provider_home.request_extra_amount, name='request_extra_amount'),
     path('jobs/progress/<int:progress_id>/start/', provider_home.start_work, name='start_job'),
     path('jobs/<int:job_id>/cancel/', provider_home.cancel_job_provider, name='provider-job-cancel'),
+    path('jobs/<int:job_id>/upload-confirmation-images/', provider_home.upload_job_confirmation_images, name='upload-confirmation-images'),
     # ===================== Wallet & Payout URLs =====================
     path("wallet/", provider_wallet.ProviderWallet, name="ProviderWallet"),
     path("wallet/payouts/", provider_wallet.ProviderPayoutRequestList, name="ProviderPayoutRequestList"),

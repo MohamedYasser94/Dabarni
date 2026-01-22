@@ -27,6 +27,8 @@ from datetime import timedelta
 from apps.wallet.models.models import Wallet, WalletMoney, PendingBalanceTransfer
 from api.v1.global_serializer.fcm import send_general_notification
 from api.v1.utils import get_display_name
+from apps.classified.models.models import JobMedia
+from api.v1.customer.serializers.media_serializer import JobMediaSerializer
 
 @extend_schema(
     tags=["Customer Jobs"],
@@ -1345,3 +1347,46 @@ def apply_coupon(request, progress_id):
         return Response({"status": False, "message": "الطلب غير موجود"}, status=404)
     except Exception as e:
         return Response({"status": False, "message": f"حدث خطأ: {str(e)}"}, status=500)
+
+@extend_schema(
+    tags=["Customer Jobs"],
+    responses={200: 'Success', 404: 'Not Found Response', 500: 'Error Response'}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_job_confirmation_images(request, job_id):
+    """
+    API endpoint for customers to view all confirmation images for a specific job.
+    Returns images uploaded by the provider with type='confirmation'.
+    """
+    try:
+        job = get_object_or_404(Job, pk=job_id, customer=request.user)
+        job_progress = JobProgress.objects.filter(job=job).first()
+        
+        if not job_progress:
+            return error_response(
+                message="لم يتم العثور على تقدم العمل لهذا الطلب",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        
+        confirmation_images = JobMedia.objects.filter(
+            job_progress=job_progress,
+            type='confirmation'
+        ).order_by('-created_at')
+        
+        serializer = JobMediaSerializer(confirmation_images, many=True, context={'request': request})
+        
+        return success_response(
+            message="تم جلب صور التأكيد بنجاح",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return error_response(
+            message="حدث خطأ أثناء جلب صور التأكيد",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )

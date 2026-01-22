@@ -491,18 +491,12 @@ def AcceptJob(request, job_id):
 
 
 @extend_schema(
-    description="Provider marks the job as finished pending customer approval.",
+    description="Provider marks the job as finished pending customer approval. Optionally upload confirmation images.",
     tags=["Job Progress"]
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def FinishJob(request, job_id):
-    """
-    المزود ينهي العمل من طرفه:
-    - تحديث provider_finished_at
-    - تغيير الحالة إلى On Hold to Finish
-    - إرسال إشعار للعميل
-    """
     try:
         provider = get_object_or_404(JobProvider, user=request.user)
         job = get_object_or_404(Job, pk=job_id)
@@ -518,6 +512,19 @@ def FinishJob(request, job_id):
             progress.provider_finished_at = timezone.now()
             progress.progress_status = "On Hold to Finish"
             progress.save()
+            images = request.FILES.getlist('images')
+            uploaded_images = []
+            if images:
+                for image in images:
+                    media = JobMedia.objects.create(
+                        job_progress=progress,
+                        image=image,
+                        type='confirmation'
+                    )
+                    uploaded_images.append({
+                        'id': media.id,
+                        'image_url': request.build_absolute_uri(media.image.url) if media.image else None
+                    })
 
             try:
                 customer_user = job.customer
@@ -543,13 +550,18 @@ def FinishJob(request, job_id):
             except Exception as noti_error:
                 pass
 
+        response_data = {
+            "progress_status": progress.progress_status,
+            "provider_finished_at": progress.provider_finished_at
+        }
+        
+        if uploaded_images:
+            response_data["uploaded_images"] = uploaded_images
+
         return Response({
             "status": True,
             "message": "تم إنهاء العمل من طرفك، بانتظار موافقة العميل.",
-            "data": {
-                "progress_status": progress.progress_status,
-                "provider_finished_at": progress.provider_finished_at
-            }
+            "data": response_data
         }, status=status.HTTP_200_OK)
 
     except JobProvider.DoesNotExist:
@@ -1518,3 +1530,61 @@ def ProviderJobReviews(request):
         "job_reviews": job_reviews_serializer.data,
     }
     return Response(data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=["Provider Jobs"],
+    responses={201: 'Success', 404: 'Not Found Response', 400: 'Bad Request', 500: 'Error Response'}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_job_confirmation_images(request, job_id):
+    """
+    API endpoint for providers to upload confirmation images for a completed job.
+    Images are stored in JobMedia with type='confirmation' and linked to JobProgress.
+    """
+    try:
+        provider = get_object_or_404(JobProvider, user=request.user)
+        job_progress = JobProgress.objects.filter(
+            job_id=job_id,
+            provider=provider
+        ).first()
+        
+        if not job_progress:
+            return error_response(
+                message="لم يتم العثور على تقدم العمل لهذا الطلب",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        images = request.FILES.getlist('images')
+        if not images:
+            return error_response(
+                message="يرجى إرفاق صورة واحدة على الأقل",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        created_media = []
+        with transaction.atomic():
+            for image in images:
+                media = JobMedia.objects.create(
+                    job_progress=job_progress,
+                    image=image,
+                    type='confirmation'
+                )
+                created_media.append(media)
+
+        serializer = JobMediaSerializer(created_media, many=True, context={'request': request})
+        return success_response(
+            message="تم رفع صور التأكيد بنجاح",
+            data=serializer.data,
+            status_code=status.HTTP_201_CREATED
+        )
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return error_response(
+            message="حدث خطأ أثناء رفع الصور",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            errors={'detail': str(e)}
+        )

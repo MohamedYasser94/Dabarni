@@ -51,6 +51,8 @@ urlpatterns = [
   #------------------- Coupons ----------------
   path('jobs/progress/<int:progress_id>/apply-coupon/', jop.apply_coupon, name='apply-coupon'),
   path('coupons/create/', jop.create_coupon, name='create-coupon'),
+  #------------------- Confirmation Images ----------------
+  path('jobs/<int:job_id>/confirmation-images/', jop.get_job_confirmation_images, name='get-job-confirmation-images'),
     # ===================== Chat URLs =====================
     path('chat/start/<slug:job_slug>/', customer_start_chat_view, name='start-chat'),
     path('chat/list/', Api_customer_Chat_Lists, name='chat-list'),

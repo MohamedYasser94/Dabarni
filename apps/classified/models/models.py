@@ -112,7 +112,8 @@ class Job(models.Model):
 
 
 class JobMedia(models.Model):
-    job= models.ForeignKey(Job, on_delete=models.CASCADE, related_name='media')
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='media', null=True, blank=True)
+    job_progress = models.ForeignKey('JobProgress', on_delete=models.CASCADE, related_name='media', null=True, blank=True)
     image = models.ImageField(upload_to=get_file_path, null=True, blank=True)
     image_url = models.URLField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=MultiFile_Type, null=True, blank=True)

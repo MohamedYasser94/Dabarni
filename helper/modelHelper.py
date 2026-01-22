@@ -678,7 +678,7 @@ Service_Type = (('Service', 'Service'), ('Work', 'Work'), ('Product', 'Product')
 Service_Status = (('Active', 'Active'), ('Waiting', 'Waiting for activation'), ('Inactive', 'Inactive'),)
 Featured_Status = (('Active', 'Active'), ('Inactive', 'Inactive'),)
 MultiFile_Type = (('image', 'image'), ('hero', 'hero'), ('video', 'video'), ('cover', 'cover'), ('file', 'file'),
-                  ('Other', 'Other'))
+                  ('confirmation', 'confirmation'), ('Other', 'Other'))
 Banners_Position = (('Top Left', 'Top Left'), ('Top Middle', 'Top Middle'), ('Top Right', 'Top Right'),
                     ('Middle Left', 'Middle Left'), ('Middle Right', 'Middle Right'), ('Bottom Left', 'Bottom Left'),
                     ('Bottom Middle', 'Bottom Middle'), ('Bottom Right', 'Bottom Right'),
