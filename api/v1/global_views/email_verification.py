@@ -30,6 +30,7 @@ def request_email_verification(request):
         }, status=status.HTTP_400_BAD_REQUEST)
     
     success, otp_code = handle_email_otp_sending(user)
+    user.refresh_from_db()
 
     if not success:
         return Response({'error': otp_code}, status=status.HTTP_429_TOO_MANY_REQUESTS)
@@ -71,12 +72,19 @@ def verify_email_otp(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     new_email = serializer.validated_data['email']
-    otp_input = serializer.validated_data['otp']
+    otp_input = str(serializer.validated_data['otp']).strip()
     user = request.user
     user.refresh_from_db()
+    stored_otp = str(user.email_verification_otp).strip() if user.email_verification_otp else None
+    
+    if not stored_otp:
+        return Response({'error': 'No OTP found. Please request a new verification code.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if not user.email_verification_otp or user.email_verification_otp != otp_input:
-        return Response({'error': 'Invalid OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
+    if stored_otp != otp_input:
+        return Response({
+            'error': 'Invalid OTP code.',
+            'debug': f'Expected: {stored_otp} ({len(stored_otp)} chars), Got: {otp_input} ({len(otp_input)} chars)'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     if user.email_verification_otp_created_at:
         expiration_time = user.email_verification_otp_created_at + timedelta(minutes=10)

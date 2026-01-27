@@ -222,7 +222,7 @@ def list_provider_jobs_by_status(request, status_param):
         )
         my_negotiates_prefetch = Prefetch(
             'negotiates', 
-            queryset=JobNegotiate.objects.filter(provider__user=user)
+            queryset=JobNegotiate.objects.filter(provider__user=user).exclude(provider_accepted=False)
         )
 
         jobs = Job.objects.filter(
