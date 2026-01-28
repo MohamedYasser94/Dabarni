@@ -23,7 +23,7 @@ class UserAddressSerializer(serializers.ModelSerializer):
         model = UserAddress
         fields = [
             "id","slug","label","latitude","longitude","address",
-            "building_name","floor","apartment_number","property_type","note","is_temporary",
+            "building_name","floor","apartment_number","property_type","note","is_temporary","governorates",
         ]
 
 class LogoutSerializer(serializers.Serializer):

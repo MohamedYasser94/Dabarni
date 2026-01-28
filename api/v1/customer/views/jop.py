@@ -883,6 +883,11 @@ def Customer_respond_Negotiation(request, negotiation_id):
                 offer.price = negotiation.provider_price 
                 offer.status = "negotiated" 
                 offer.save()
+                job_progress = JobProgress.objects.filter(job=negotiation.job).first()
+                if job_progress:
+                    job_progress.total_cost = negotiation.provider_price
+                    job_progress.save()
+                
                 message = "تم قبول عرض التفاوض وتحديث سعر العرض بنجاح."
                 
                 # Send notification to provider on accept
@@ -891,8 +896,8 @@ def Customer_respond_Negotiation(request, negotiation_id):
                         provider_user = negotiation.provider.user
                         customer_name = get_display_name(request.user.get_full_name(), "العميل")
                         
-                        # Try to get job_progress if exists
-                        job_progress = JobProgress.objects.filter(job=negotiation.job).first()
+                        if not job_progress:
+                            job_progress = JobProgress.objects.filter(job=negotiation.job).first()
                         
                         noti_title = "تم قبول عرض التفاوض!"
                         noti_body = f"وافق {customer_name} على عرض التفاوض بسعر {negotiation.provider_price} ريال"

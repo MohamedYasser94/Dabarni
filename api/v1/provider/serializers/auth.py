@@ -170,6 +170,7 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
     # JobProvider model fields
     category = serializers.CharField(required=True,write_only=True,help_text="The job category")
     address = serializers.CharField(required=True)
+    governorates = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     user_image = serializers.ImageField(required=False, write_only=True)
     
     class Meta:
@@ -177,7 +178,7 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
         fields = [
             'address', 'full_name', 'is_citizen', 'category',  
             'user_image', 'id_image_front', 'residence_image', 
-            'id_image_back',
+            'id_image_back', 'governorates',
         ]
 
     def validate_category(self, value):
@@ -208,6 +209,8 @@ class ProviderProfileCompletionSerializer(serializers.ModelSerializer):
             user.last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
             if 'user_image' in validated_data:
                 user.image = validated_data.pop('user_image')
+            if 'governorates' in validated_data:
+                user.governorates = validated_data.pop('governorates')
             user.save()
             
             # Update or create the UserProfile instance
@@ -240,6 +243,7 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     user_phone = serializers.CharField(source='user.phone', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
     user_image = serializers.ImageField(source='user.image', read_only=True)
+    governorates = serializers.CharField(source='user.governorates', read_only=True)
     # UserProfile model fields
     is_citizen = serializers.BooleanField(source='user.profile.is_citizen', read_only=True)
     id_image_front = serializers.ImageField(source='user.profile.id_image_front', read_only=True)
@@ -261,7 +265,7 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
         model = JobProvider
         fields = [
             # From User
-            'user_first_name', 'user_last_name', 'user_phone', 'email',
+            'user_first_name', 'user_last_name', 'user_phone', 'email', 'governorates',
             
             # From UserProfile
             'is_citizen', 'user_image', 'id_image_front', 'id_image_back', 
@@ -331,6 +335,7 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
     commercial_image = serializers.ImageField(required=False)
     vat_image = serializers.ImageField(required=False)
     license_image = serializers.ImageField(required=False)
+    governorates = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = JobProvider
@@ -339,7 +344,7 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             'nationality', 'residence', 'id_number', 'is_citizen',
             'category','experience_years',  'commercial_number', 'company',
             'id_image_front', 'residence_image', 'commercial_image','bio',
-            'id_image_back', 'vat_image', 'license_image',
+            'id_image_back', 'vat_image', 'license_image', 'governorates',
         ]
 
     def validate_category(self, value):
@@ -368,6 +373,8 @@ class ProviderProfileUpdateSerializer(serializers.ModelSerializer):
             user.email = validated_data.pop('email', user.email)
             if 'user_image' in validated_data:
                 user.image = validated_data.pop('user_image')
+            if 'governorates' in validated_data:
+                user.governorates = validated_data.pop('governorates')
             user.save()
             
             # Update UserProfile model fields (assumed to exist)

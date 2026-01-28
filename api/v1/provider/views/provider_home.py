@@ -710,6 +710,10 @@ def Provider_respond_Negotiation(request, negotiation_id):
                 offer.price = negotiation.customer_price 
                 offer.status = "negotiated" 
                 offer.save()
+                job_progress = JobProgress.objects.filter(job=negotiation.job).first()
+                if job_progress:
+                    job_progress.total_cost = negotiation.customer_price
+                    job_progress.save()
                 
                 # Send notification to customer
                 try:
@@ -728,7 +732,6 @@ def Provider_respond_Negotiation(request, negotiation_id):
                     }
                     
                     # Try to get job_progress to include progress_status if exists
-                    job_progress = JobProgress.objects.filter(job=negotiation.job).first()
                     if job_progress:
                         noti_data["progress_id"] = job_progress.id
                         noti_data["progress_status"] = job_progress.progress_status
