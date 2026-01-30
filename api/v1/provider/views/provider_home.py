@@ -260,7 +260,7 @@ def list_provider_jobs_by_status(request, status_param):
 @permission_classes([IsAuthenticated])
 def RetrieveAvailableJobs(request):
     """
-    API endpoint to list jobs available for a provider, filtered by their category.
+    API endpoint to list jobs available for a provider, filtered by their category and governorates.
     If coordinates are available (provider's saved location or lat/long query params),
     results are distance-filtered within a given radius (default 50km). Otherwise,
     falls back to category-only results without returning 400.
@@ -305,6 +305,22 @@ def RetrieveAvailableJobs(request):
             except Exception:
                 providerLat = providerLong = None
 
+        # Get provider's governorate from the user model
+        provider_governorate = provider.user.governorates if provider.user.governorates else None
+        
+        # Helper function to normalize governorate names for comparison
+        def normalize_governorate(gov_name):
+            """Remove common prefixes and normalize for comparison"""
+            if not gov_name:
+                return ""
+            # Remove common prefixes like "محافظة"
+            normalized = gov_name.strip()
+            prefixes = ["محافظة ", "محافظه "]
+            for prefix in prefixes:
+                if normalized.startswith(prefix):
+                    normalized = normalized[len(prefix):].strip()
+            return normalized
+        
         # Base queryset filtered by category and pending progress
         jobsQueryset = (
             Job.objects
@@ -313,12 +329,17 @@ def RetrieveAvailableJobs(request):
             .select_related('location')
             .distinct()
         )
+        
+        if provider_governorate:
+            normalized_provider_gov = normalize_governorate(provider_governorate)
+            jobsQueryset = jobsQueryset.filter(
+                location__governorates__icontains=normalized_provider_gov
+            )
 
-        # If no coordinates available, return category-only results
         if providerLat is None or providerLong is None:
             serializer = JobDetailSerializer(jobsQueryset, many=True, context={'request': request})
             return success_response(
-                message="تم جلب قائمة الوظائف المتاحة حسب الفئة. (بدون تحديد موقع)",
+                message="تم جلب قائمة الوظائف المتاحة حسب الفئة والمحافظة. (بدون تحديد موقع)",
                 data=serializer.data,
                 status_code=status.HTTP_200_OK
             )

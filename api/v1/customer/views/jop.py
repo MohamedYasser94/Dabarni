@@ -58,7 +58,7 @@ def create_job(request):
                 
                 customer_name = request.user.get_full_name() or "عميل"
                 noti_title = "وظيفة جديدة في تخصصك!"
-                noti_body = f"تم نشر وظيفة جديدة: {job_instance.title or 'وظيفة'} - الكمية: {job_instance.quantity}"
+                noti_body = f"تم نشر وظيفة جديدة: الكمية: {job_instance.quantity}"
                 noti_data = {
                     "job_id": job_instance.id,
                     "job_slug": job_instance.slug,
