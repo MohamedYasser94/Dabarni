@@ -125,5 +125,9 @@ This project is licensed under the MIT License – see the [`LICENSE`](LICENSE) 
 ---
 
 > Made with ❤️ by [Digithup](https://digithup.com)
+
+---
+link figma : https://www.figma.com/design/ULRbnuKmje8LfxYA0jt90X/%D8%AF%D8%A8%D8%B1%D9%86%D9%8A?m=auto&t=DDDa0NpiDKveQhmE-6
+---
 ```
 This `README.md` is structured, branded, and ready for a professional classified ads platform.
